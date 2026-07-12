@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  # MQTT Broker (Eclipse Mosquitto)
+  mqtt-broker:
+    image: eclipse-mosquitto:2.0.15
+    container_name: circe-mqtt-broker
+    ports:
+      - "1883:1883"      # Porta padrão MQTT
+      - "9001:9001"      # Porta Websockets MQTT (para debug/painéis futuros)
+    volumes:
+      - ./docker/mosquitto/config:/mosquitto/config
+      - ./docker/mosquitto/data:/mosquitto/data
+      - ./docker/mosquitto/log:/mosquitto/log
+    restart: unless-stopped
