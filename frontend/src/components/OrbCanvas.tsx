@@ -11,10 +11,37 @@ interface IrisStore {
   setTemperature: (temp: number) => void;
   setIrisState: (state: 'idle' | 'listening' | 'speaking' | 'critical') => void;
   
+  // Contrato completo do WebSocket
+  humidity: number;
+  tempHistory: number[];
+  fan1Speed: number;
+  fan1Rpm: number;
+  fan2Speed: number;
+  fan2Rpm: number;
+  fanMode: 'auto' | 'manual' | 'silent';
+  finsState: 'open' | 'closed' | 'moving' | 'error';
+  pcState: 'on' | 'off';
+  roofAngle: number;
+  setHumidity: (humidity: number) => void;
+  setTempHistory: (history: number[]) => void;
+  setFan1Speed: (speed: number) => void;
+  setFan1Rpm: (rpm: number) => void;
+  setFan2Speed: (speed: number) => void;
+  setFan2Rpm: (rpm: number) => void;
+  setFanMode: (mode: 'auto' | 'manual' | 'silent') => void;
+  setFinsState: (state: 'open' | 'closed' | 'moving' | 'error') => void;
+  setPcState: (state: 'on' | 'off') => void;
+  setRoofAngle: (angle: number) => void;
+
   // Customização Visual R2.1 e R2.2
   primaryColor: string;
   secondaryColor: string;
   tertiaryColor: string; // Terceira cor
+  quaternaryColor: string; // Quarta cor manual R2.2
+  quinaryColor: string; // Quinta cor manual R2.2
+  senaryColor: string; // Sexta cor manual R2.2
+  septenaryColor: string; // Sétima cor manual
+  octonaryColor: string; // Oitava cor manual
   customThemeActive: boolean;
   rotationSpeed: number;
   physicsMode: 'gel' | 'mechanical' | 'liquid';
@@ -27,15 +54,16 @@ interface IrisStore {
   saturation: number;
   ringColorCustom: string; // Cor customizada do anel R2.2
   ringSpeed: number; // Velocidade de rotação do anel R2.2
-  quaternaryColor: string; // Quarta cor manual R2.2
-  quinaryColor: string; // Quinta cor manual R2.2
-  senaryColor: string; // Sexta cor manual R2.2
   pulseSpeed: number; // Velocidade de pulsação das linhas de fuga R2.2
   activePanel: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null; // Sincronização Spatial UI
   setActivePanel: (panel: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null) => void;
   dragOffset: { x: number; y: number }; // Deslocamento 3D do arrasto do mouse no centro
   snapToCenter: boolean; // Se verdadeiro, o orbe volta ao centro quando o clique é solto
-  setFXConfig: (config: Partial<Omit<IrisStore, 'temperature' | 'irisState' | 'setTemperature' | 'setIrisState' | 'setFXConfig' | 'setActivePanel'>>) => void;
+  glowBarsEnabled: boolean;
+  glowLinesEnabled: boolean;
+  colorZonesEnabled: boolean[];
+  satelliteCoords: { x: number; y: number };
+  setFXConfig: (config: Partial<Omit<IrisStore, 'temperature' | 'irisState' | 'setTemperature' | 'setIrisState' | 'setFXConfig' | 'setActivePanel' | 'humidity' | 'tempHistory' | 'fan1Speed' | 'fan1Rpm' | 'fan2Speed' | 'fan2Rpm' | 'fanMode' | 'finsState' | 'pcState' | 'roofAngle' | 'setHumidity' | 'setTempHistory' | 'setFan1Speed' | 'setFan1Rpm' | 'setFan2Speed' | 'setFan2Rpm' | 'setFanMode' | 'setFinsState' | 'setPcState' | 'setRoofAngle'>>) => void;
 }
 
 export const useIrisStore = create<IrisStore>((set) => ({
@@ -44,13 +72,40 @@ export const useIrisStore = create<IrisStore>((set) => ({
   setTemperature: (temp) => set({ temperature: temp }),
   setIrisState: (state) => set({ irisState: state }),
   
+  // Defaults do contrato
+  humidity: 62.5,
+  tempHistory: Array(24).fill(42.0),
+  fan1Speed: 60,
+  fan1Rpm: 1200,
+  fan2Speed: 60,
+  fan2Rpm: 1150,
+  fanMode: 'auto',
+  finsState: 'open',
+  pcState: 'on',
+  roofAngle: 90,
+  setHumidity: (h) => set({ humidity: h }),
+  setTempHistory: (hist) => set({ tempHistory: hist }),
+  setFan1Speed: (speed) => set({ fan1Speed: speed }),
+  setFan1Rpm: (rpm) => set({ fan1Rpm: rpm }),
+  setFan2Speed: (speed) => set({ fan2Speed: speed }),
+  setFan2Rpm: (rpm) => set({ fan2Rpm: rpm }),
+  setFanMode: (mode) => set({ fanMode: mode }),
+  setFinsState: (fins) => set({ finsState: fins }),
+  setPcState: (pc) => set({ pcState: pc }),
+  setRoofAngle: (angle) => set({ roofAngle: angle }),
+
   // Defaults R2.2
+  glowBarsEnabled: true,
+  glowLinesEnabled: true,
+  colorZonesEnabled: [true, true, true, true, true, true, true, true],
   primaryColor: '#00f3ff', // ciano
   secondaryColor: '#00aaff', // azul claro
   tertiaryColor: '#d946ef', // rosa/magenta
   quaternaryColor: '#ff007f', // pink
   quinaryColor: '#ff5500', // laranja
   senaryColor: '#aaff00', // limão
+  septenaryColor: '#ffff00', // amarelo
+  octonaryColor: '#00ff55', // verde-ciano
   customThemeActive: false,
   rotationSpeed: 1.0,
   physicsMode: 'gel',
@@ -68,6 +123,7 @@ export const useIrisStore = create<IrisStore>((set) => ({
   setActivePanel: (panel) => set({ activePanel: panel }),
   dragOffset: { x: 0, y: 0 },
   snapToCenter: true,
+  satelliteCoords: { x: 180, y: 0 },
   setFXConfig: (config) => set((state) => ({ ...state, ...config })),
 }));
 
@@ -87,6 +143,8 @@ function getZoneColor(
   color4: THREE.Color,
   color5: THREE.Color,
   color6: THREE.Color,
+  color7: THREE.Color,
+  color8: THREE.Color,
   saturation: number
 ): THREE.Color {
   let norm = (angle / (Math.PI * 2)) % 1;
@@ -94,19 +152,23 @@ function getZoneColor(
   const color = new THREE.Color();
 
   if (customActive) {
-    // Interpolar de forma fluida e cíclica entre as seis cores customizadas (arco-íris manual) e fechar de volta na primeira cor (miscigenação R2.2)
-    if (norm < 0.166) {
-      color.lerpColors(color1, color2, norm / 0.166);
-    } else if (norm < 0.333) {
-      color.lerpColors(color2, color3, (norm - 0.166) / 0.167);
+    // Interpolar de forma fluida e cíclica entre as oito cores customizadas (arco-íris de 8 zonas)
+    if (norm < 0.125) {
+      color.lerpColors(color1, color2, norm / 0.125);
+    } else if (norm < 0.25) {
+      color.lerpColors(color2, color3, (norm - 0.125) / 0.125);
+    } else if (norm < 0.375) {
+      color.lerpColors(color3, color4, (norm - 0.25) / 0.125);
     } else if (norm < 0.5) {
-      color.lerpColors(color3, color4, (norm - 0.333) / 0.167);
-    } else if (norm < 0.666) {
-      color.lerpColors(color4, color5, (norm - 0.5) / 0.166);
-    } else if (norm < 0.833) {
-      color.lerpColors(color5, color6, (norm - 0.666) / 0.167);
+      color.lerpColors(color4, color5, (norm - 0.375) / 0.125);
+    } else if (norm < 0.625) {
+      color.lerpColors(color5, color6, (norm - 0.5) / 0.125);
+    } else if (norm < 0.75) {
+      color.lerpColors(color6, color7, (norm - 0.625) / 0.125);
+    } else if (norm < 0.875) {
+      color.lerpColors(color7, color8, (norm - 0.75) / 0.125);
     } else {
-      color.lerpColors(color6, color1, (norm - 0.833) / 0.167);
+      color.lerpColors(color8, color1, (norm - 0.875) / 0.125);
     }
   } else if (mode === 'listening') {
     // Roxo profundo
@@ -132,9 +194,6 @@ function getZoneColor(
   color.getHSL(hsl);
   color.setHSL(hsl.h, hsl.s * saturation, hsl.l);
 
-  // HDR booster para as barras brilharem intensamente no bloom
-  color.multiplyScalar(3.5);
-
   return color;
 }
 
@@ -151,7 +210,10 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
   const quaternaryColor = useIrisStore((s) => s.quaternaryColor);
   const quinaryColor = useIrisStore((s) => s.quinaryColor);
   const senaryColor = useIrisStore((s) => s.senaryColor);
+  const septenaryColor = useIrisStore((s) => s.septenaryColor);
+  const octonaryColor = useIrisStore((s) => s.octonaryColor);
   const customThemeActive = useIrisStore((s) => s.customThemeActive);
+  const colorZonesEnabled = useIrisStore((s) => s.colorZonesEnabled);
   const rotationSpeed = useIrisStore((s) => s.rotationSpeed);
   const physicsMode = useIrisStore((s) => s.physicsMode);
   const repulsionStrength = useIrisStore((s) => s.repulsionStrength);
@@ -166,6 +228,10 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
   const barGlowPulseSpeed = useIrisStore((s) => s.barGlowPulseSpeed);
 
 
+
+  // Referências para o Satélite Gravitacional/Repulsão Interativo (Lua)
+  const satelliteCoords = useIrisStore((s) => s.satelliteCoords);
+  const satellitePosRef = useRef(new THREE.Vector3(3.2, 0.0, 0.0)); // Posição XY convertida para 3D
 
   // Referências para os grupos de rotação
   const orbGroupRef = useRef<THREE.Group>(null);
@@ -449,16 +515,27 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
     // Atualizar cores das barras a cada frame de acordo com a rotação de tempo e velocidade do slider (R2.2 corrigido)
     const updateColorsInFrame = (instMesh: THREE.InstancedMesh, data: any[]) => {
       // Instanciar objetos de cores uma única vez por frame no escopo do update (com fallbacks à prova de falhas)
-      const color1 = new THREE.Color(primaryColor || '#00f3ff');
-      const color2 = new THREE.Color(secondaryColor || '#00aaff');
-      const color3 = new THREE.Color(tertiaryColor || '#d946ef');
-      const color4 = new THREE.Color(quaternaryColor || '#ff007f');
-      const color5 = new THREE.Color(quinaryColor || '#ff5500');
-      const color6 = new THREE.Color(senaryColor || '#aaff00');
+      const cActive = colorZonesEnabled || [true, true, true, true, true, true, true, true];
+      const color1 = new THREE.Color(cActive[0] ? (primaryColor || '#00f3ff') : '#000000');
+      const color2 = new THREE.Color(cActive[1] ? (secondaryColor || '#00aaff') : '#000000');
+      const color3 = new THREE.Color(cActive[2] ? (tertiaryColor || '#d946ef') : '#000000');
+      const color4 = new THREE.Color(cActive[3] ? (quaternaryColor || '#ff007f') : '#000000');
+      const color5 = new THREE.Color(cActive[4] ? (quinaryColor || '#ff5500') : '#000000');
+      const color6 = new THREE.Color(cActive[5] ? (senaryColor || '#aaff00') : '#000000');
+      const color7 = new THREE.Color(cActive[6] ? (septenaryColor || '#ffff00') : '#000000');
+      const color8 = new THREE.Color(cActive[7] ? (octonaryColor || '#00ff55') : '#000000');
+
+      // Parâmetros de Glow dinâmicos e pulsação suave
+      const glowEnabled = useIrisStore.getState().glowBarsEnabled;
+      const pulseVal = !glowEnabled || barGlowPulseSpeed === 0 ? 1.0 : Math.pow(Math.sin(barGlowPulsePhaseRef.current) * 0.5 + 0.5, 1.5);
+      const maxGlowMultiplier = glowEnabled ? glowIntensityBars * 4.5 : 1.0;
+      const glowMultiplier = 1.0 + (maxGlowMultiplier - 1.0) * pulseVal;
 
       for (let i = 0; i < data.length; i++) {
-        // Rotacionar o ângulo da cor no sentido horário proporcional à fase acumulada para evitar saltos bruscos
-        const rotatedAngle = data[i].angle - colorRotationPhaseRef.current;
+        // Mistura de cores 3D aumentada (ripple baseada em rBase e zOff) para suavizar a transição angular
+        const colorShift = Math.sin(data[i].rBase * 4.5) * 0.35 + Math.cos(data[i].zOff * 1.5) * 0.2;
+        const rotatedAngle = data[i].angle - colorRotationPhaseRef.current + colorShift;
+
         const color = getZoneColor(
           rotatedAngle, 
           irisState, 
@@ -470,8 +547,12 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
           color4, 
           color5, 
           color6, 
+          color7,
+          color8,
           saturation
         );
+        // Aplicar o boost de glow na cor final (HDR)
+        color.multiplyScalar(glowMultiplier);
         instMesh.setColorAt(i, color);
       }
       if (instMesh.instanceColor) {
@@ -495,16 +576,20 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
       rayGroupRef.current.rotation.y = Math.cos(elapsed * 0.12) * 0.08 + currentDragRotation.current.y; // Alinhado com o ângulo de rotação/inclinação do Orbe
       rayGroupRef.current.rotation.x = Math.sin(elapsed * 0.08) * 0.05 + currentDragRotation.current.x; // Alinhado com o ângulo de rotação/inclinação do Orbe
       
-      // Aplicar opacidade de glow das barras com pulsação
+      // Aplicar opacidade de glow das barras
       if (material) {
-        const pulse = barGlowPulseSpeed === 0 ? 1.0 : 0.77 + 0.23 * Math.sin(barGlowPulsePhaseRef.current);
-        material.opacity = 0.85 * pulse * (glowIntensityBars / 1.2);
+        material.opacity = 0.85;
       }
 
-      // Pulsação contínua da opacidade das linhas de fuga (acende/apaga 100% com base na fase acumulada)
+      // Pulsação contínua da opacidade das linhas de fuga
       if (rayLinesMaterial) {
-        const baseOpacity = pulseSpeed === 0 ? 0.45 : 0.22 + 0.23 * Math.sin(pulsePhaseRef.current);
-        (rayLinesMaterial as THREE.LineBasicMaterial).opacity = Math.max(0.0, baseOpacity) * (glowIntensityLines / 1.2);
+        const linesGlowEnabled = useIrisStore.getState().glowLinesEnabled;
+        if (linesGlowEnabled) {
+          const baseOpacity = pulseSpeed === 0 ? 0.45 : 0.22 + 0.23 * Math.sin(pulsePhaseRef.current);
+          (rayLinesMaterial as THREE.LineBasicMaterial).opacity = Math.max(0.0, baseOpacity) * (glowIntensityLines / 1.2);
+        } else {
+          (rayLinesMaterial as THREE.LineBasicMaterial).opacity = 0.0; // Desliga totalmente o glow e as linhas
+        }
       }
     }
 
@@ -561,7 +646,23 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
           targetScaleY = b.baseHeight * (1.0 + (1.0 - dist / rInfluence) * (type === 'tall' ? 1.1 : 0.5) * repulsionStrength);
         }
 
-        // 3. Interpolação linear (Lerp) para suavização total da escala (evita transição seca/brusca)
+        // 3. Interação física com o Satélite Gravitacional (Lua)
+        const satPos = satellitePosRef.current;
+        const distSat = absolutePos.distanceTo(satPos);
+        const rInfluenceSat = type === 'tall' ? 2.5 : 1.8; // área de influência maior para o satélite
+        
+        if (distSat < rInfluenceSat) {
+          const forceDirSat = new THREE.Vector3().subVectors(absolutePos, satPos);
+          forceDirSat.z = 0;
+          const forceMagSat = (1.0 - distSat / rInfluenceSat) * fMax * 1.6; // repulsão mais acentuada
+          b.velocity.addScaledVector(forceDirSat.normalize(), forceMagSat);
+          
+          // Esticar as barras conforme a proximidade (simula atração/repulsão extrema do anexo)
+          const satScaleFactor = (1.0 - distSat / rInfluenceSat) * (type === 'tall' ? 1.4 : 0.7) * repulsionStrength;
+          targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + satScaleFactor));
+        }
+
+        // 4. Interpolação linear (Lerp) para suavização total da escala (evita transição seca/brusca)
         if (b.currentScaleY === undefined) b.currentScaleY = targetScaleY;
         b.currentScaleY = THREE.MathUtils.lerp(b.currentScaleY, targetScaleY, lerpSpeed);
 
@@ -649,6 +750,13 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
       // Balanço de câmera/paralaxe global ultra lento
       bgPtsRef.current.rotation.z = elapsed * 0.0015;
     }
+
+    // Mapeamento linear direto: 160px (raio do orbe no DOM) = 2.0 unidades no Three.js (RING_R)
+    // Fator de escala: 2.0 / 160 = 0.0125
+    const satPos3DX = (satelliteCoords?.x ?? 180) * 0.0125;
+    const satPos3DY = -(satelliteCoords?.y ?? 0) * 0.0125; // inverter Y
+    
+    satellitePosRef.current.set(satPos3DX, satPos3DY, 0);
   });
 
   return (
@@ -688,6 +796,7 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
       <points ref={bgPtsRef} geometry={bgParticlesGeometry}>
         <pointsMaterial color={0xdfe9ff} size={0.007} transparent opacity={0.3} sizeAttenuation />
       </points>
+
     </>
   );
 }

@@ -7,7 +7,9 @@ import {
   Lightbulb, 
   Cpu, 
   Activity,
-  Sliders
+  Sliders,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import OrbCanvas, { useIrisStore } from './components/OrbCanvas';
 
@@ -100,12 +102,34 @@ export default function App() {
     irisState, 
     setTemperature, 
     setIrisState,
+    humidity,
+    tempHistory,
+    fan1Speed,
+    fan1Rpm,
+    fan2Speed,
+    fan2Rpm,
+    fanMode,
+    finsState,
+    pcState,
+    roofAngle,
+    setHumidity,
+    setTempHistory,
+    setFan1Speed,
+    setFan1Rpm,
+    setFan2Speed,
+    setFan2Rpm,
+    setFanMode,
+    setFinsState,
+    setPcState,
+    setRoofAngle,
     primaryColor,
     secondaryColor,
     tertiaryColor,
     quaternaryColor,
     quinaryColor,
     senaryColor,
+    septenaryColor,
+    octonaryColor,
     customThemeActive,
     rotationSpeed,
     physicsMode,
@@ -122,11 +146,65 @@ export default function App() {
     activePanel,
     setActivePanel,
     snapToCenter,
+    glowBarsEnabled,
+    glowLinesEnabled,
+    colorZonesEnabled,
+    satelliteCoords,
     setFXConfig
   } = useIrisStore();
   const [showFXSettings, setShowFXSettings] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    presets: true,
+    colors: false, // Inicia expandida para fácil customização
+    glow: true,
+    physics: true,
+    sliders: true
+  });
+  const toggleSection = (sec: string) => {
+    setCollapsedSections(prev => ({ ...prev, [sec]: !prev[sec] }));
+  };
   const [hoveredQuadrant, setHoveredQuadrant] = useState<'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null>(null);
+
+  // Controle de arrasto em 2D do Satélite Gravitacional (Lua)
+  const [isDraggingSat, setIsDraggingSat] = useState(false);
+  const handleSatPointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    setIsDraggingSat(true);
+  };
+
+  useEffect(() => {
+    if (!isDraggingSat) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      let newX = e.clientX - centerX;
+      let newY = e.clientY - centerY;
+
+      // Limitar a distância máxima do centro do orbe (~450px para cobrir todo o visor)
+      const dist = Math.sqrt(newX * newX + newY * newY);
+      const maxRadius = 450;
+      if (dist > maxRadius) {
+        newX = (newX / dist) * maxRadius;
+        newY = (newY / dist) * maxRadius;
+      }
+
+      useIrisStore.setState({ satelliteCoords: { x: newX, y: newY } });
+    };
+
+    const handlePointerUp = () => {
+      setIsDraggingSat(false);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [isDraggingSat]);
 
   // Instâncias do Framer Motion useDragControls para controle de arrasto manual no visor de cabeçalho
   const dragSensors = useDragControls();
@@ -142,8 +220,6 @@ export default function App() {
   const dragBaseRef = useRef({ x: 0, y: 0 });
   
   // Controles locais (estado do dashboard)
-  const [fanSpeed, setFanSpeed] = useState(60);
-  const [roofAngle, setRoofAngle] = useState(90);
   const [ledColor, setLedColor] = useState('#06B6D4');
   const [ledMode, setLedMode] = useState('Breath');
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
@@ -258,6 +334,25 @@ export default function App() {
           const data = JSON.parse(event.data);
           if (data.temperature !== undefined) setTemperature(data.temperature);
           if (data.irisState !== undefined) setIrisState(data.irisState);
+          if (data.humidity !== undefined) setHumidity(data.humidity);
+          if (data.tempHistory !== undefined) setTempHistory(data.tempHistory);
+          if (data.fanSpeed !== undefined) {
+            setFan1Speed(data.fanSpeed);
+            setFan2Speed(data.fanSpeed);
+          }
+          if (data.fan1Speed !== undefined) setFan1Speed(data.fan1Speed);
+          if (data.fan1Rpm !== undefined) setFan1Rpm(data.fan1Rpm);
+          if (data.fan2Speed !== undefined) setFan2Speed(data.fan2Speed);
+          if (data.fan2Rpm !== undefined) setFan2Rpm(data.fan2Rpm);
+          if (data.fanMode !== undefined) setFanMode(data.fanMode);
+          if (data.finsState !== undefined) setFinsState(data.finsState);
+          if (data.pcState !== undefined) setPcState(data.pcState);
+          if (data.roofAngle !== undefined) {
+            setRoofAngle(data.roofAngle);
+            if (data.finsState === undefined) {
+              setFinsState(data.roofAngle > 10 ? 'open' : 'closed');
+            }
+          }
         } catch (err) {
           console.error('Erro ao processar dados do WS:', err);
         }
@@ -275,24 +370,71 @@ export default function App() {
     return () => {
       if (wsRef.current) wsRef.current.close();
     };
-  }, [setTemperature, setIrisState]);
+  }, [
+    setTemperature, 
+    setIrisState, 
+    setHumidity, 
+    setTempHistory, 
+    setFan1Speed, 
+    setFan2Speed, 
+    setFan1Rpm, 
+    setFan2Rpm, 
+    setFanMode, 
+    setFinsState, 
+    setPcState, 
+    setRoofAngle
+  ]);
 
-  // Simulação Local Inteligente (Hysteresis e Ruído Térmico) caso o backend não esteja ativo
+  // Simulação Local Inteligente (Física Térmica, Histórico, RPMs e Aletas)
   useEffect(() => {
     if (isWebSocketConnected) return;
 
     const interval = setInterval(() => {
-      const prev = useIrisStore.getState().temperature;
-      // Oscilação térmica simulada em torno de 45°C
-      const target = irisState === 'critical' ? 78 : irisState === 'speaking' ? 52 : 44;
-      const noise = (Math.random() - 0.5) * 0.4;
-      const diff = target - prev;
-      const nextTemp = parseFloat((prev + diff * 0.05 + noise).toFixed(1));
+      const store = useIrisStore.getState();
+      
+      // 1. Simulação Térmica
+      const coolingFactor = (store.fan1Speed / 100) * 0.45;
+      const heatingFactor = 0.18;
+      const noise = (Math.random() - 0.5) * 0.3;
+      const tempDelta = heatingFactor - coolingFactor + noise;
+      const nextTemp = parseFloat(Math.max(30, Math.min(85, store.temperature + tempDelta)).toFixed(1));
       setTemperature(nextTemp);
+
+      // Automação de Alerta Crítico
+      if (nextTemp >= 75) {
+        setIrisState('critical');
+      } else if (store.irisState === 'critical' && nextTemp < 70) {
+        setIrisState('idle');
+      }
+
+      // 2. Histórico de Temperatura (24 pontos)
+      const currentHistory = [...store.tempHistory];
+      currentHistory.push(nextTemp);
+      if (currentHistory.length > 24) currentHistory.shift();
+      setTempHistory(currentHistory);
+
+      // 3. Simulação de Umidade
+      const humidityNoise = (Math.random() - 0.5) * 0.5;
+      const nextHumidity = parseFloat(Math.max(20, Math.min(90, 75.0 - (nextTemp - 30.0) * 0.6 + humidityNoise)).toFixed(1));
+      setHumidity(nextHumidity);
+
+      // 4. Simulação de RPMs dos Ventiladores (com flutuação realista de ±15 RPM)
+      const rpm1Fluctuation = Math.floor((Math.random() - 0.5) * 30);
+      const rpm2Fluctuation = Math.floor((Math.random() - 0.5) * 30);
+      setFan1Rpm(store.fan1Speed > 0 ? Math.floor(store.fan1Speed * 20 + rpm1Fluctuation) : 0);
+      setFan2Rpm(store.fan2Speed > 0 ? Math.floor(store.fan2Speed * 19.5 + rpm2Fluctuation) : 0);
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [isWebSocketConnected, irisState, setTemperature]);
+  }, [
+    isWebSocketConnected,
+    setTemperature,
+    setIrisState,
+    setTempHistory,
+    setHumidity,
+    setFan1Rpm,
+    setFan2Rpm
+  ]);
 
   // Função para enviar comandos via REST ou WebSocket
   const sendControl = async (topic: string, value: string) => {
@@ -356,6 +498,37 @@ export default function App() {
       
       {/* 1. Renderização 3D Otimizada de Fundo */}
       <OrbCanvas />
+
+      {/* Satélite Gravitacional (Lua) como Elemento DOM de alta prioridade (z-35) */}
+      <div
+        style={{
+          position: 'absolute',
+          left: `calc(50% + ${(satelliteCoords?.x ?? 180)}px - 28px)`,
+          top: `calc(50% + ${(satelliteCoords?.y ?? 0)}px - 28px)`,
+          width: '56px',
+          height: '56px',
+          zIndex: 35,
+          cursor: isDraggingSat ? 'grabbing' : 'grab',
+          pointerEvents: 'auto'
+        }}
+        onPointerDown={handleSatPointerDown}
+        className="flex items-center justify-center select-none"
+      >
+        {/* Halo de energia sutil (vazado/hollow, sem sólido interno para não brigar por atenção) */}
+        <div 
+          className={`w-9 h-9 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+            isDraggingSat 
+              ? 'border-cyan-400 scale-110 shadow-[0_0_15px_rgba(6,182,212,0.65)] bg-cyan-500/5' 
+              : 'border-cyan-500/35 hover:border-cyan-400 hover:scale-105 hover:bg-cyan-500/10 hover:shadow-[0_0_8px_rgba(6,182,212,0.35)] bg-transparent'
+          }`}
+        >
+          {/* Fino anel de controle interno com preenchimento sutil */}
+          <div className="w-3.5 h-3.5 rounded-full border border-cyan-400/25 bg-cyan-500/5" />
+        </div>
+
+        {/* Fino anel orbital externo tracejado */}
+        <div className="absolute w-14 h-14 rounded-full border border-dashed border-cyan-500/15 animate-[spin_25s_linear_infinite]" />
+      </div>
 
       {/* Ambient background glow for active/hovered quadrants */}
       <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
@@ -495,6 +668,11 @@ export default function App() {
             <Thermometer className="w-3.5 h-3.5 text-cyan-400" />
             <span>{temperature}°C</span>
           </div>
+          <div className="w-[1px] h-4 bg-white/10" />
+          <div className="flex items-center gap-1.5 font-mono text-xs uppercase text-slate-400">
+            <span className={`w-1.5 h-1.5 rounded-full ${pcState === 'on' ? 'bg-emerald-450 animate-pulse' : 'bg-zinc-600'}`} />
+            <span className="font-semibold text-white">HOST: {pcState}</span>
+          </div>
         </div>
 
         {/* Console de Teste Rápido de Estados da IRIS (Colapsável) */}
@@ -540,6 +718,13 @@ export default function App() {
                   className={`px-2 py-0.5 rounded transition ${irisState === 'critical' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'text-slate-400 hover:text-white'}`}
                 >
                   Crit
+                </button>
+                <div className="w-[1px] h-3 bg-white/10 mx-0.5" />
+                <button 
+                  onClick={() => setPcState(pcState === 'on' ? 'off' : 'on')}
+                  className={`px-2 py-0.5 rounded transition ${pcState === 'on' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-zinc-800 text-slate-400 border border-transparent hover:text-white'}`}
+                >
+                  PC: {pcState.toUpperCase()}
                 </button>
               </motion.div>
             )}
@@ -673,7 +858,70 @@ export default function App() {
                 </div>
                 <div className="bg-black/55 p-3 rounded-xl border border-zinc-800 flex flex-col gap-1 shadow-inner">
                   <span className="text-[9px] font-mono text-slate-500 uppercase font-bold">Umidade</span>
-                  <span className="text-xl font-mono font-bold text-crt-cyan">62.8%</span>
+                  <span className="text-xl font-mono font-bold text-crt-cyan">{humidity}%</span>
+                </div>
+              </div>
+
+              {/* Gráfico Histórico CRT */}
+              <div className="crt-screen p-3 rounded-xl border border-zinc-950 flex flex-col gap-1">
+                <span className="text-[9px] font-mono text-crt-cyan uppercase font-bold">HISTÓRICO_TÉRMICO_24H</span>
+                <div className="w-full h-16 mt-1 relative flex items-end">
+                  {/* Grade de fundo do gráfico */}
+                  <div className="absolute inset-0 grid grid-cols-6 grid-rows-3 pointer-events-none opacity-10">
+                    <div className="border-b border-r border-crt-cyan"></div>
+                    <div className="border-b border-r border-crt-cyan"></div>
+                    <div className="border-b border-r border-crt-cyan"></div>
+                    <div className="border-b border-r border-crt-cyan"></div>
+                    <div className="border-b border-r border-crt-cyan"></div>
+                    <div className="border-b border-crt-cyan"></div>
+                    <div className="border-b border-r border-crt-cyan"></div>
+                    <div className="border-b border-r border-crt-cyan"></div>
+                    <div className="border-b border-r border-crt-cyan"></div>
+                    <div className="border-b border-r border-crt-cyan"></div>
+                    <div className="border-b border-r border-crt-cyan"></div>
+                    <div className="border-b border-crt-cyan"></div>
+                    <div className="border-r border-crt-cyan"></div>
+                    <div className="border-r border-crt-cyan"></div>
+                    <div className="border-r border-crt-cyan"></div>
+                    <div className="border-r border-crt-cyan"></div>
+                    <div className="border-r border-crt-cyan"></div>
+                    <div></div>
+                  </div>
+                  {/* Gráfico SVG */}
+                  <svg className="w-full h-full" viewBox="0 0 240 60" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#00f3ff" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="#00f3ff" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    {tempHistory && tempHistory.length > 1 && (
+                      <>
+                        <path
+                          d={`M ${tempHistory.map((temp, index) => {
+                            const x = (index / (tempHistory.length - 1)) * 240;
+                            // Normaliza a temp de 20 a 85
+                            const normTemp = (temp - 20) / (85 - 20);
+                            const y = 60 - normTemp * 50 - 5;
+                            return `${x} ${y}`;
+                          }).join(' L ')} L 240 60 L 0 60 Z`}
+                          fill="url(#chartGlow)"
+                        />
+                        <path
+                          d={`M ${tempHistory.map((temp, index) => {
+                            const x = (index / (tempHistory.length - 1)) * 240;
+                            const normTemp = (temp - 20) / (85 - 20);
+                            const y = 60 - normTemp * 50 - 5;
+                            return `${x} ${y}`;
+                          }).join(' L ')}`}
+                          fill="none"
+                          stroke="#00f3ff"
+                          strokeWidth="2"
+                          className="drop-shadow-[0_0_3px_rgba(0,243,255,0.7)]"
+                        />
+                      </>
+                    )}
+                  </svg>
                 </div>
               </div>
 
@@ -732,35 +980,64 @@ export default function App() {
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between font-mono text-xs items-center">
                   <span className="text-slate-400">Velocidade dos Fans</span>
-                  <span className="text-crt-purple font-mono font-bold text-sm bg-black/40 px-1.5 py-0.5 rounded border border-zinc-800">{fanSpeed}%</span>
+                  <span className="text-crt-purple font-mono font-bold text-xs bg-black/40 px-1.5 py-0.5 rounded border border-zinc-800">
+                    F1: {fan1Speed}% | F2: {fan2Speed}%
+                  </span>
                 </div>
                 <input 
                   type="range" 
                   min="0" 
                   max="100" 
-                  value={fanSpeed} 
+                  value={fan1Speed} 
                   onChange={(e) => {
                     const val = parseInt(e.target.value);
-                    setFanSpeed(val);
+                    setFan1Speed(val);
+                    setFan2Speed(val);
+                    setFanMode('manual');
                     sendControl('alx/case/fans/set', val.toString());
                   }}
                   className="w-full cursor-pointer accent-slider-purple" 
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <button 
-                  onClick={() => { setFanSpeed(100); sendControl('alx/case/fans/set', '100'); }}
-                  className="bg-purple-950/20 hover:bg-purple-900/40 border border-purple-500/30 text-purple-300 font-mono text-xs py-2 rounded-xl transition shadow active:translate-y-0.5"
-                >
-                  Modo Turbo
-                </button>
-                <button 
-                  onClick={() => { setFanSpeed(20); sendControl('alx/case/fans/set', '20'); }}
-                  className="bg-black/55 hover:bg-black/75 border border-zinc-800 text-slate-400 font-mono text-xs py-2 rounded-xl transition shadow active:translate-y-0.5"
-                >
-                  Modo Silencioso
-                </button>
+              {/* Leituras individuais de RPM */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-black/55 p-2.5 rounded-xl border border-zinc-800 flex flex-col gap-0.5 shadow-inner">
+                  <span className="text-[8px] font-mono text-slate-500 uppercase font-bold">FAN_1 (Admissão)</span>
+                  <span className="text-sm font-mono font-bold text-crt-purple">{fan1Rpm} RPM</span>
+                </div>
+                <div className="bg-black/55 p-2.5 rounded-xl border border-zinc-800 flex flex-col gap-0.5 shadow-inner">
+                  <span className="text-[8px] font-mono text-slate-500 uppercase font-bold">FAN_2 (Exaustão)</span>
+                  <span className="text-sm font-mono font-bold text-crt-purple">{fan2Rpm} RPM</span>
+                </div>
+              </div>
+
+              {/* Seletor de Modo Fan (Auto / Manual / Silent) */}
+              <div className="flex flex-col gap-1.5">
+                <span className="font-mono text-[9px] text-slate-500 uppercase font-bold">Modo de Operação</span>
+                <div className="grid grid-cols-3 gap-1 text-[10px] font-mono">
+                  {['auto', 'manual', 'silent'].map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => {
+                        setFanMode(mode as any);
+                        sendControl('alx/case/fans/mode', mode);
+                        if (mode === 'silent') {
+                          setFan1Speed(20);
+                          setFan2Speed(20);
+                          sendControl('alx/case/fans/set', '20');
+                        }
+                      }}
+                      className={`py-1.5 rounded-lg border transition active:translate-y-0.5 shadow ${
+                        fanMode === mode 
+                          ? 'bg-purple-950/20 border-purple-500/30 text-purple-300' 
+                          : 'bg-black/55 border-zinc-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {mode.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}
@@ -799,32 +1076,75 @@ export default function App() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <div className="flex justify-between font-mono text-xs items-center">
-                  <span className="text-slate-400">Abertura do Servo</span>
-                  <span className="text-crt-orange font-mono font-bold text-sm bg-black/40 px-1.5 py-0.5 rounded border border-zinc-800">{roofAngle}°</span>
+                {/* Status Físico de Diagnóstico */}
+                <div className="flex justify-between items-center bg-black/25 p-2.5 rounded-xl border border-zinc-850 shadow-inner">
+                  <span className="font-mono text-[10px] text-slate-400 font-bold uppercase">Estado Físico</span>
+                  <span className={`font-mono text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${
+                    finsState === 'open' ? 'bg-emerald-950/20 border-emerald-500/30 text-crt-green' :
+                    finsState === 'closed' ? 'bg-zinc-950/40 border-zinc-700/30 text-slate-400' :
+                    finsState === 'moving' ? 'bg-amber-950/20 border-amber-500/30 text-crt-orange animate-pulse' :
+                    'bg-red-950/20 border-red-500/30 text-crt-red animate-pulse'
+                  }`}>
+                    {finsState}
+                  </span>
                 </div>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="180" 
-                  value={roofAngle} 
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    setRoofAngle(val);
-                    sendControl('alx/case/servos/angle', val.toString());
-                  }}
-                  className="w-full cursor-pointer accent-slider-orange" 
-                />
+
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex justify-between font-mono text-xs items-center">
+                    <span className="text-slate-400">Abertura do Servo</span>
+                    <span className="text-crt-orange font-mono font-bold text-sm bg-black/40 px-1.5 py-0.5 rounded border border-zinc-800">{roofAngle}°</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="180" 
+                    value={roofAngle} 
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      setFinsState('moving');
+                      setRoofAngle(val);
+                      sendControl('alx/case/servos/angle', val.toString());
+                      
+                      if (!isWebSocketConnected) {
+                        if ((window as any).finsTimeout) clearTimeout((window as any).finsTimeout);
+                        (window as any).finsTimeout = setTimeout(() => {
+                          setFinsState(val > 10 ? 'open' : 'closed');
+                        }, 700);
+                      }
+                    }}
+                    className="w-full cursor-pointer accent-slider-orange" 
+                  />
+                </div>
                 
                 <div className="flex justify-between gap-2 mt-1">
                   <button 
-                    onClick={() => { setRoofAngle(180); sendControl('alx/case/servos/angle', '180'); }}
+                    onClick={() => { 
+                      setFinsState('moving');
+                      setRoofAngle(180); 
+                      sendControl('alx/case/servos/angle', '180');
+                      if (!isWebSocketConnected) {
+                        if ((window as any).finsTimeout) clearTimeout((window as any).finsTimeout);
+                        (window as any).finsTimeout = setTimeout(() => {
+                          setFinsState('open');
+                        }, 700);
+                      }
+                    }}
                     className="flex-1 bg-orange-950/20 hover:bg-orange-900/40 border border-orange-500/30 text-orange-300 font-mono text-[10px] py-1.5 rounded-lg transition active:translate-y-0.5 shadow"
                   >
                     100% Aberto
                   </button>
                   <button 
-                    onClick={() => { setRoofAngle(0); sendControl('alx/case/servos/angle', '0'); }}
+                    onClick={() => { 
+                      setFinsState('moving');
+                      setRoofAngle(0); 
+                      sendControl('alx/case/servos/angle', '0'); 
+                      if (!isWebSocketConnected) {
+                        if ((window as any).finsTimeout) clearTimeout((window as any).finsTimeout);
+                        (window as any).finsTimeout = setTimeout(() => {
+                          setFinsState('closed');
+                        }, 700);
+                      }
+                    }}
                     className="flex-1 bg-black/55 hover:bg-black/75 border border-zinc-800 text-slate-400 font-mono text-[10px] py-1.5 rounded-lg transition active:translate-y-0.5 shadow"
                   >
                     Fechado
@@ -966,319 +1286,484 @@ export default function App() {
               <span className="text-[8px] font-mono bg-emerald-500/10 px-1.5 py-0.5 rounded text-crt-green border border-emerald-500/30 animate-pulse font-bold">ACTIVE</span>
             </div>
 
-            {/* Seção Presets */}
-            <div className="flex flex-col gap-2 border-b border-zinc-800 pb-3">
-              <span className="font-mono text-[10px] text-slate-400 font-bold uppercase">Presets Visuais</span>
+            {/* Área Rolável contendo todas as Seções do Painel para evitar transbordamento vertical */}
+            <div className="flex flex-col gap-3.5 max-h-[60vh] overflow-y-auto pr-1 bg-black/10 rounded-lg p-1 border border-zinc-850 shadow-inner">
               
-              {/* Seletor de Presets com visual de papel fixado */}
-              <div className="grid grid-cols-2 gap-2 text-[10px] font-mono max-h-36 overflow-y-auto pr-0.5">
-                {presetsList.map((preset) => {
-                  const isActive = activePresetName === preset.name;
-                  return (
-                    <div
-                      key={preset.name}
-                      onClick={() => applyPreset(preset)}
-                      className={`border rounded text-slate-850 font-bold px-2 py-1.5 flex justify-between items-center cursor-pointer shadow-md transition-all active:translate-y-0.5 ${
-                        isActive
-                          ? 'bg-[#ded6c3] border-[#a0947a] text-zinc-900'
-                          : 'bg-[#b8b09d]/75 border-[#9a907a] text-zinc-700/80 hover:text-zinc-900 hover:bg-[#ded6c3]/90'
-                      }`}
-                    >
-                      <span className="truncate max-w-[85px] uppercase font-mono">{preset.name}</span>
-                      <div className="flex items-center gap-1">
-                        {/* Lâmpada indicadora de preset ativo */}
-                        <div 
-                          className={`w-2.5 h-2.5 rounded-full border border-zinc-950/60 shadow ${
-                            isActive 
-                              ? 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.85)]' 
-                              : 'bg-[#555045]/60'
-                          }`} 
-                        />
-                        {!preset.isFactory && (
-                          <span 
-                            onClick={(e) => deleteCustomPreset(e, preset.name)}
-                            className="text-[10px] text-red-700 hover:text-red-900 px-0.5 pl-1 cursor-pointer font-bold transition-colors font-mono"
-                          >
-                            ×
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Salvar Novo Preset com push button mecânico */}
-              <div className="flex gap-2 mt-1 bg-black/20 p-1.5 rounded-xl border border-zinc-800 shadow-inner">
-                <input 
-                  type="text" 
-                  placeholder="Novo preset..."
-                  value={newPresetName}
-                  onChange={(e) => setNewPresetName(e.target.value)}
-                  className="flex-1 bg-black/55 border border-zinc-800 rounded px-2.5 py-1 text-[10px] font-mono text-white focus:outline-none focus:border-zinc-700/50 shadow-inner"
-                />
-                <button
-                  onClick={saveCustomPreset}
-                  className="px-3.5 py-1 bg-red-800 hover:bg-red-700 border border-zinc-950 text-white shadow-md active:translate-y-0.5 rounded text-[10px] font-mono font-bold uppercase transition"
+              {/* Seção Presets */}
+              <div className="flex flex-col gap-2 border-b border-zinc-800/50 pb-2">
+                <div 
+                  onClick={() => toggleSection('presets')}
+                  className="flex justify-between items-center cursor-pointer hover:text-cyan-400 transition-colors py-1 pl-1"
                 >
-                  Salvar
-                </button>
-              </div>
-            </div>
+                  <span className="font-mono text-[10px] text-slate-350 font-bold uppercase flex items-center gap-1.5 select-none">
+                    {collapsedSections.presets ? <ChevronRight className="w-3.5 h-3.5 text-cyan-500" /> : <ChevronDown className="w-3.5 h-3.5 text-cyan-500" />}
+                    Presets Visuais
+                  </span>
+                  <span className="text-[8px] font-mono text-slate-500 font-bold uppercase truncate max-w-[120px] bg-black/30 px-1 py-0.5 rounded">
+                    {activePresetName || 'NENHUM'}
+                  </span>
+                </div>
+                
+                {!collapsedSections.presets && (
+                  <div className="flex flex-col gap-2 mt-1">
+                    {/* Seletor de Presets com visual de papel fixado */}
+                    <div className="grid grid-cols-2 gap-2 text-[10px] font-mono max-h-36 overflow-y-auto pr-0.5">
+                      {presetsList.map((preset) => {
+                        const isActive = activePresetName === preset.name;
+                        return (
+                          <div
+                            key={preset.name}
+                            onClick={() => applyPreset(preset)}
+                            className={`border rounded text-slate-850 font-bold px-2 py-1.5 flex justify-between items-center cursor-pointer shadow-md transition-all active:translate-y-0.5 ${
+                              isActive
+                                ? 'bg-[#ded6c3] border-[#a0947a] text-zinc-900'
+                                : 'bg-[#b8b09d]/75 border-[#9a907a] text-zinc-700/80 hover:text-zinc-900 hover:bg-[#ded6c3]/90'
+                            }`}
+                          >
+                            <span className="truncate max-w-[85px] uppercase font-mono">{preset.name}</span>
+                            <div className="flex items-center gap-1">
+                              {/* Lâmpada indicadora de preset ativo */}
+                              <div 
+                                className={`w-2.5 h-2.5 rounded-full border border-zinc-950/60 shadow ${
+                                  isActive 
+                                    ? 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.85)]' 
+                                    : 'bg-[#555045]/60'
+                                }`} 
+                              />
+                              {!preset.isFactory && (
+                                <span 
+                                  onClick={(e) => deleteCustomPreset(e, preset.name)}
+                                  className="text-[10px] text-red-700 hover:text-red-900 px-0.5 pl-1 cursor-pointer font-bold transition-colors font-mono"
+                                >
+                                  ×
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
 
-            {/* Seção Cores Personalizadas com Lâmpadas Indicadoras 3D */}
-            <div className="flex flex-col gap-2 border-b border-zinc-800 pb-3">
-              <div className="flex justify-between items-center">
-                <span className="font-mono text-[10px] text-slate-400 font-bold uppercase">Cores Customizadas</span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={customThemeActive} 
-                    onChange={(e) => setFXConfig({ customThemeActive: e.target.checked })}
-                    className="sr-only peer" 
-                  />
-                  <div className="w-9 h-5 bg-zinc-800 border-2 border-zinc-950 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[#ded6c3] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ded6c3] after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-orange-500"></div>
-                </label>
-              </div>
-
-              {customThemeActive && (
-                <div className="flex flex-col gap-2 mt-1">
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: 'Cor 1', value: primaryColor, setter: (c: string) => setFXConfig({ primaryColor: c }) },
-                      { label: 'Cor 2', value: secondaryColor, setter: (c: string) => setFXConfig({ secondaryColor: c }) },
-                      { label: 'Cor 3', value: tertiaryColor, setter: (c: string) => setFXConfig({ tertiaryColor: c }) },
-                      { label: 'Cor 4', value: quaternaryColor, setter: (c: string) => setFXConfig({ quaternaryColor: c }) },
-                      { label: 'Cor 5', value: quinaryColor, setter: (c: string) => setFXConfig({ quinaryColor: c }) },
-                      { label: 'Cor 6', value: senaryColor, setter: (c: string) => setFXConfig({ senaryColor: c }) },
-                    ].map((item, idx) => (
-                      <div key={idx} className="bg-black/40 p-2 rounded-xl border border-zinc-800 flex flex-col items-center gap-1 shadow-inner">
-                        <span className="text-[8px] font-mono text-slate-500 uppercase font-bold">{item.label}</span>
-                        <div 
-                          className="glowing-lamp shadow-md"
-                          style={{
-                            background: `radial-gradient(circle at 35% 35%, ${item.value} 0%, #151515 80%, #000 100%)`,
-                            boxShadow: `0 0 8px ${item.value}, inset 0 -2.5px 5px rgba(0,0,0,0.85), inset 0 2.5px 5px rgba(255,255,255,0.3)`
-                          }}
-                        >
-                          <input 
-                            type="color" 
-                            value={item.value} 
-                            onChange={(e) => item.setter(e.target.value)}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                          />
-                        </div>
-                        <span className="text-[8px] font-mono uppercase text-slate-400 font-bold">{item.value}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Cor do Anel */}
-                  <div className="bg-black/40 p-2 rounded-xl border border-zinc-800 flex items-center justify-between shadow-inner mt-1">
-                    <span className="text-[9px] font-mono text-slate-400 uppercase font-bold pl-1">Cor do Anel</span>
-                    <div className="flex items-center gap-2 pr-1">
-                      <div 
-                        className="glowing-lamp shadow-md"
-                        style={{
-                          background: `radial-gradient(circle at 35% 35%, ${ringColorCustom} 0%, #151515 80%, #000 100%)`,
-                          boxShadow: `0 0 8px ${ringColorCustom}, inset 0 -2.5px 5px rgba(0,0,0,0.85), inset 0 2.5px 5px rgba(255,255,255,0.3)`
-                        }}
+                    {/* Salvar Novo Preset com push button mecânico */}
+                    <div className="flex gap-2 mt-1 bg-black/20 p-1.5 rounded-xl border border-zinc-800 shadow-inner">
+                      <input 
+                        type="text" 
+                        placeholder="Novo preset..."
+                        value={newPresetName}
+                        onChange={(e) => setNewPresetName(e.target.value)}
+                        className="flex-1 bg-black/55 border border-zinc-800 rounded px-2.5 py-1 text-[10px] font-mono text-white focus:outline-none focus:border-zinc-700/50 shadow-inner"
+                      />
+                      <button
+                        onClick={saveCustomPreset}
+                        className="px-3.5 py-1 bg-red-800 hover:bg-red-700 border border-zinc-950 text-white shadow-md active:translate-y-0.5 rounded text-[10px] font-mono font-bold uppercase transition"
                       >
-                        <input 
-                          type="color" 
-                          value={ringColorCustom} 
-                          onChange={(e) => setFXConfig({ ringColorCustom: e.target.value })}
-                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                        />
-                      </div>
-                      <span className="text-[9px] font-mono uppercase text-white font-bold">{ringColorCustom}</span>
+                        Salvar
+                      </button>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Perfil de Física */}
-            <div className="flex flex-col gap-1.5 border-b border-zinc-800 pb-3">
-              <span className="font-mono text-[10px] text-slate-400 font-bold uppercase">Física do Orbe</span>
-              <div className="grid grid-cols-3 gap-1.5 mt-0.5">
-                {(['gel', 'mechanical', 'liquid'] as const).map((mode) => {
-                  const isActive = physicsMode === mode;
-                  return (
-                    <button
-                      key={mode}
-                      onClick={() => setFXConfig({ physicsMode: mode })}
-                      className={`py-2 rounded-lg border text-[9px] font-mono uppercase font-bold transition duration-150 active:translate-y-0.5 shadow-md ${
-                        isActive 
-                          ? 'bg-zinc-800 border-orange-500/80 text-orange-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9),0_0_8px_rgba(249,115,22,0.3)]' 
-                          : 'bg-black/55 border-zinc-850 text-slate-450 hover:text-slate-200'
-                      }`}
-                    >
-                      {mode === 'gel' ? 'Gel' : mode === 'mechanical' ? 'Rígida' : 'Líquida'}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Alternador de Snap com Papel de Projeto */}
-            <div className="blueprint-paper p-3 rounded-xl flex items-center justify-between border-2 border-zinc-700 shadow-md">
-              <div className="flex flex-col gap-0.5">
-                <span className="font-mono text-xs font-bold text-zinc-900">Snap ao Soltar</span>
-                <span className="text-[8px] font-mono text-zinc-700 leading-tight font-semibold">Retorna o orbe ao centro se ativo</span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={snapToCenter} 
-                  onChange={(e) => setFXConfig({ snapToCenter: e.target.checked })}
-                  className="sr-only peer" 
-                />
-                <div className="w-9 h-5 bg-[#3a3222]/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[#ded6c3] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#3a3222] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#3a3222]"></div>
-              </label>
-            </div>
-
-            {/* Sliders de Controle FX */}
-            <div className="flex flex-col gap-3 font-mono text-xs max-h-64 overflow-y-auto pr-1">
-              
-              {/* Rotação */}
-              <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Rotação do Orbe</span>
-                  <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{rotationSpeed.toFixed(1)}x</span>
-                </div>
-                <input 
-                  type="range" min="0.1" max="3.0" step="0.1"
-                  value={rotationSpeed} 
-                  onChange={(e) => setFXConfig({ rotationSpeed: parseFloat(e.target.value) })}
-                  className="w-full cursor-pointer accent-slider-cyan" 
-                />
+                )}
               </div>
 
-              {/* Repulsão */}
-              <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Repulsão do Mouse</span>
-                  <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{repulsionStrength.toFixed(1)}x</span>
+              {/* Seção Cores Personalizadas com Lâmpadas Indicadoras 3D */}
+              <div className="flex flex-col gap-2 border-b border-zinc-800/50 pb-2">
+                <div 
+                  onClick={() => toggleSection('colors')}
+                  className="flex justify-between items-center cursor-pointer hover:text-cyan-400 transition-colors py-1 pl-1"
+                >
+                  <span className="font-mono text-[10px] text-slate-350 font-bold uppercase flex items-center gap-1.5 select-none">
+                    {collapsedSections.colors ? <ChevronRight className="w-3.5 h-3.5 text-cyan-500" /> : <ChevronDown className="w-3.5 h-3.5 text-cyan-500" />}
+                    Personalização Cores
+                  </span>
+                  <span className={`font-mono text-[8px] font-bold px-1.5 py-0.5 rounded border ${
+                    customThemeActive 
+                      ? 'bg-orange-500/15 border-orange-500/30 text-orange-400 animate-pulse' 
+                      : 'bg-zinc-800/40 border-zinc-700/30 text-slate-500'
+                  }`}>
+                    {customThemeActive ? 'ON' : 'OFF'}
+                  </span>
                 </div>
-                <input 
-                  type="range" min="0.0" max="2.5" step="0.1"
-                  value={repulsionStrength} 
-                  onChange={(e) => setFXConfig({ repulsionStrength: parseFloat(e.target.value) })}
-                  className="w-full cursor-pointer accent-slider-cyan" 
-                />
+   
+                {!collapsedSections.colors && (
+                  <div className="flex flex-col gap-2 mt-1">
+                    <div className="flex justify-between items-center bg-black/25 p-2 rounded-xl border border-zinc-850 shadow-inner">
+                      <span className="font-mono text-[9px] text-slate-400 uppercase font-bold pl-1">Ativar Paleta Personalizada</span>
+                      <label className="relative inline-flex items-center cursor-pointer pr-1">
+                        <input 
+                          type="checkbox" 
+                          checked={customThemeActive} 
+                          onChange={(e) => setFXConfig({ customThemeActive: e.target.checked })}
+                          className="sr-only peer" 
+                        />
+                        <div className="relative w-9 h-5 bg-zinc-800 border-2 border-zinc-950 rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-[#ded6c3] after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-orange-500"></div>
+                      </label>
+                    </div>
+
+                    {customThemeActive && (
+                      <div className="flex flex-col gap-2 mt-1">
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {[
+                            { label: 'C1', value: primaryColor, setter: (c: string) => setFXConfig({ primaryColor: c }), idx: 0 },
+                            { label: 'C2', value: secondaryColor, setter: (c: string) => setFXConfig({ secondaryColor: c }), idx: 1 },
+                            { label: 'C3', value: tertiaryColor, setter: (c: string) => setFXConfig({ tertiaryColor: c }), idx: 2 },
+                            { label: 'C4', value: quaternaryColor, setter: (c: string) => setFXConfig({ quaternaryColor: c }), idx: 3 },
+                            { label: 'C5', value: quinaryColor, setter: (c: string) => setFXConfig({ quinaryColor: c }), idx: 4 },
+                            { label: 'C6', value: senaryColor, setter: (c: string) => setFXConfig({ senaryColor: c }), idx: 5 },
+                            { label: 'C7', value: septenaryColor, setter: (c: string) => setFXConfig({ septenaryColor: c }), idx: 6 },
+                            { label: 'C8', value: octonaryColor, setter: (c: string) => setFXConfig({ octonaryColor: c }), idx: 7 },
+                          ].map((item) => {
+                            const isActive = colorZonesEnabled ? colorZonesEnabled[item.idx] : true;
+                            const toggleZone = () => {
+                              const newEnabled = [...(colorZonesEnabled || [true, true, true, true, true, true, true, true])];
+                              newEnabled[item.idx] = !newEnabled[item.idx];
+                              setFXConfig({ colorZonesEnabled: newEnabled });
+                            };
+
+                            return (
+                              <div key={item.idx} className="bg-black/40 p-1.5 rounded-xl border border-zinc-800 flex flex-col items-center gap-1 shadow-inner">
+                                <span className="text-[8px] font-mono text-slate-500 uppercase font-bold">{item.label}</span>
+                                
+                                {/* Lâmpada indicadora clicável para Ligar/Desligar a zona */}
+                                <div 
+                                  onClick={toggleZone}
+                                  className={`glowing-lamp shadow-md cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 ${isActive ? 'opacity-100' : 'opacity-20'}`}
+                                  style={{
+                                    background: isActive 
+                                      ? `radial-gradient(circle at 35% 35%, ${item.value} 0%, #151515 80%, #000 100%)`
+                                      : `radial-gradient(circle at 35% 35%, #444 0%, #151515 80%, #000 100%)`,
+                                    boxShadow: isActive 
+                                      ? `0 0 8px ${item.value}, inset 0 -2.5px 5px rgba(0,0,0,0.85), inset 0 2.5px 5px rgba(255,255,255,0.3)`
+                                      : `none`
+                                  }}
+                                />
+
+                                {/* Seletor de cores ativado ao clicar no código HEX */}
+                                <div className="relative flex items-center justify-center w-full min-h-[12px]">
+                                  {isActive ? (
+                                    <>
+                                      <span className="text-[8px] font-mono uppercase text-slate-400 font-bold hover:text-white transition-colors cursor-pointer select-none">
+                                        {item.value}
+                                      </span>
+                                      <input 
+                                        type="color" 
+                                        value={item.value} 
+                                        onChange={(e) => item.setter(e.target.value)}
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                      />
+                                    </>
+                                  ) : (
+                                    <span className="text-[8px] font-mono uppercase text-zinc-650 font-bold line-through select-none">
+                                      MUTED
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+       
+                         {/* Cor do Anel */}
+                        <div className="bg-black/40 p-2 rounded-xl border border-zinc-800 flex items-center justify-between shadow-inner mt-1">
+                          <span className="text-[9px] font-mono text-slate-400 uppercase font-bold pl-1">Cor do Anel</span>
+                          <div className="flex items-center gap-2 pr-1">
+                            <div 
+                              className="glowing-lamp shadow-md"
+                              style={{
+                                background: `radial-gradient(circle at 35% 35%, ${ringColorCustom} 0%, #151515 80%, #000 100%)`,
+                                boxShadow: `0 0 8px ${ringColorCustom}, inset 0 -2.5px 5px rgba(0,0,0,0.85), inset 0 2.5px 5px rgba(255,255,255,0.3)`
+                              }}
+                            >
+                              <input 
+                                type="color" 
+                                value={ringColorCustom} 
+                                onChange={(e) => setFXConfig({ ringColorCustom: e.target.value })}
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              />
+                            </div>
+                            <span className="text-[9px] font-mono uppercase text-white font-bold">{ringColorCustom}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Glow das Barras */}
-              <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Glow das Barras</span>
-                  <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{glowIntensityBars.toFixed(1)}x</span>
+              {/* Glow & Iluminação Toggles */}
+              <div className="flex flex-col gap-2 border-b border-zinc-800/50 pb-2">
+                <div 
+                  onClick={() => toggleSection('glow')}
+                  className="flex justify-between items-center cursor-pointer hover:text-cyan-400 transition-colors py-1 pl-1"
+                >
+                  <span className="font-mono text-[10px] text-slate-350 font-bold uppercase flex items-center gap-1.5 select-none">
+                    {collapsedSections.glow ? <ChevronRight className="w-3.5 h-3.5 text-cyan-500" /> : <ChevronDown className="w-3.5 h-3.5 text-cyan-500" />}
+                    Habilitar Glow
+                  </span>
+                  <span className="text-[8px] font-mono text-slate-500 font-bold uppercase">
+                    {glowBarsEnabled || glowLinesEnabled ? 'ON' : 'OFF'}
+                  </span>
                 </div>
-                <input 
-                  type="range" min="0.2" max="2.5" step="0.1"
-                  value={glowIntensityBars} 
-                  onChange={(e) => setFXConfig({ glowIntensityBars: parseFloat(e.target.value) })}
-                  className="w-full cursor-pointer accent-slider-cyan" 
-                />
+
+                {!collapsedSections.glow && (
+                  <div className="grid grid-cols-2 gap-2 mt-1.5">
+                    {/* Glow das Barras */}
+                    <div className="bg-black/40 p-2 rounded-xl border border-zinc-850 flex items-center justify-between shadow-inner">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-mono text-[9px] font-bold text-slate-300">Glow Barras</span>
+                        <span className="text-[7px] font-mono text-slate-500 uppercase">{glowBarsEnabled ? 'ON' : 'OFF'}</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={glowBarsEnabled} 
+                          onChange={(e) => setFXConfig({ glowBarsEnabled: e.target.checked })}
+                          className="sr-only peer" 
+                        />
+                        <div className="relative w-8 h-4.5 bg-zinc-800 border border-zinc-950 rounded-full peer peer-checked:after:translate-x-3.5 after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-[#ded6c3] after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-cyan-500"></div>
+                      </label>
+                    </div>
+                    {/* Glow das Linhas */}
+                    <div className="bg-black/40 p-2 rounded-xl border border-zinc-850 flex items-center justify-between shadow-inner">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-mono text-[9px] font-bold text-slate-300">Glow Linhas</span>
+                        <span className="text-[7px] font-mono text-slate-500 uppercase">{glowLinesEnabled ? 'ON' : 'OFF'}</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={glowLinesEnabled} 
+                          onChange={(e) => setFXConfig({ glowLinesEnabled: e.target.checked })}
+                          className="sr-only peer" 
+                        />
+                        <div className="relative w-8 h-4.5 bg-zinc-800 border border-zinc-950 rounded-full peer peer-checked:after:translate-x-3.5 after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-[#ded6c3] after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-purple-500"></div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+   
+              {/* Perfil de Física */}
+              <div className="flex flex-col gap-1.5 border-b border-zinc-800/50 pb-2">
+                <div 
+                  onClick={() => toggleSection('physics')}
+                  className="flex justify-between items-center cursor-pointer hover:text-cyan-400 transition-colors py-1 pl-1"
+                >
+                  <span className="font-mono text-[10px] text-slate-350 font-bold uppercase flex items-center gap-1.5 select-none">
+                    {collapsedSections.physics ? <ChevronRight className="w-3.5 h-3.5 text-cyan-500" /> : <ChevronDown className="w-3.5 h-3.5 text-cyan-500" />}
+                    Física & Dinâmica
+                  </span>
+                  <span className="text-[8px] font-mono text-slate-500 font-bold uppercase">
+                    {physicsMode.toUpperCase()}
+                  </span>
+                </div>
+
+                {!collapsedSections.physics && (
+                  <div className="flex flex-col gap-2 mt-1.5">
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(['gel', 'mechanical', 'liquid'] as const).map((mode) => {
+                        const isActive = physicsMode === mode;
+                        return (
+                          <button
+                            key={mode}
+                            onClick={() => setFXConfig({ physicsMode: mode })}
+                            className={`py-2 rounded-lg border text-[9px] font-mono uppercase font-bold transition duration-150 active:translate-y-0.5 shadow-md ${
+                              isActive 
+                                ? 'bg-zinc-800 border-orange-500/80 text-orange-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9),0_0_8px_rgba(249,115,22,0.3)]' 
+                                : 'bg-black/55 border-zinc-850 text-slate-450 hover:text-slate-200'
+                            }`}
+                          >
+                            {mode === 'gel' ? 'Gel' : mode === 'mechanical' ? 'Rígida' : 'Líquida'}
+                          </button>
+                        );
+                      })}
+                    </div>
+   
+                    {/* Alternador de Snap com Papel de Projeto */}
+                    <div className="blueprint-paper p-3 rounded-xl flex items-center justify-between border-2 border-zinc-700 shadow-md">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-mono text-xs font-bold text-zinc-900">Snap ao Soltar</span>
+                        <span className="text-[8px] font-mono text-zinc-700 leading-tight font-semibold">Retorna o orbe ao centro se ativo</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                          snapToCenter 
+                            ? 'bg-emerald-100 border-emerald-400 text-emerald-800' 
+                            : 'bg-zinc-200 border-zinc-450 text-zinc-650 font-semibold'
+                        }`}>
+                          {snapToCenter ? 'ATIVADO' : 'DESATIVADO'}
+                        </span>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={snapToCenter} 
+                            onChange={(e) => setFXConfig({ snapToCenter: e.target.checked })}
+                            className="sr-only peer" 
+                          />
+                          <div className="relative w-9 h-5 bg-[#3a3222]/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-[#3a3222] after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Pulsação do Glow das Barras */}
-              <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Pulsação Glow Barras</span>
-                  <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{barGlowPulseSpeed.toFixed(1)}x</span>
+              {/* Sliders de Ajuste Fino */}
+              <div className="flex flex-col gap-2">
+                <div 
+                  onClick={() => toggleSection('sliders')}
+                  className="flex justify-between items-center cursor-pointer hover:text-cyan-400 transition-colors py-1 pl-1"
+                >
+                  <span className="font-mono text-[10px] text-slate-350 font-bold uppercase flex items-center gap-1.5 select-none">
+                    {collapsedSections.sliders ? <ChevronRight className="w-3.5 h-3.5 text-cyan-500" /> : <ChevronDown className="w-3.5 h-3.5 text-cyan-500" />}
+                    Sliders de Ajuste
+                  </span>
+                  <span className="text-[8px] font-mono text-slate-500 font-bold uppercase">
+                    SLIDERS
+                  </span>
                 </div>
-                <input 
-                  type="range" min="0.0" max="3.0" step="0.1"
-                  value={barGlowPulseSpeed} 
-                  onChange={(e) => setFXConfig({ barGlowPulseSpeed: parseFloat(e.target.value) })}
-                  className="w-full cursor-pointer accent-slider-cyan" 
-                />
-              </div>
 
-              {/* Pulsação das Barras */}
-              <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Pulsação Barras</span>
-                  <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{barPulseSpeed.toFixed(1)}x</span>
-                </div>
-                <input 
-                  type="range" min="0.0" max="3.0" step="0.1"
-                  value={barPulseSpeed} 
-                  onChange={(e) => setFXConfig({ barPulseSpeed: parseFloat(e.target.value) })}
-                  className="w-full cursor-pointer accent-slider-cyan" 
-                />
-              </div>
+                {!collapsedSections.sliders && (
+                  <div className="flex flex-col gap-3 mt-1.5 pr-0.5">
+                    {/* Rotação */}
+                    <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Rotação do Orbe</span>
+                        <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{rotationSpeed.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.1" max="3.0" step="0.1"
+                        value={rotationSpeed} 
+                        onChange={(e) => setFXConfig({ rotationSpeed: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                    </div>
 
-              {/* Glow das Linhas */}
-              <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Glow das Linhas</span>
-                  <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{glowIntensityLines.toFixed(1)}x</span>
-                </div>
-                <input 
-                  type="range" min="0.2" max="2.5" step="0.1"
-                  value={glowIntensityLines} 
-                  onChange={(e) => setFXConfig({ glowIntensityLines: parseFloat(e.target.value) })}
-                  className="w-full cursor-pointer accent-slider-cyan" 
-                />
-              </div>
+                    {/* Repulsão */}
+                    <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Repulsão do Mouse</span>
+                        <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{repulsionStrength.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.0" max="2.5" step="0.1"
+                        value={repulsionStrength} 
+                        onChange={(e) => setFXConfig({ repulsionStrength: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                    </div>
 
-              {/* Velocidade de Pulsação das Linhas */}
-              <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Pulsação Linhas</span>
-                  <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{pulseSpeed.toFixed(1)}x</span>
-                </div>
-                <input 
-                  type="range" min="0.0" max="4.0" step="0.1"
-                  value={pulseSpeed} 
-                  onChange={(e) => setFXConfig({ pulseSpeed: parseFloat(e.target.value) })}
-                  className="w-full cursor-pointer accent-slider-cyan" 
-                />
-              </div>
+                    {/* Glow das Barras */}
+                    <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Glow das Barras</span>
+                        <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{glowIntensityBars.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.2" max="2.5" step="0.1"
+                        value={glowIntensityBars} 
+                        onChange={(e) => setFXConfig({ glowIntensityBars: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                    </div>
 
-              {/* Estrelas */}
-              <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Vórtice das Estrelas</span>
-                  <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{starSpeed.toFixed(1)}x</span>
-                </div>
-                <input 
-                  type="range" min="0.0" max="3.0" step="0.1"
-                  value={starSpeed} 
-                  onChange={(e) => setFXConfig({ starSpeed: parseFloat(e.target.value) })}
-                  className="w-full cursor-pointer accent-slider-cyan" 
-                />
-              </div>
+                    {/* Pulsação do Glow das Barras */}
+                    <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Pulsação Glow Barras</span>
+                        <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{barGlowPulseSpeed.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.0" max="3.0" step="0.1"
+                        value={barGlowPulseSpeed} 
+                        onChange={(e) => setFXConfig({ barGlowPulseSpeed: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                    </div>
 
-              {/* Saturação */}
-              <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Saturação Cores</span>
-                  <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{(saturation * 100).toFixed(0)}%</span>
-                </div>
-                <input 
-                  type="range" min="0.0" max="2.0" step="0.1"
-                  value={saturation} 
-                  onChange={(e) => setFXConfig({ saturation: parseFloat(e.target.value) })}
-                  className="w-full cursor-pointer accent-slider-cyan" 
-                />
-              </div>
+                    {/* Pulsação das Barras */}
+                    <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Pulsação Barras</span>
+                        <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{barPulseSpeed.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.0" max="3.0" step="0.1"
+                        value={barPulseSpeed} 
+                        onChange={(e) => setFXConfig({ barPulseSpeed: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                    </div>
 
-              {/* Velocidade do Anel */}
-              <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Velocidade Anel</span>
-                  <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{ringSpeed.toFixed(1)}x</span>
-                </div>
-                <input 
-                  type="range" min="0.0" max="3.0" step="0.1"
-                  value={ringSpeed} 
-                  onChange={(e) => setFXConfig({ ringSpeed: parseFloat(e.target.value) })}
-                  className="w-full cursor-pointer accent-slider-cyan" 
-                />
+                    {/* Glow das Linhas */}
+                    <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Glow das Linhas</span>
+                        <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{glowIntensityLines.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.2" max="2.5" step="0.1"
+                        value={glowIntensityLines} 
+                        onChange={(e) => setFXConfig({ glowIntensityLines: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                    </div>
+
+                    {/* Velocidade de Pulsação das Linhas */}
+                    <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Pulsação Linhas</span>
+                        <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{pulseSpeed.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.0" max="4.0" step="0.1"
+                        value={pulseSpeed} 
+                        onChange={(e) => setFXConfig({ pulseSpeed: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                    </div>
+
+                    {/* Estrelas */}
+                    <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Vórtice das Estrelas</span>
+                        <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{starSpeed.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.0" max="3.0" step="0.1"
+                        value={starSpeed} 
+                        onChange={(e) => setFXConfig({ starSpeed: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                    </div>
+
+                    {/* Saturação */}
+                    <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Saturação Cores</span>
+                        <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{(saturation * 100).toFixed(0)}%</span>
+                      </div>
+                      <input 
+                        type="range" min="0.0" max="2.0" step="0.1"
+                        value={saturation} 
+                        onChange={(e) => setFXConfig({ saturation: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                    </div>
+
+                    {/* Velocidade do Anel */}
+                    <div className="flex flex-col gap-1.5 bg-black/15 p-2 rounded-lg border border-zinc-800/40">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Velocidade Anel</span>
+                        <span className="led-readout text-[11px] font-mono px-2 py-0.5 rounded">{ringSpeed.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.0" max="3.0" step="0.1"
+                        value={ringSpeed} 
+                        onChange={(e) => setFXConfig({ ringSpeed: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
             </div>
@@ -1286,7 +1771,56 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* 6. Footer de Rodapé (Instrução Sci-fi) */}
+      {/* 6. Barra de Status Central Inferior (Reativa ao estado térmico e da IRIS) */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+        <div className="glass-panel px-6 py-2 rounded-full border border-white/5 flex items-center gap-3 shadow-md transition-all duration-300">
+          <span 
+            className="w-2.5 h-2.5 rounded-full animate-pulse" 
+            style={{
+              backgroundColor: 
+                irisState === 'critical' || temperature >= 75 ? '#DC2626' : 
+                temperature >= 68 ? '#EA580C' : 
+                temperature >= 60 ? '#F59E0B' : 
+                irisState === 'listening' ? '#7C3AED' : 
+                irisState === 'speaking' ? '#F8FAFC' : 
+                '#06B6D4', 
+              boxShadow: `0 0 8px ${
+                irisState === 'critical' || temperature >= 75 ? '#DC2626' :
+                temperature >= 68 ? '#EA580C' :
+                temperature >= 60 ? '#F59E0B' :
+                irisState === 'listening' ? '#7C3AED' :
+                irisState === 'speaking' ? '#F8FAFC' :
+                '#06B6D4'
+              }`
+            }}
+          />
+          <span className="font-mono text-[9px] tracking-[3px] uppercase font-bold text-slate-300">
+            {
+              irisState === 'critical' || temperature >= 75 ? 'ALERTA TÉRMICO' :
+              temperature >= 68 ? 'AQUECIMENTO ALTO' :
+              temperature >= 60 ? 'AQUECENDO' :
+              irisState === 'listening' ? 'IRIS OUVINDO' :
+              irisState === 'speaking' ? 'IRIS FALANDO' :
+              'IRIS ONLINE'
+            }
+          </span>
+          <div className="w-[1px] h-3 bg-white/10" />
+          <span 
+            className="font-mono text-[9px] font-bold"
+            style={{
+              color: 
+                irisState === 'critical' || temperature >= 75 ? '#DC2626' :
+                temperature >= 68 ? '#EA580C' :
+                temperature >= 60 ? '#F59E0B' :
+                '#94a3b8'
+            }}
+          >
+            {temperature}°C
+          </span>
+        </div>
+      </div>
+
+      {/* 7. Footer de Rodapé (Instrução Sci-fi) */}
       <div className="absolute bottom-4 left-6 pointer-events-none z-10 flex flex-col font-mono text-[9px] text-slate-500">
         <span>SECURITY_PROTOCOL // ENCRYPTED</span>
         <span>SYS_STATUS // ACTIVE_LOCAL_HOST</span>
