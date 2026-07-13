@@ -42,31 +42,256 @@
   background: rgba(6, 182, 212, 0.6);
 }
 
-/* Efeito de luz neon nas bordas dos painéis */
-.border-neon-cyan {
-  border-color: rgba(6, 182, 212, 0.2);
+/* Efeito de luz neon nas bordas dos painéis (com brilho superior acentuado) */
+.glass-panel.border-neon-cyan {
+  border-top-color: rgba(6, 182, 212, 0.85);
+  border-left-color: rgba(6, 182, 212, 0.25);
+  border-right-color: rgba(6, 182, 212, 0.25);
+  border-bottom-color: rgba(6, 182, 212, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 10px rgba(6, 182, 212, 0.15);
 }
-.border-neon-cyan:hover {
-  border-color: rgba(6, 182, 212, 0.5);
-}
-
-.border-neon-purple {
-  border-color: rgba(168, 85, 247, 0.2);
-}
-.border-neon-purple:hover {
-  border-color: rgba(168, 85, 247, 0.5);
-}
-
-.border-neon-orange {
-  border-color: rgba(249, 115, 22, 0.2);
-}
-.border-neon-orange:hover {
-  border-color: rgba(249, 115, 22, 0.5);
+.glass-panel.border-neon-cyan:hover {
+  border-top-color: rgba(6, 182, 212, 1);
+  border-left-color: rgba(6, 182, 212, 0.4);
+  border-right-color: rgba(6, 182, 212, 0.4);
+  border-bottom-color: rgba(6, 182, 212, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 15px rgba(6, 182, 212, 0.3);
 }
 
-.border-neon-red {
-  border-color: rgba(239, 68, 68, 0.2);
+.glass-panel.border-neon-purple {
+  border-top-color: rgba(168, 85, 247, 0.85);
+  border-left-color: rgba(168, 85, 247, 0.25);
+  border-right-color: rgba(168, 85, 247, 0.25);
+  border-bottom-color: rgba(168, 85, 247, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 10px rgba(168, 85, 247, 0.15);
 }
-.border-neon-red:hover {
-  border-color: rgba(239, 68, 68, 0.5);
+.glass-panel.border-neon-purple:hover {
+  border-top-color: rgba(168, 85, 247, 1);
+  border-left-color: rgba(168, 85, 247, 0.4);
+  border-right-color: rgba(168, 85, 247, 0.4);
+  border-bottom-color: rgba(168, 85, 247, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 15px rgba(168, 85, 247, 0.3);
 }
+
+.glass-panel.border-neon-orange {
+  border-top-color: rgba(249, 115, 22, 0.85);
+  border-left-color: rgba(249, 115, 22, 0.25);
+  border-right-color: rgba(249, 115, 22, 0.25);
+  border-bottom-color: rgba(249, 115, 22, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 10px rgba(249, 115, 22, 0.15);
+}
+.glass-panel.border-neon-orange:hover {
+  border-top-color: rgba(249, 115, 22, 1);
+  border-left-color: rgba(249, 115, 22, 0.4);
+  border-right-color: rgba(249, 115, 22, 0.4);
+  border-bottom-color: rgba(249, 115, 22, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 15px rgba(249, 115, 22, 0.3);
+}
+
+.glass-panel.border-neon-red {
+  border-top-color: rgba(239, 68, 68, 0.85);
+  border-left-color: rgba(239, 68, 68, 0.25);
+  border-right-color: rgba(239, 68, 68, 0.25);
+  border-bottom-color: rgba(239, 68, 68, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 10px rgba(239, 68, 68, 0.15);
+}
+.glass-panel.border-neon-red:hover {
+  border-top-color: rgba(239, 68, 68, 1);
+  border-left-color: rgba(239, 68, 68, 0.4);
+  border-right-color: rgba(239, 68, 68, 0.4);
+  border-bottom-color: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+/* Animações e Utilitários HUD */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+/* ==========================================================================
+   Estética Dieselpunk / Retro-Futurista de Hardware Físico
+   ========================================================================== */
+
+/* Painel de Aço Escovado e Rebites */
+.diesel-panel {
+  background: linear-gradient(135deg, #2d3139 0%, #1e2025 50%, #14161a 100%);
+  border: 2px solid #3c414c;
+  border-top-color: #5c6373;
+  border-bottom-color: #0e1013;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.8),
+    0 12px 36px rgba(0, 0, 0, 0.85);
+}
+
+/* Rebites de Metal */
+.mechanical-rivet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #8e95a5 0%, #4a505c 60%, #121417 100%);
+  box-shadow: 
+    1px 1px 1px rgba(0, 0, 0, 0.6), 
+    inset -1px -1px 1px rgba(0, 0, 0, 0.9), 
+    inset 1px 1px 1px rgba(255, 255, 255, 0.25);
+  position: absolute;
+}
+
+/* Telas CRT Recessadas */
+.crt-screen {
+  background: radial-gradient(circle at center, #0b1f11 0%, #030805 100%);
+  border: 2px solid #101215;
+  border-top-color: #08090a;
+  border-left-color: #08090a;
+  border-bottom-color: #3b3f49;
+  border-right-color: #3b3f49;
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.95), 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+.crt-screen::before {
+  content: ' ';
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 3px;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.crt-screen-text {
+  text-shadow: 0 0 5px #10b981, 0 0 1px rgba(16, 185, 129, 0.5);
+  animation: crt-flicker 0.15s infinite alternate;
+}
+@keyframes crt-flicker {
+  0% { opacity: 0.97; }
+  100% { opacity: 1.0; }
+}
+
+/* Lâmpadas Indicadoras RGB 3D */
+.glowing-lamp {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  position: relative;
+  border: 1.5px solid #16181b;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.25s;
+}
+.glowing-lamp:hover {
+  transform: scale(1.08);
+}
+.glowing-lamp::after {
+  content: '';
+  position: absolute;
+  top: 1.5px;
+  left: 4px;
+  width: 6px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+
+/* Visores LED Vermelho 7 Segmentos */
+.led-readout {
+  font-family: 'IBM Plex Mono', monospace;
+  color: #ef4444;
+  text-shadow: 
+    0 0 8px rgba(239, 68, 68, 0.85),
+    0 0 2px rgba(239, 68, 68, 0.4);
+  background: #140404;
+  border: 1.5px solid #2b0b0b;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.95);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Papel Técnico/Esquema do Snap */
+.blueprint-paper {
+  background-color: #ded6c3;
+  background-image: radial-gradient(rgba(60, 50, 30, 0.08) 1px, transparent 0);
+  background-size: 10px 10px;
+  color: #3e3321;
+  border: 1.5px dashed rgba(62, 51, 33, 0.35);
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Sliders de Fenda Industriais */
+input[type="range"].accent-slider-cyan,
+input[type="range"].accent-slider-purple,
+input[type="range"].accent-slider-orange,
+input[type="range"].accent-slider-rose {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #0b0c0f;
+  height: 12px;
+  border-radius: 6px;
+  outline: none;
+  box-shadow: 
+    inset 0 3px 5px rgba(0, 0, 0, 0.95), 
+    0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid #23272f;
+}
+
+/* Thumb do Webkit (Chrome, Edge, Safari) */
+input[type="range"].accent-slider-cyan::-webkit-slider-thumb,
+input[type="range"].accent-slider-purple::-webkit-slider-thumb,
+input[type="range"].accent-slider-orange::-webkit-slider-thumb,
+input[type="range"].accent-slider-rose::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 24px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #4b4f59 0%, #898e9b 45%, #ef4444 46%, #ef4444 54%, #898e9b 55%, #4b4f59 100%);
+  border: 1.5px solid #121417;
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.6), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.35), 
+    inset 0 -1px 2px rgba(0, 0, 0, 0.7);
+  cursor: grab;
+  margin-top: -6px;
+}
+input[type="range"].accent-slider-cyan::-webkit-slider-thumb:active,
+input[type="range"].accent-slider-purple::-webkit-slider-thumb:active,
+input[type="range"].accent-slider-orange::-webkit-slider-thumb:active,
+input[type="range"].accent-slider-rose::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+/* Thumb do Firefox */
+input[type="range"].accent-slider-cyan::-moz-range-thumb,
+input[type="range"].accent-slider-purple::-moz-range-thumb,
+input[type="range"].accent-slider-orange::-moz-range-thumb,
+input[type="range"].accent-slider-rose::-moz-range-thumb {
+  width: 12px;
+  height: 22px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #4b4f59 0%, #898e9b 45%, #ef4444 46%, #ef4444 54%, #898e9b 55%, #4b4f59 100%);
+  border: 1.5px solid #121417;
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.6), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.35), 
+    inset 0 -1px 2px rgba(0, 0, 0, 0.7);
+  cursor: grab;
+}
+input[type="range"].accent-slider-cyan::-moz-range-thumb:active,
+input[type="range"].accent-slider-purple::-moz-range-thumb:active,
+input[type="range"].accent-slider-orange::-moz-range-thumb:active,
+input[type="range"].accent-slider-rose::-moz-range-thumb:active {
+  cursor: grabbing;
+}
+
+/* Cores de fósforo CRT customizadas */
+.text-crt-green { color: #39ff14; text-shadow: 0 0 5px rgba(57, 255, 20, 0.7); }
+.text-crt-cyan { color: #00f3ff; text-shadow: 0 0 5px rgba(0, 243, 255, 0.7); }
+.text-crt-purple { color: #c084fc; text-shadow: 0 0 5px rgba(192, 132, 252, 0.7); }
+.text-crt-orange { color: #f97316; text-shadow: 0 0 5px rgba(249, 115, 22, 0.7); }
+.text-crt-red { color: #f43f5e; text-shadow: 0 0 5px rgba(244, 63, 94, 0.7); }
