@@ -62,8 +62,18 @@ interface IrisStore {
   glowBarsEnabled: boolean;
   glowLinesEnabled: boolean;
   colorZonesEnabled: boolean[];
-  satelliteCoords: { x: number; y: number };
+  satelliteCoords: { x: number; y: number; z?: number };
+  satellite2Coords: { x: number; y: number; z?: number };
+  sat1Mode: 'manual' | 'gravitational' | 'orbital';
+  sat2Mode: 'manual' | 'gravitational' | 'orbital';
+  sat1Force: number; // Força de atração/repulsão individual (-3.0 a 3.0)
+  sat2Force: number;
+  sat1Speed: number; // Velocidade de rotação individual (0.0 a 3.0)
+  sat2Speed: number;
+  isDraggingSat1: boolean;
+  isDraggingSat2: boolean;
   setFXConfig: (config: Partial<Omit<IrisStore, 'temperature' | 'irisState' | 'setTemperature' | 'setIrisState' | 'setFXConfig' | 'setActivePanel' | 'humidity' | 'tempHistory' | 'fan1Speed' | 'fan1Rpm' | 'fan2Speed' | 'fan2Rpm' | 'fanMode' | 'finsState' | 'pcState' | 'roofAngle' | 'setHumidity' | 'setTempHistory' | 'setFan1Speed' | 'setFan1Rpm' | 'setFan2Speed' | 'setFan2Rpm' | 'setFanMode' | 'setFinsState' | 'setPcState' | 'setRoofAngle'>>) => void;
+
 }
 
 export const useIrisStore = create<IrisStore>((set) => ({
@@ -123,7 +133,16 @@ export const useIrisStore = create<IrisStore>((set) => ({
   setActivePanel: (panel) => set({ activePanel: panel }),
   dragOffset: { x: 0, y: 0 },
   snapToCenter: true,
-  satelliteCoords: { x: 180, y: 0 },
+  satelliteCoords: { x: 180, y: 0, z: 0 },
+  satellite2Coords: { x: -180, y: 0, z: 0 },
+  sat1Mode: 'manual',
+  sat2Mode: 'manual',
+  sat1Force: 1.0,
+  sat2Force: 1.0,
+  sat1Speed: 1.0,
+  sat2Speed: 1.0,
+  isDraggingSat1: false,
+  isDraggingSat2: false,
   setFXConfig: (config) => set((state) => ({ ...state, ...config })),
 }));
 
@@ -197,6 +216,8 @@ function getZoneColor(
   return color;
 }
 
+
+
 // Componente da Cena 3D principal (contém a renderização otimizada)
 function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
   const { camera, raycaster, size } = useThree();
@@ -232,6 +253,18 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
   // Referências para o Satélite Gravitacional/Repulsão Interativo (Lua)
   const satelliteCoords = useIrisStore((s) => s.satelliteCoords);
   const satellitePosRef = useRef(new THREE.Vector3(3.2, 0.0, 0.0)); // Posição XY convertida para 3D
+  const satellite2Coords = useIrisStore((s) => s.satellite2Coords);
+  const satellite2PosRef = useRef(new THREE.Vector3(-3.2, 0.0, 0.0)); // Segundo satélite
+
+  // Referências de velocidade física para simulação gravitacional
+  const sat1VelRef = useRef(new THREE.Vector2(0, 0));
+  const sat2VelRef = useRef(new THREE.Vector2(0, 0));
+  const prevSat1Mode = useRef<'manual' | 'gravitational' | 'orbital'>('manual');
+  const prevSat2Mode = useRef<'manual' | 'gravitational' | 'orbital'>('manual');
+  const prevSat1Pos = useRef({ x: 180, y: 0 });
+  const prevSat2Pos = useRef({ x: -180, y: 0 });
+  const prevDraggingSat1 = useRef(false);
+  const prevDraggingSat2 = useRef(false);
 
   // Referências para os grupos de rotação
   const orbGroupRef = useRef<THREE.Group>(null);
@@ -602,7 +635,7 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
       // Parâmetros de física dinâmicos conforme Zustand (Gel, Mecânico ou Líquido)
       const rInfluence = type === 'tall' ? 2.2 : 1.5;
       const fMax = (type === 'tall' ? 0.08 : 0.05) * repulsionStrength;
-      const maxVel = 0.08 * Math.max(0.2, repulsionStrength); // Limite de velocidade linear escalonado com repulsionStrength
+      const maxVel = 0.35; // Limite fixo de velocidade linear para reatividade física máxima e estabilidade (independente de repulsionStrength)
       
       let damping = 0.92;
       let kSpring = 0.02;
@@ -633,33 +666,61 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         }
 
         const dist = absolutePos.distanceTo(cursor);
+        const isDraggingAnySat = useIrisStore.getState().isDraggingSat1 || useIrisStore.getState().isDraggingSat2;
         
-        if (dist < rInfluence) {
+        if (dist < rInfluence && !isDraggingAnySat) {
           // Vetor de repulsão no plano 3D
           const forceDir = new THREE.Vector3().subVectors(absolutePos, cursor);
           forceDir.z = 0; // focado na repulsão plana XY
           
-          const forceMag = (1.0 - dist / rInfluence) * fMax;
+          const factor = 1.0 - dist / rInfluence;
+          const smoothFactor = factor * factor; // Suavização quadrática progressiva (muito mais linear visualmente)
+          const forceMag = smoothFactor * fMax * 0.45; // Coeficiente ajustado para suavidade máxima
           b.velocity.addScaledVector(forceDir.normalize(), forceMag);
           
-          // Esticar barra sob influência do toque de forma amortecida e linear
-          targetScaleY = b.baseHeight * (1.0 + (1.0 - dist / rInfluence) * (type === 'tall' ? 1.1 : 0.5) * repulsionStrength);
+          // Esticar barra sob influência do toque de forma amortecida e suave
+          targetScaleY = b.baseHeight * (1.0 + smoothFactor * (type === 'tall' ? 1.1 : 0.5) * repulsionStrength);
         }
 
         // 3. Interação física com o Satélite Gravitacional (Lua)
         const satPos = satellitePosRef.current;
         const distSat = absolutePos.distanceTo(satPos);
-        const rInfluenceSat = type === 'tall' ? 2.5 : 1.8; // área de influência maior para o satélite
+        const sat1Force = useIrisStore.getState().sat1Force;
+        const rInfluenceSat = (type === 'tall' ? 2.5 : 1.8) * Math.max(0.4, Math.abs(sat1Force)); // escala influência com a força
         
         if (distSat < rInfluenceSat) {
           const forceDirSat = new THREE.Vector3().subVectors(absolutePos, satPos);
           forceDirSat.z = 0;
-          const forceMagSat = (1.0 - distSat / rInfluenceSat) * fMax * 1.6; // repulsão mais acentuada
+          const baseForce = type === 'tall' ? 0.08 : 0.05;
+          
+          const factorSat = 1.0 - distSat / rInfluenceSat;
+          const smoothFactorSat = factorSat * factorSat; // Suavização quadrática
+          const forceMagSat = smoothFactorSat * baseForce * 0.45 * sat1Force; // Coeficiente suave
           b.velocity.addScaledVector(forceDirSat.normalize(), forceMagSat);
           
           // Esticar as barras conforme a proximidade (simula atração/repulsão extrema do anexo)
-          const satScaleFactor = (1.0 - distSat / rInfluenceSat) * (type === 'tall' ? 1.4 : 0.7) * repulsionStrength;
+          const satScaleFactor = smoothFactorSat * (type === 'tall' ? 1.4 : 0.7) * Math.abs(sat1Force);
           targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + satScaleFactor));
+        }
+
+        // 3.5 Interação física com o Segundo Satélite Gravitacional (10% menor em tamanho e influência)
+        const sat2Pos = satellite2PosRef.current;
+        const distSat2 = absolutePos.distanceTo(sat2Pos);
+        const sat2Force = useIrisStore.getState().sat2Force;
+        const rInfluenceSat2 = (type === 'tall' ? 2.5 : 1.8) * 0.9 * Math.max(0.4, Math.abs(sat2Force)); // escala influência com a força
+        
+        if (distSat2 < rInfluenceSat2) {
+          const forceDirSat2 = new THREE.Vector3().subVectors(absolutePos, sat2Pos);
+          forceDirSat2.z = 0;
+          const baseForce2 = type === 'tall' ? 0.08 : 0.05;
+          
+          const factorSat2 = 1.0 - distSat2 / rInfluenceSat2;
+          const smoothFactorSat2 = factorSat2 * factorSat2; // Suavização quadrática
+          const forceMagSat2 = smoothFactorSat2 * baseForce2 * 0.45 * 0.9 * sat2Force; // Coeficiente suave
+          b.velocity.addScaledVector(forceDirSat2.normalize(), forceMagSat2);
+          
+          const sat2ScaleFactor = smoothFactorSat2 * (type === 'tall' ? 1.4 : 0.7) * Math.abs(sat2Force) * 0.9;
+          targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + sat2ScaleFactor));
         }
 
         // 4. Interpolação linear (Lerp) para suavização total da escala (evita transição seca/brusca)
@@ -751,12 +812,177 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
       bgPtsRef.current.rotation.z = elapsed * 0.0015;
     }
 
+    // Física gravitacional real em tempo real
+    const sat1Mode = useIrisStore.getState().sat1Mode;
+    const sat2Mode = useIrisStore.getState().sat2Mode;
+    const isDraggingSat1 = useIrisStore.getState().isDraggingSat1;
+    const isDraggingSat2 = useIrisStore.getState().isDraggingSat2;
+    const sat1Speed = useIrisStore.getState().sat1Speed;
+    const sat2Speed = useIrisStore.getState().sat2Speed;
+
+    // Satélite 1
+    let x1 = satelliteCoords.x;
+    let y1 = satelliteCoords.y;
+    let vx1 = sat1VelRef.current.x;
+    let vy1 = sat1VelRef.current.y;
+
+    // Satélite 2
+    let x2 = satellite2Coords.x;
+    let y2 = satellite2Coords.y;
+    let vx2 = sat2VelRef.current.x;
+    let vy2 = sat2VelRef.current.y;
+
+    const G_center = 180000;
+    const G_mutual = 80000;
+
+     // Inicializar velocidade orbital estável se acabou de trocar para gravitacional ou acabou de soltar
+    if (sat1Mode === 'gravitational') {
+      if ((prevSat1Mode.current === 'manual' || prevSat1Mode.current === 'orbital') || (prevDraggingSat1.current && !isDraggingSat1)) {
+        const dist = Math.sqrt(x1 * x1 + y1 * y1) + 0.1;
+        const speed = Math.sqrt(G_center / dist) * 0.95;
+        sat1VelRef.current.x = (-y1 / dist) * speed;
+        sat1VelRef.current.y = (x1 / dist) * speed;
+        vx1 = sat1VelRef.current.x;
+        vy1 = sat1VelRef.current.y;
+      }
+    }
+    prevSat1Mode.current = sat1Mode;
+    prevDraggingSat1.current = isDraggingSat1;
+
+    if (sat2Mode === 'gravitational') {
+      if ((prevSat2Mode.current === 'manual' || prevSat2Mode.current === 'orbital') || (prevDraggingSat2.current && !isDraggingSat2)) {
+        const dist = Math.sqrt(x2 * x2 + y2 * y2) + 0.1;
+        const speed = Math.sqrt(G_center / dist) * 0.95;
+        sat2VelRef.current.x = (-y2 / dist) * speed;
+        sat2VelRef.current.y = (x2 / dist) * speed;
+        vx2 = sat2VelRef.current.x;
+        vy2 = sat2VelRef.current.y;
+      }
+    }
+    prevSat2Mode.current = sat2Mode;
+    prevDraggingSat2.current = isDraggingSat2;
+
+    // Atualizar órbita circular diagonal 3D (modelo planetário coplanar: Ciano no limite máximo, Fúcsia a 20% do limite)
+    const R1_max = Math.max(500, (window.innerWidth / 2) - 40); // limite máximo do canvas
+    const tiltRadCommon = 74 * Math.PI / 180; // inclinação comum de 74 graus
+    const rotRadCommon = 15 * Math.PI / 180; // rotação comum de 15 graus (mesma trajetória)
+
+    if (sat1Mode === 'orbital' && !isDraggingSat1) {
+      const ringSpeed = useIrisStore.getState().ringSpeed;
+      const angle = elapsed * 0.75 * ringSpeed * sat1Speed; // Multiplicador de velocidade individual
+      
+      const x_flat = R1_max * Math.cos(angle);
+      const y_flat = R1_max * Math.sin(angle);
+      
+      x1 = x_flat * Math.cos(rotRadCommon) - (y_flat * Math.cos(tiltRadCommon)) * Math.sin(rotRadCommon);
+      y1 = x_flat * Math.sin(rotRadCommon) + (y_flat * Math.cos(tiltRadCommon)) * Math.cos(rotRadCommon);
+      const z1 = y_flat * Math.sin(tiltRadCommon);
+      
+      useIrisStore.setState({ satelliteCoords: { x: x1, y: y1, z: z1 } });
+    } else if ((sat1Mode === 'manual' || isDraggingSat1) && satelliteCoords.z !== 0) {
+      // Garante z = 0 se manual ou arrastado
+      useIrisStore.setState({ satelliteCoords: { x: satelliteCoords.x, y: satelliteCoords.y, z: 0 } });
+    }
+
+    if (sat2Mode === 'orbital' && !isDraggingSat2) {
+      const ringSpeed = useIrisStore.getState().ringSpeed;
+      // Orbita na mesma direção, mas com velocidade angular de Kepler escalada por sat2Speed
+      const angle = elapsed * 1.25 * ringSpeed * sat2Speed + Math.PI; 
+      const R2 = R1_max * 0.8; // Recuo de 20% em relação ao limite máximo da borda do canvas!
+      
+      const x_flat = R2 * Math.cos(angle);
+      const y_flat = R2 * Math.sin(angle);
+      
+      x2 = x_flat * Math.cos(rotRadCommon) - (y_flat * Math.cos(tiltRadCommon)) * Math.sin(rotRadCommon);
+      y2 = x_flat * Math.sin(rotRadCommon) + (y_flat * Math.cos(tiltRadCommon)) * Math.cos(rotRadCommon);
+      const z2 = y_flat * Math.sin(tiltRadCommon);
+      
+      useIrisStore.setState({ satellite2Coords: { x: x2, y: y2, z: z2 } });
+    } else if ((sat2Mode === 'manual' || isDraggingSat2) && satellite2Coords.z !== 0) {
+      // Garante z = 0 se manual ou arrastado
+      useIrisStore.setState({ satellite2Coords: { x: satellite2Coords.x, y: satellite2Coords.y, z: 0 } });
+    }
+
+    // Se estiver arrastando, calcula velocidade do arrasto para poder arremessar
+    if (isDraggingSat1) {
+      vx1 = (x1 - prevSat1Pos.current.x) / safeDelta;
+      vy1 = (y1 - prevSat1Pos.current.y) / safeDelta;
+      sat1VelRef.current.set(vx1, vy1).clampLength(0, 600);
+    }
+    if (isDraggingSat2) {
+      vx2 = (x2 - prevSat2Pos.current.x) / safeDelta;
+      vy2 = (y2 - prevSat2Pos.current.y) / safeDelta;
+      sat2VelRef.current.set(vx2, vy2).clampLength(0, 600);
+    }
+
+    const dist1Sq = x1*x1 + y1*y1;
+    const dist2Sq = x2*x2 + y2*y2;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const distMutualSq = dx*dx + dy*dy;
+
+    // Força gravitacional mútua (atração)
+    const forceMutual = G_mutual / (distMutualSq + 4000);
+    const ax_m = dx * forceMutual;
+    const ay_m = dy * forceMutual;
+
+    // Aplicar física no Satélite 1
+    if (sat1Mode === 'gravitational' && !isDraggingSat1) {
+      const forceC1 = G_center / (dist1Sq + 3000);
+      let ax = -x1 * forceC1 + ax_m;
+      let ay = -y1 * forceC1 + ay_m;
+
+      const dt1 = safeDelta * sat1Speed;
+      vx1 = (vx1 + ax * dt1) * Math.pow(0.994, sat1Speed);
+      vy1 = (vy1 + ay * dt1) * Math.pow(0.994, sat1Speed);
+      x1 += vx1 * dt1;
+      y1 += vy1 * dt1;
+
+      const limitX = (window.innerWidth / 2) - 28;
+      const limitY = (window.innerHeight / 2) - 28;
+      x1 = Math.max(-limitX, Math.min(limitX, x1));
+      y1 = Math.max(-limitY, Math.min(limitY, y1));
+
+      useIrisStore.setState({ satelliteCoords: { x: x1, y: y1, z: 0 } });
+      sat1VelRef.current.set(vx1, vy1);
+    }
+
+    // Aplicar física no Satélite 2
+    if (sat2Mode === 'gravitational' && !isDraggingSat2) {
+      const forceC2 = G_center / (dist2Sq + 3000);
+      let ax = -x2 * forceC2 - ax_m;
+      let ay = -y2 * forceC2 - ay_m;
+
+      const dt2 = safeDelta * sat2Speed;
+      vx2 = (vx2 + ax * dt2) * Math.pow(0.994, sat2Speed);
+      vy2 = (vy2 + ay * dt2) * Math.pow(0.994, sat2Speed);
+      x2 += vx2 * dt2;
+      y2 += vy2 * dt2;
+
+      const limitX = (window.innerWidth / 2) - 25;
+      const limitY = (window.innerHeight / 2) - 25;
+      x2 = Math.max(-limitX, Math.min(limitX, x2));
+      y2 = Math.max(-limitY, Math.min(limitY, y2));
+
+      useIrisStore.setState({ satellite2Coords: { x: x2, y: y2, z: 0 } });
+      sat2VelRef.current.set(vx2, vy2);
+    }
+
+    prevSat1Pos.current = { x: x1, y: y1 };
+    prevSat2Pos.current = { x: x2, y: y2 };
+
     // Mapeamento linear direto: 160px (raio do orbe no DOM) = 2.0 unidades no Three.js (RING_R)
     // Fator de escala: 2.0 / 160 = 0.0125
     const satPos3DX = (satelliteCoords?.x ?? 180) * 0.0125;
     const satPos3DY = -(satelliteCoords?.y ?? 0) * 0.0125; // inverter Y
-    
-    satellitePosRef.current.set(satPos3DX, satPos3DY, 0);
+    const satPos3DZ = (satelliteCoords?.z ?? 0) * 0.0125; // Profundidade mapeada para 3D!
+    satellitePosRef.current.set(satPos3DX, satPos3DY, satPos3DZ);
+
+    const sat2Pos3DX = (satellite2Coords?.x ?? -180) * 0.0125;
+    const sat2Pos3DY = -(satellite2Coords?.y ?? 0) * 0.0125; // inverter Y
+    const sat2Pos3DZ = (satellite2Coords?.z ?? 0) * 0.0125; // Profundidade mapeada para 3D!
+    satellite2PosRef.current.set(sat2Pos3DX, sat2Pos3DY, sat2Pos3DZ);
   });
 
   return (

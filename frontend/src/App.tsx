@@ -150,9 +150,18 @@ export default function App() {
     glowLinesEnabled,
     colorZonesEnabled,
     satelliteCoords,
+    satellite2Coords,
+    sat1Mode,
+    sat2Mode,
+    sat1Force,
+    sat2Force,
+    sat1Speed,
+    sat2Speed,
     setFXConfig
   } = useIrisStore();
   const [showFXSettings, setShowFXSettings] = useState(false);
+  const R1_dyn = Math.max(500, (window.innerWidth / 2) - 40);
+  const R2_dyn = R1_dyn * 0.8;
   const [showDebug, setShowDebug] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     presets: true,
@@ -172,6 +181,7 @@ export default function App() {
     e.stopPropagation();
     (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     setIsDraggingSat(true);
+    useIrisStore.setState({ isDraggingSat1: true });
   };
 
   useEffect(() => {
@@ -183,19 +193,19 @@ export default function App() {
       let newX = e.clientX - centerX;
       let newY = e.clientY - centerY;
 
-      // Limitar a distância máxima do centro do orbe (~450px para cobrir todo o visor)
-      const dist = Math.sqrt(newX * newX + newY * newY);
-      const maxRadius = 450;
-      if (dist > maxRadius) {
-        newX = (newX / dist) * maxRadius;
-        newY = (newY / dist) * maxRadius;
-      }
+      // Limitar o movimento para que o satélite possa se mover por todo o canvas/viewport
+      // mantendo uma margem de 28px (metade do tamanho do satélite) para não sair da tela
+      const limitX = centerX - 28;
+      const limitY = centerY - 28;
+      newX = Math.max(-limitX, Math.min(limitX, newX));
+      newY = Math.max(-limitY, Math.min(limitY, newY));
 
       useIrisStore.setState({ satelliteCoords: { x: newX, y: newY } });
     };
 
     const handlePointerUp = () => {
       setIsDraggingSat(false);
+      useIrisStore.setState({ isDraggingSat1: false });
     };
 
     window.addEventListener('pointermove', handlePointerMove);
@@ -205,6 +215,47 @@ export default function App() {
       window.removeEventListener('pointerup', handlePointerUp);
     };
   }, [isDraggingSat]);
+
+  // Controle de arrasto em 2D do Segundo Satélite Gravitacional (10% menor)
+  const [isDraggingSat2, setIsDraggingSat2] = useState(false);
+  const handleSat2PointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    setIsDraggingSat2(true);
+    useIrisStore.setState({ isDraggingSat2: true });
+  };
+
+  useEffect(() => {
+    if (!isDraggingSat2) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      let newX = e.clientX - centerX;
+      let newY = e.clientY - centerY;
+
+      // Limitar o movimento para que o segundo satélite possa se mover por todo o canvas/viewport
+      // mantendo uma margem de 25px (metade do tamanho de 50px do satélite) para não sair da tela
+      const limitX = centerX - 25;
+      const limitY = centerY - 25;
+      newX = Math.max(-limitX, Math.min(limitX, newX));
+      newY = Math.max(-limitY, Math.min(limitY, newY));
+
+      useIrisStore.setState({ satellite2Coords: { x: newX, y: newY } });
+    };
+
+    const handlePointerUp = () => {
+      setIsDraggingSat2(false);
+      useIrisStore.setState({ isDraggingSat2: false });
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [isDraggingSat2]);
 
   // Instâncias do Framer Motion useDragControls para controle de arrasto manual no visor de cabeçalho
   const dragSensors = useDragControls();
@@ -507,9 +558,14 @@ export default function App() {
           top: `calc(50% + ${(satelliteCoords?.y ?? 0)}px - 28px)`,
           width: '56px',
           height: '56px',
-          zIndex: 35,
+          zIndex: 35, // Mantém zIndex fixo em 35 para não sumir atrás do background opaco do canvas
           cursor: isDraggingSat ? 'grabbing' : 'grab',
-          pointerEvents: 'auto'
+          pointerEvents: 'auto',
+          transform: `scale(${0.9 + ((satelliteCoords?.z ?? 0) / R1_dyn) * 0.45})`,
+          opacity: ((satelliteCoords?.z ?? 0) < -20 && Math.sqrt(satelliteCoords.x * satelliteCoords.x + satelliteCoords.y * satelliteCoords.y) < 162)
+            ? 0.05 // Oclusão atrás do orbe central
+            : 0.35 + (((satelliteCoords?.z ?? 0) / R1_dyn) + 1.0) * 0.325,
+          transition: 'none'
         }}
         onPointerDown={handleSatPointerDown}
         className="flex items-center justify-center select-none"
@@ -528,6 +584,42 @@ export default function App() {
 
         {/* Fino anel orbital externo tracejado */}
         <div className="absolute w-14 h-14 rounded-full border border-dashed border-cyan-500/15 animate-[spin_25s_linear_infinite]" />
+      </div>
+
+      {/* Segundo Satélite Gravitacional (10% menor, cor de realce magenta/fúcsia) */}
+      <div
+        style={{
+          position: 'absolute',
+          left: `calc(50% + ${(satellite2Coords?.x ?? -180)}px - 25px)`,
+          top: `calc(50% + ${(satellite2Coords?.y ?? 0)}px - 25px)`,
+          width: '50px',
+          height: '50px',
+          zIndex: 35, // Mantém zIndex fixo em 35
+          cursor: isDraggingSat2 ? 'grabbing' : 'grab',
+          pointerEvents: 'auto',
+          transform: `scale(${0.9 + ((satellite2Coords?.z ?? 0) / R2_dyn) * 0.45})`,
+          opacity: ((satellite2Coords?.z ?? 0) < -20 && Math.sqrt(satellite2Coords.x * satellite2Coords.x + satellite2Coords.y * satellite2Coords.y) < 162)
+            ? 0.05 // Oclusão atrás do orbe central
+            : 0.35 + (((satellite2Coords?.z ?? 0) / R2_dyn) + 1.0) * 0.325,
+          transition: 'none'
+        }}
+        onPointerDown={handleSat2PointerDown}
+        className="flex items-center justify-center select-none"
+      >
+        {/* Halo de energia sutil (Fuchsia/Magenta) */}
+        <div 
+          className={`w-8 h-8 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+            isDraggingSat2 
+              ? 'border-fuchsia-400 scale-110 shadow-[0_0_15px_rgba(217,70,239,0.65)] bg-fuchsia-500/5' 
+              : 'border-fuchsia-500/35 hover:border-fuchsia-400 hover:scale-105 hover:bg-fuchsia-500/10 hover:shadow-[0_0_8px_rgba(217,70,239,0.35)] bg-transparent'
+          }`}
+        >
+          {/* Fino anel de controle interno */}
+          <div className="w-3 h-3 rounded-full border border-fuchsia-400/25 bg-fuchsia-500/5" />
+        </div>
+
+        {/* Fino anel orbital externo tracejado */}
+        <div className="absolute w-12 h-12 rounded-full border border-dashed border-fuchsia-500/15 animate-[spin_20s_linear_infinite_reverse]" />
       </div>
 
       {/* Ambient background glow for active/hovered quadrants */}
@@ -1649,6 +1741,84 @@ export default function App() {
                         onChange={(e) => setFXConfig({ repulsionStrength: parseFloat(e.target.value) })}
                         className="w-full cursor-pointer accent-slider-cyan" 
                       />
+                    </div>
+
+                    {/* Satélite 1 (Ciano) - Modo e Força */}
+                    <div className="flex flex-col gap-2 bg-cyan-950/15 p-2.5 rounded-lg border border-cyan-500/15">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-cyan-400">Satélite Ciano (Maior)</span>
+                        <select
+                          value={sat1Mode}
+                          onChange={(e) => setFXConfig({ sat1Mode: e.target.value as 'manual' | 'gravitational' | 'orbital' })}
+                          className="bg-[#050512]/90 border border-cyan-500/25 rounded px-1.5 py-0.5 text-[9px] font-mono uppercase text-cyan-400 cursor-pointer focus:outline-none"
+                        >
+                          <option value="manual">Manual</option>
+                          <option value="gravitational">Gravitacional</option>
+                          <option value="orbital">Orbital 3D</option>
+                        </select>
+                      </div>
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[9px] uppercase text-slate-500 text-left">Força de Impacto</span>
+                        <span className="led-readout text-[10px] font-mono px-1.5 py-0.5 rounded text-cyan-400 bg-cyan-950/20">{sat1Force.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="-2.0" max="2.0" step="0.1"
+                        value={sat1Force} 
+                        onChange={(e) => setFXConfig({ sat1Force: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                      <div className="flex justify-between items-center text-slate-400 mt-1">
+                        <span className="text-[9px] uppercase text-slate-500 text-left">Velocidade Órbita</span>
+                        <span className="led-readout text-[10px] font-mono px-1.5 py-0.5 rounded text-cyan-400 bg-cyan-950/20">{sat1Speed.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.0" max="3.0" step="0.1"
+                        value={sat1Speed} 
+                        onChange={(e) => setFXConfig({ sat1Speed: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-cyan" 
+                      />
+                      <span className="text-[7.5px] text-slate-500 font-mono -mt-1 text-center leading-none">
+                        Valores negativos atraem, positivos repelem as barras
+                      </span>
+                    </div>
+
+                    {/* Satélite 2 (Fúcsia) - Modo e Força */}
+                    <div className="flex flex-col gap-2 bg-fuchsia-950/15 p-2.5 rounded-lg border border-fuchsia-500/15">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[10px] uppercase font-bold text-fuchsia-400">Satélite Fúcsia (Menor)</span>
+                        <select
+                          value={sat2Mode}
+                          onChange={(e) => setFXConfig({ sat2Mode: e.target.value as 'manual' | 'gravitational' | 'orbital' })}
+                          className="bg-[#050512]/90 border border-fuchsia-500/25 rounded px-1.5 py-0.5 text-[9px] font-mono uppercase text-fuchsia-400 cursor-pointer focus:outline-none"
+                        >
+                          <option value="manual">Manual</option>
+                          <option value="gravitational">Gravitacional</option>
+                          <option value="orbital">Orbital 3D</option>
+                        </select>
+                      </div>
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span className="text-[9px] uppercase text-slate-500 text-left">Força de Impacto</span>
+                        <span className="led-readout text-[10px] font-mono px-1.5 py-0.5 rounded text-fuchsia-400 bg-fuchsia-950/20">{sat2Force.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="-2.0" max="2.0" step="0.1"
+                        value={sat2Force} 
+                        onChange={(e) => setFXConfig({ sat2Force: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-rose" 
+                      />
+                      <div className="flex justify-between items-center text-slate-400 mt-1">
+                        <span className="text-[9px] uppercase text-slate-500 text-left">Velocidade Órbita</span>
+                        <span className="led-readout text-[10px] font-mono px-1.5 py-0.5 rounded text-fuchsia-400 bg-fuchsia-950/20">{sat2Speed.toFixed(1)}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.0" max="3.0" step="0.1"
+                        value={sat2Speed} 
+                        onChange={(e) => setFXConfig({ sat2Speed: parseFloat(e.target.value) })}
+                        className="w-full cursor-pointer accent-slider-rose" 
+                      />
+                      <span className="text-[7.5px] text-slate-500 font-mono -mt-1 text-center leading-none">
+                        Valores negativos atraem, positivos repelem as barras
+                      </span>
                     </div>
 
                     {/* Glow das Barras */}
