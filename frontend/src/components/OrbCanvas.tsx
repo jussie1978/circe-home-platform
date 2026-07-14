@@ -682,46 +682,45 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
           targetScaleY = b.baseHeight * (1.0 + smoothFactor * (type === 'tall' ? 1.1 : 0.5) * repulsionStrength);
         }
 
-        // 3. Interação física com o Satélite Gravitacional (Lua)
+        // 3. Interação física com o Satélite Gravitacional (Ciano) - Sem cutoff rígido (gravidade contínua)
         const satPos = satellitePosRef.current;
         const distSat = absolutePos.distanceTo(satPos);
         const sat1Force = useIrisStore.getState().sat1Force;
-        const rInfluenceSat = (type === 'tall' ? 2.5 : 1.8) * Math.max(0.4, Math.abs(sat1Force)); // escala influência com a força
         
-        if (distSat < rInfluenceSat) {
-          const forceDirSat = new THREE.Vector3().subVectors(absolutePos, satPos);
-          forceDirSat.z = 0;
-          const baseForce = type === 'tall' ? 0.08 : 0.05;
-          
-          const factorSat = 1.0 - distSat / rInfluenceSat;
-          const smoothFactorSat = factorSat * factorSat; // Suavização quadrática
-          const forceMagSat = smoothFactorSat * baseForce * 0.45 * sat1Force; // Coeficiente suave
-          b.velocity.addScaledVector(forceDirSat.normalize(), forceMagSat);
-          
-          // Esticar as barras conforme a proximidade (simula atração/repulsão extrema do anexo)
-          const satScaleFactor = smoothFactorSat * (type === 'tall' ? 1.4 : 0.7) * Math.abs(sat1Force);
-          targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + satScaleFactor));
-        }
+        const forceDirSat = new THREE.Vector3().subVectors(absolutePos, satPos);
+        forceDirSat.z = 0; // focado no plano XY
+        const baseForce = type === 'tall' ? 0.08 : 0.05;
+        
+        // Ondulação vibratória de energia viva no tempo e espaço (ripple)
+        // Isso impede as barras de congelarem no ponto de equilíbrio quando o satélite está estático
+        const waveForce1 = sat1Force * (1.0 + 0.22 * Math.sin(elapsed * 6.0 + i * 0.1));
+        
+        // Decaimento linear contínuo: F = (baseForce * waveForce1 * 0.38) / (dist + 0.8)
+        const forceMagSat = (baseForce * waveForce1 * 0.38) / (distSat + 0.8);
+        b.velocity.addScaledVector(forceDirSat.normalize(), forceMagSat);
+        
+        // Esticar as barras de forma contínua conforme proximidade (Deformação de Maré)
+        const satScaleFactor = (0.75 * Math.abs(waveForce1)) / (distSat + 0.9);
+        targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + satScaleFactor * (type === 'tall' ? 1.4 : 0.7)));
 
-        // 3.5 Interação física com o Segundo Satélite Gravitacional (10% menor em tamanho e influência)
+        // 3.5 Interação física com o Segundo Satélite Gravitacional (Fúcsia) - Sem cutoff rígido
         const sat2Pos = satellite2PosRef.current;
         const distSat2 = absolutePos.distanceTo(sat2Pos);
         const sat2Force = useIrisStore.getState().sat2Force;
-        const rInfluenceSat2 = (type === 'tall' ? 2.5 : 1.8) * 0.9 * Math.max(0.4, Math.abs(sat2Force)); // escala influência com a força
         
-        if (distSat2 < rInfluenceSat2) {
-          const forceDirSat2 = new THREE.Vector3().subVectors(absolutePos, sat2Pos);
-          forceDirSat2.z = 0;
-          const baseForce2 = type === 'tall' ? 0.08 : 0.05;
-          
-          const factorSat2 = 1.0 - distSat2 / rInfluenceSat2;
-          const smoothFactorSat2 = factorSat2 * factorSat2; // Suavização quadrática
-          const forceMagSat2 = smoothFactorSat2 * baseForce2 * 0.45 * 0.9 * sat2Force; // Coeficiente suave
-          b.velocity.addScaledVector(forceDirSat2.normalize(), forceMagSat2);
-          
-          const sat2ScaleFactor = smoothFactorSat2 * (type === 'tall' ? 1.4 : 0.7) * Math.abs(sat2Force) * 0.9;
-          targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + sat2ScaleFactor));
-        }
+        const forceDirSat2 = new THREE.Vector3().subVectors(absolutePos, sat2Pos);
+        forceDirSat2.z = 0;
+        const baseForce2 = type === 'tall' ? 0.08 : 0.05;
+        
+        // Ondulação senoidal defasada (cria interferência harmônica com o satélite 1)
+        const waveForce2 = sat2Force * (1.0 + 0.22 * Math.cos(elapsed * 7.5 + i * 0.1));
+        
+        // Decaimento linear contínuo
+        const forceMagSat2 = (baseForce2 * waveForce2 * 0.38 * 0.9) / (distSat2 + 0.8);
+        b.velocity.addScaledVector(forceDirSat2.normalize(), forceMagSat2);
+        
+        const sat2ScaleFactor = (0.75 * Math.abs(waveForce2) * 0.9) / (distSat2 + 0.9);
+        targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + sat2ScaleFactor * (type === 'tall' ? 1.4 : 0.7)));
 
         // 4. Interpolação linear (Lerp) para suavização total da escala (evita transição seca/brusca)
         if (b.currentScaleY === undefined) b.currentScaleY = targetScaleY;
