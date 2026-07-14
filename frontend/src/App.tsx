@@ -564,7 +564,7 @@ export default function App() {
           transform: `scale(${0.9 + ((satelliteCoords?.z ?? 0) / R1_dyn) * 0.45})`,
           opacity: ((satelliteCoords?.z ?? 0) < -20 && Math.sqrt(satelliteCoords.x * satelliteCoords.x + satelliteCoords.y * satelliteCoords.y) < 162)
             ? 0.05 // Oclusão atrás do orbe central
-            : 0.35 + (((satelliteCoords?.z ?? 0) / R1_dyn) + 1.0) * 0.325,
+            : 0.52 + (((satelliteCoords?.z ?? 0) / R1_dyn) + 1.0) * 0.24, // Destaque de opacidade base maior (mínimo 0.52 em vez de 0.35)
           transition: 'none'
         }}
         onPointerDown={handleSatPointerDown}
@@ -574,16 +574,16 @@ export default function App() {
         <div 
           className={`w-9 h-9 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
             isDraggingSat 
-              ? 'border-cyan-400 scale-110 shadow-[0_0_15px_rgba(6,182,212,0.65)] bg-cyan-500/5' 
-              : 'border-cyan-500/35 hover:border-cyan-400 hover:scale-105 hover:bg-cyan-500/10 hover:shadow-[0_0_8px_rgba(6,182,212,0.35)] bg-transparent'
+              ? 'border-cyan-400 scale-110 shadow-[0_0_15px_rgba(6,182,212,0.8)] bg-cyan-500/10' 
+              : 'border-cyan-400/70 hover:border-cyan-400 hover:scale-105 hover:bg-cyan-500/10 shadow-[0_0_8px_rgba(6,182,212,0.35)] bg-cyan-500/5'
           }`}
         >
           {/* Fino anel de controle interno com preenchimento sutil */}
-          <div className="w-3.5 h-3.5 rounded-full border border-cyan-400/25 bg-cyan-500/5" />
+          <div className="w-3.5 h-3.5 rounded-full border border-cyan-400/40 bg-cyan-500/10" />
         </div>
 
         {/* Fino anel orbital externo tracejado */}
-        <div className="absolute w-14 h-14 rounded-full border border-dashed border-cyan-500/15 animate-[spin_25s_linear_infinite]" />
+        <div className="absolute w-14 h-14 rounded-full border border-dashed border-cyan-400/25 animate-[spin_25s_linear_infinite]" />
       </div>
 
       {/* Segundo Satélite Gravitacional (10% menor, cor de realce magenta/fúcsia) */}
@@ -600,7 +600,7 @@ export default function App() {
           transform: `scale(${0.9 + ((satellite2Coords?.z ?? 0) / R2_dyn) * 0.45})`,
           opacity: ((satellite2Coords?.z ?? 0) < -20 && Math.sqrt(satellite2Coords.x * satellite2Coords.x + satellite2Coords.y * satellite2Coords.y) < 162)
             ? 0.05 // Oclusão atrás do orbe central
-            : 0.35 + (((satellite2Coords?.z ?? 0) / R2_dyn) + 1.0) * 0.325,
+            : 0.52 + (((satellite2Coords?.z ?? 0) / R2_dyn) + 1.0) * 0.24, // Destaque de opacidade base maior (mínimo 0.52 em vez de 0.35)
           transition: 'none'
         }}
         onPointerDown={handleSat2PointerDown}
@@ -610,16 +610,16 @@ export default function App() {
         <div 
           className={`w-8 h-8 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
             isDraggingSat2 
-              ? 'border-fuchsia-400 scale-110 shadow-[0_0_15px_rgba(217,70,239,0.65)] bg-fuchsia-500/5' 
-              : 'border-fuchsia-500/35 hover:border-fuchsia-400 hover:scale-105 hover:bg-fuchsia-500/10 hover:shadow-[0_0_8px_rgba(217,70,239,0.35)] bg-transparent'
+              ? 'border-fuchsia-400 scale-110 shadow-[0_0_15px_rgba(217,70,239,0.8)] bg-fuchsia-500/10' 
+              : 'border-fuchsia-400/70 hover:border-fuchsia-400 hover:scale-105 hover:bg-fuchsia-500/10 shadow-[0_0_8px_rgba(217,70,239,0.35)] bg-fuchsia-500/5'
           }`}
         >
           {/* Fino anel de controle interno */}
-          <div className="w-3 h-3 rounded-full border border-fuchsia-400/25 bg-fuchsia-500/5" />
+          <div className="w-3 h-3 rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10" />
         </div>
 
         {/* Fino anel orbital externo tracejado */}
-        <div className="absolute w-12 h-12 rounded-full border border-dashed border-fuchsia-500/15 animate-[spin_20s_linear_infinite_reverse]" />
+        <div className="absolute w-12 h-12 rounded-full border border-dashed border-fuchsia-400/25 animate-[spin_20s_linear_infinite_reverse]" />
       </div>
 
       {/* Ambient background glow for active/hovered quadrants */}
