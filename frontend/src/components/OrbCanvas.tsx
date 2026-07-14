@@ -695,12 +695,22 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         // Isso impede as barras de congelarem no ponto de equilíbrio quando o satélite está estático
         const waveForce1 = sat1Force * (1.0 + 0.22 * Math.sin(elapsed * 6.0 + i * 0.1));
         
-        // Decaimento linear contínuo: F = (baseForce * waveForce1 * 0.38) / (dist + 0.8)
-        const forceMagSat = (baseForce * waveForce1 * 0.38) / (distSat + 0.8);
-        b.velocity.addScaledVector(forceDirSat.normalize(), forceMagSat);
+        // Decaimento linear contínuo lento: F = (baseForce * waveForce1) / (dist * 0.22 + 0.8)
+        // O multiplicador 0.22 garante alcance global por toda a tela (retenção de 40% da força nos cantos)
+        const forceMagSat = (baseForce * waveForce1) / (distSat * 0.22 + 0.8);
+        
+        // Aplicar forças Radiais (Atração/Repulsão) e Tangenciais (Swirl/Vórtice de Acreção)
+        const direction = forceDirSat.normalize();
+        const tangent = new THREE.Vector3(-direction.y, direction.x, 0);
+        
+        const radialForce = forceMagSat;
+        const tangentialForce = forceMagSat * 0.55; // Intensidade da torção espiral (Efeito de Acreção Cósmica)
+        
+        b.velocity.addScaledVector(direction, radialForce);
+        b.velocity.addScaledVector(tangent, tangentialForce);
         
         // Esticar as barras de forma contínua conforme proximidade (Deformação de Maré)
-        const satScaleFactor = (0.75 * Math.abs(waveForce1)) / (distSat + 0.9);
+        const satScaleFactor = (0.75 * Math.abs(waveForce1)) / (distSat * 0.22 + 0.9);
         targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + satScaleFactor * (type === 'tall' ? 1.4 : 0.7)));
 
         // 3.5 Interação física com o Segundo Satélite Gravitacional (Fúcsia) - Sem cutoff rígido
@@ -715,11 +725,19 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         // Ondulação senoidal defasada (cria interferência harmônica com o satélite 1)
         const waveForce2 = sat2Force * (1.0 + 0.22 * Math.cos(elapsed * 7.5 + i * 0.1));
         
-        // Decaimento linear contínuo
-        const forceMagSat2 = (baseForce2 * waveForce2 * 0.38 * 0.9) / (distSat2 + 0.8);
-        b.velocity.addScaledVector(forceDirSat2.normalize(), forceMagSat2);
+        // Decaimento linear contínuo lento
+        const forceMagSat2 = (baseForce2 * waveForce2 * 0.9) / (distSat2 * 0.22 + 0.8);
         
-        const sat2ScaleFactor = (0.75 * Math.abs(waveForce2) * 0.9) / (distSat2 + 0.9);
+        const direction2 = forceDirSat2.normalize();
+        const tangent2 = new THREE.Vector3(-direction2.y, direction2.x, 0);
+        
+        const radialForce2 = forceMagSat2;
+        const tangentialForce2 = forceMagSat2 * 0.55; // Torção espiral fúcsia (Vórtice)
+        
+        b.velocity.addScaledVector(direction2, radialForce2);
+        b.velocity.addScaledVector(tangent2, tangentialForce2);
+        
+        const sat2ScaleFactor = (0.75 * Math.abs(waveForce2) * 0.9) / (distSat2 * 0.22 + 0.9);
         targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + sat2ScaleFactor * (type === 'tall' ? 1.4 : 0.7)));
 
         // 4. Interpolação linear (Lerp) para suavização total da escala (evita transição seca/brusca)
