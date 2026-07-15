@@ -55,7 +55,7 @@ interface IrisStore {
   ringColorCustom: string; // Cor customizada do anel R2.2
   ringSpeed: number; // Velocidade de rotação do anel R2.2
   pulseSpeed: number; // Velocidade de pulsação das linhas de fuga R2.2
-  activePanel: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null; // Sincronização Spatial UI
+  activePanel: ('top-left' | 'top-right' | 'bottom-left' | 'bottom-right')[]; // Sincronização Spatial UI (Multilançamento)
   setActivePanel: (panel: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null) => void;
   dragOffset: { x: number; y: number }; // Deslocamento 3D do arrasto do mouse no centro
   snapToCenter: boolean; // Se verdadeiro, o orbe volta ao centro quando o clique é solto
@@ -130,8 +130,14 @@ export const useIrisStore = create<IrisStore>((set) => ({
   ringColorCustom: '#00f3ff', // ciano
   ringSpeed: 1.0,
   pulseSpeed: 1.0,
-  activePanel: null,
-  setActivePanel: (panel) => set({ activePanel: panel }),
+  activePanel: [],
+  setActivePanel: (panel) => set((state) => {
+    if (panel === null) return { activePanel: [] };
+    const current = state.activePanel || [];
+    const exists = current.includes(panel);
+    const next = exists ? current.filter((p) => p !== panel) : [...current, panel];
+    return { activePanel: next };
+  }),
   dragOffset: { x: 0, y: 0 },
   snapToCenter: true,
   satelliteCoords: { x: 180, y: 0, z: 0 },

@@ -656,28 +656,28 @@ export default function App() {
       <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 z-20 pointer-events-none">
         {/* Quadrante Superior Esquerdo - Sensores */}
         <div 
-          onClick={(e) => { e.stopPropagation(); setActivePanel(activePanel === 'top-left' ? null : 'top-left'); }}
+          onClick={(e) => { e.stopPropagation(); setActivePanel('top-left'); }}
           onMouseEnter={() => setHoveredQuadrant('top-left')}
           onMouseLeave={() => setHoveredQuadrant(null)}
           className="pointer-events-auto cursor-pointer"
         />
         {/* Quadrante Superior Direito - Ventilação */}
         <div 
-          onClick={(e) => { e.stopPropagation(); setActivePanel(activePanel === 'top-right' ? null : 'top-right'); }}
+          onClick={(e) => { e.stopPropagation(); setActivePanel('top-right'); }}
           onMouseEnter={() => setHoveredQuadrant('top-right')}
           onMouseLeave={() => setHoveredQuadrant(null)}
           className="pointer-events-auto cursor-pointer"
         />
         {/* Quadrante Inferior Esquerdo - Aletas */}
         <div 
-          onClick={(e) => { e.stopPropagation(); setActivePanel(activePanel === 'bottom-left' ? null : 'bottom-left'); }}
+          onClick={(e) => { e.stopPropagation(); setActivePanel('bottom-left'); }}
           onMouseEnter={() => setHoveredQuadrant('bottom-left')}
           onMouseLeave={() => setHoveredQuadrant(null)}
           className="pointer-events-auto cursor-pointer"
         />
         {/* Quadrante Inferior Direito - Iluminação */}
         <div 
-          onClick={(e) => { e.stopPropagation(); setActivePanel(activePanel === 'bottom-right' ? null : 'bottom-right'); }}
+          onClick={(e) => { e.stopPropagation(); setActivePanel('bottom-right'); }}
           onMouseEnter={() => setHoveredQuadrant('bottom-right')}
           onMouseLeave={() => setHoveredQuadrant(null)}
           className="pointer-events-auto cursor-pointer"
@@ -746,7 +746,7 @@ export default function App() {
       />
 
       {/* Central HUD Close Hint (Anel tracejado rotativo sutil indicando que a área central fecha o painel ativo) */}
-      {activePanel && (
+      {activePanel.length > 0 && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] rounded-full border border-dashed border-white/10 animate-spin-slow pointer-events-none z-20" />
       )}
 
@@ -831,12 +831,12 @@ export default function App() {
         {/* Canto Superior Esquerdo - Telemetria */}
         <div className="absolute top-0 left-0 flex flex-col gap-2">
           <div className={`w-5 h-5 border-t-2 border-l-2 transition-all duration-300 ${
-            hoveredQuadrant === 'top-left' || activePanel === 'top-left'
+            hoveredQuadrant === 'top-left' || activePanel.includes('top-left')
               ? 'border-cyan-400 drop-shadow-[0_0_6px_rgba(6,182,212,0.8)] scale-105' 
               : 'border-cyan-500/20'
           }`} />
           <span className={`font-mono text-[9px] tracking-widest transition-all duration-300 ${
-            hoveredQuadrant === 'top-left' || activePanel === 'top-left'
+            hoveredQuadrant === 'top-left' || activePanel.includes('top-left')
               ? 'text-cyan-400 opacity-100 translate-y-0' 
               : 'text-cyan-500/40 opacity-0 -translate-y-1'
           }`}>
@@ -847,12 +847,12 @@ export default function App() {
         {/* Canto Superior Direito - Ventilação */}
         <div className="absolute top-0 right-0 flex flex-col items-end gap-2">
           <div className={`w-5 h-5 border-t-2 border-r-2 transition-all duration-300 ${
-            hoveredQuadrant === 'top-right' || activePanel === 'top-right'
+            hoveredQuadrant === 'top-right' || activePanel.includes('top-right')
               ? 'border-purple-400 drop-shadow-[0_0_6px_rgba(168,85,247,0.8)] scale-105' 
               : 'border-purple-500/20'
           }`} />
           <span className={`font-mono text-[9px] tracking-widest transition-all duration-300 ${
-            hoveredQuadrant === 'top-right' || activePanel === 'top-right'
+            hoveredQuadrant === 'top-right' || activePanel.includes('top-right')
               ? 'text-purple-400 opacity-100 translate-y-0' 
               : 'text-purple-500/40 opacity-0 -translate-y-1'
           }`}>
@@ -863,14 +863,14 @@ export default function App() {
         {/* Canto Inferior Esquerdo - Aletas */}
         <div className="absolute bottom-0 left-0 flex flex-col gap-2 justify-end">
           <span className={`font-mono text-[9px] tracking-widest transition-all duration-300 order-1 ${
-            hoveredQuadrant === 'bottom-left' || activePanel === 'bottom-left'
+            hoveredQuadrant === 'bottom-left' || activePanel.includes('bottom-left')
               ? 'text-orange-400 opacity-100 translate-y-0' 
               : 'text-orange-500/40 opacity-0 translate-y-1'
           }`}>
             [ ADJUST_APERTURE ]
           </span>
           <div className={`w-5 h-5 border-b-2 border-l-2 transition-all duration-300 order-2 ${
-            hoveredQuadrant === 'bottom-left' || activePanel === 'bottom-left'
+            hoveredQuadrant === 'bottom-left' || activePanel.includes('bottom-left')
               ? 'border-orange-400 drop-shadow-[0_0_6px_rgba(234,88,12,0.8)] scale-105' 
               : 'border-orange-500/20'
           }`} />
@@ -879,14 +879,14 @@ export default function App() {
         {/* Canto Inferior Direito - Iluminação */}
         <div className="absolute bottom-0 right-0 flex flex-col items-end gap-2 justify-end">
           <span className={`font-mono text-[9px] tracking-widest transition-all duration-300 order-1 ${
-            hoveredQuadrant === 'bottom-right' || activePanel === 'bottom-right'
+            hoveredQuadrant === 'bottom-right' || activePanel.includes('bottom-right')
               ? 'text-red-400 opacity-100 translate-y-0' 
               : 'text-red-500/40 opacity-0 translate-y-1'
           }`}>
             [ LIGHTING_CONTROLS ]
           </span>
           <div className={`w-5 h-5 border-b-2 border-r-2 transition-all duration-300 order-2 ${
-            hoveredQuadrant === 'bottom-right' || activePanel === 'bottom-right'
+            hoveredQuadrant === 'bottom-right' || activePanel.includes('bottom-right')
               ? 'border-red-500 drop-shadow-[0_0_6px_rgba(220,38,38,0.8)] scale-105' 
               : 'border-red-500/20'
           }`} />
@@ -894,14 +894,14 @@ export default function App() {
       </div>
 
       {/* Backdrop de desfocagem (glassmorphism) e clique fora para fechar painéis */}
-      {(activePanel !== null || showFXSettings) && (
+      {(activePanel.length > 0 || showFXSettings) && (
         <div 
           onClick={() => {
             setActivePanel(null);
             setShowFXSettings(false);
           }}
           className={`fixed inset-0 z-30 pointer-events-auto transition-all ${
-            activePanel !== null 
+            activePanel.length > 0 
               ? 'bg-black/25 backdrop-blur-[1.5px]' 
               : 'bg-transparent'
           }`}
@@ -913,7 +913,7 @@ export default function App() {
         <AnimatePresence custom={activePanel}>
           
           {/* PAINEL: SENSORES (Superior Esquerdo) */}
-          {activePanel === 'top-left' && (
+          {activePanel.includes('top-left') && (
             <motion.div
               custom="top-left"
               variants={cardVariants}
@@ -921,7 +921,7 @@ export default function App() {
               animate="visible"
               exit="exit"
               onClick={(e) => e.stopPropagation()}
-              className="absolute top-[12%] left-[8%] w-80 diesel-panel p-5 rounded-2xl pointer-events-auto flex flex-col gap-4 shadow-2xl border-2 border-zinc-700 backdrop-blur-md bg-opacity-90 select-none"
+              className="absolute top-[12%] left-[8%] w-80 diesel-panel glow-panel-cyan p-5 rounded-2xl pointer-events-auto flex flex-col gap-4 shadow-2xl border-2 border-zinc-700 backdrop-blur-md bg-opacity-90 select-none"
               drag
               dragControls={dragSensors}
               dragListener={false}
@@ -1039,7 +1039,7 @@ export default function App() {
           )}
 
           {/* PAINEL: VENTILAÇÃO (Superior Direito) */}
-          {activePanel === 'top-right' && (
+          {activePanel.includes('top-right') && (
             <motion.div
               custom="top-right"
               variants={cardVariants}
@@ -1047,7 +1047,7 @@ export default function App() {
               animate="visible"
               exit="exit"
               onClick={(e) => e.stopPropagation()}
-              className="absolute top-[12%] right-[8%] w-80 diesel-panel p-5 rounded-2xl pointer-events-auto flex flex-col gap-4 shadow-2xl border-2 border-zinc-700 backdrop-blur-md bg-opacity-90 select-none"
+              className="absolute top-[12%] right-[8%] w-80 diesel-panel glow-panel-purple p-5 rounded-2xl pointer-events-auto flex flex-col gap-4 shadow-2xl border-2 border-zinc-700 backdrop-blur-md bg-opacity-90 select-none"
               drag
               dragControls={dragFans}
               dragListener={false}
@@ -1068,7 +1068,20 @@ export default function App() {
                   <Wind className="w-4.5 h-4.5 text-crt-purple" />
                   <h2 className="font-bold tracking-wider uppercase font-mono text-xs text-crt-purple">FANS PWM</h2>
                 </div>
-                <Cpu className="w-3.5 h-3.5 text-crt-purple animate-pulse" />
+                <svg
+                  className="w-4.5 h-4.5 text-crt-purple"
+                  viewBox="0 0 100 100"
+                  style={{
+                    animation: fan1Speed > 0 ? `spin ${(100 - fan1Speed) * 0.005 + 0.08}s linear infinite` : 'none',
+                    transformOrigin: '50px 50px'
+                  }}
+                >
+                  <circle cx="50" cy="50" r="12" fill="currentColor" />
+                  <path d="M50 40 C42 20, 58 10, 50 2 C42 10, 42 20, 50 40 Z" fill="currentColor" />
+                  <path d="M60 50 C80 42, 90 58, 98 50 C90 42, 80 42, 60 50 Z" fill="currentColor" />
+                  <path d="M50 60 C58 80, 42 90, 50 98 C58 90, 58 80, 50 60 Z" fill="currentColor" />
+                  <path d="M40 50 C20 58, 10 42, 2 50 C10 58, 20 58, 40 50 Z" fill="currentColor" />
+                </svg>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -1137,7 +1150,7 @@ export default function App() {
           )}
 
           {/* PAINEL: ALETAS DO TETO (Inferior Esquerdo) */}
-          {activePanel === 'bottom-left' && (
+          {activePanel.includes('bottom-left') && (
             <motion.div
               custom="bottom-left"
               variants={cardVariants}
@@ -1145,7 +1158,7 @@ export default function App() {
               animate="visible"
               exit="exit"
               onClick={(e) => e.stopPropagation()}
-              className="absolute bottom-[12%] left-[8%] w-80 diesel-panel p-5 rounded-2xl pointer-events-auto flex flex-col gap-4 shadow-2xl border-2 border-zinc-700 backdrop-blur-md bg-opacity-90 select-none"
+              className="absolute bottom-[12%] left-[8%] w-80 diesel-panel glow-panel-orange p-5 rounded-2xl pointer-events-auto flex flex-col gap-4 shadow-2xl border-2 border-zinc-700 backdrop-blur-md bg-opacity-90 select-none"
               drag
               dragControls={dragServos}
               dragListener={false}
@@ -1209,6 +1222,23 @@ export default function App() {
                     className="w-full cursor-pointer accent-slider-orange" 
                   />
                 </div>
+
+                {/* Visualizador Esquemático de Aletas */}
+                <div className="crt-screen p-2 rounded-xl border border-zinc-950 flex flex-col items-center justify-center gap-1 h-14 relative overflow-hidden">
+                  <div className="absolute top-0.5 left-2 text-[7px] font-mono text-crt-orange/60 uppercase">MECHANICAL_FINS_PROFILE</div>
+                  <div className="flex gap-6 items-center justify-center mt-2.5">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div 
+                        key={i} 
+                        className="w-8 h-1 bg-crt-orange rounded-full transition-transform duration-300 shadow-[0_0_6px_rgba(249,115,22,0.85)]"
+                        style={{
+                          transform: `rotate(${-(roofAngle * 0.5)}deg)`,
+                          transformOrigin: 'center'
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
                 
                 <div className="flex justify-between gap-2 mt-1">
                   <button 
@@ -1249,7 +1279,7 @@ export default function App() {
           )}
 
           {/* PAINEL: ILUMINAÇÃO (Inferior Direito) */}
-          {activePanel === 'bottom-right' && (
+          {activePanel.includes('bottom-right') && (
             <motion.div
               custom="bottom-right"
               variants={cardVariants}
@@ -1257,7 +1287,7 @@ export default function App() {
               animate="visible"
               exit="exit"
               onClick={(e) => e.stopPropagation()}
-              className="absolute bottom-[12%] right-[8%] w-80 diesel-panel p-5 rounded-2xl pointer-events-auto flex flex-col gap-4 shadow-2xl border-2 border-zinc-700 backdrop-blur-md bg-opacity-90 select-none"
+              className="absolute bottom-[12%] right-[8%] w-80 diesel-panel glow-panel-rose p-5 rounded-2xl pointer-events-auto flex flex-col gap-4 shadow-2xl border-2 border-zinc-700 backdrop-blur-md bg-opacity-90 select-none"
               drag
               dragControls={dragLeds}
               dragListener={false}
@@ -1304,6 +1334,36 @@ export default function App() {
                       />
                     </div>
                     <span className="font-mono text-xs uppercase text-white font-bold">{ledColor}</span>
+                  </div>
+                </div>
+
+                {/* Visualizador Esquemático da Fita de LEDs */}
+                <div className="crt-screen p-2 rounded-xl border border-zinc-950 flex flex-col justify-center gap-1 h-14 relative overflow-hidden">
+                  <div className="absolute top-0.5 left-2 text-[7px] font-mono text-crt-red/60 uppercase">LED_STRIP_MATRIX</div>
+                  <div className="flex gap-2.5 items-center justify-center mt-2.5">
+                    {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+                      let color = ledColor;
+                      if (ledMode === 'Rainbow') {
+                        const hue = (i * 45) % 360;
+                        color = `hsl(${hue}, 100%, 50%)`;
+                      }
+                      
+                      const opacity = ledMode === 'Breath' 
+                        ? 0.4 + 0.6 * Math.sin(Date.now() * 0.005 + i * 0.5) 
+                        : 1.0;
+                      
+                      return (
+                        <div 
+                          key={i} 
+                          className="w-3.5 h-3.5 rounded-full border border-black/50 transition-all duration-300"
+                          style={{
+                            backgroundColor: color,
+                            opacity: opacity,
+                            boxShadow: `0 0 8px ${color}`,
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
 
