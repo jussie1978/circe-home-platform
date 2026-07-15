@@ -157,6 +157,8 @@ export default function App() {
     sat2Force,
     sat1Speed,
     sat2Speed,
+    cosmicJetsEnabled,
+    jetIntensity,
     setFXConfig
   } = useIrisStore();
   const [showFXSettings, setShowFXSettings] = useState(false);
@@ -1819,6 +1821,39 @@ export default function App() {
                       <span className="text-[7.5px] text-slate-500 font-mono -mt-1 text-center leading-none">
                         Valores negativos atraem, positivos repelem as barras
                       </span>
+                    </div>
+
+                    {/* Jatos Cósmicos Relativísticos */}
+                    <div className="flex flex-col gap-2.5 bg-yellow-950/10 p-2.5 rounded-lg border border-yellow-500/15">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] uppercase font-bold text-yellow-500">Jatos Cósmicos Polares</span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setFXConfig({ cosmicJetsEnabled: !cosmicJetsEnabled }); }}
+                          className={`px-2 py-0.5 rounded text-[8px] font-mono border transition-all duration-300 uppercase ${
+                            cosmicJetsEnabled
+                              ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.4)]'
+                              : 'bg-zinc-900/60 border-zinc-800 text-slate-500 hover:border-zinc-700'
+                          }`}
+                        >
+                          {cosmicJetsEnabled ? 'Ativado' : 'Desativado'}
+                        </button>
+                      </div>
+                      
+                      {cosmicJetsEnabled && (
+                        <div className="flex flex-col gap-1.5 animate-[fadeIn_0.3s_ease-out]">
+                          <div className="flex justify-between items-center text-slate-400">
+                            <span className="text-[9px] uppercase text-slate-500 text-left">Intensidade do Jato</span>
+                            <span className="led-readout text-[10px] font-mono px-1.5 py-0.5 rounded text-yellow-400 bg-yellow-950/20">{jetIntensity.toFixed(1)}x</span>
+                          </div>
+                          <input 
+                            type="range" min="0.1" max="2.5" step="0.1"
+                            value={jetIntensity} 
+                            onChange={(e) => setFXConfig({ jetIntensity: parseFloat(e.target.value) })}
+                            className="w-full cursor-pointer accent-yellow-500" 
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Glow das Barras */}

@@ -72,8 +72,9 @@ interface IrisStore {
   sat2Speed: number;
   isDraggingSat1: boolean;
   isDraggingSat2: boolean;
+  cosmicJetsEnabled: boolean;
+  jetIntensity: number;
   setFXConfig: (config: Partial<Omit<IrisStore, 'temperature' | 'irisState' | 'setTemperature' | 'setIrisState' | 'setFXConfig' | 'setActivePanel' | 'humidity' | 'tempHistory' | 'fan1Speed' | 'fan1Rpm' | 'fan2Speed' | 'fan2Rpm' | 'fanMode' | 'finsState' | 'pcState' | 'roofAngle' | 'setHumidity' | 'setTempHistory' | 'setFan1Speed' | 'setFan1Rpm' | 'setFan2Speed' | 'setFan2Rpm' | 'setFanMode' | 'setFinsState' | 'setPcState' | 'setRoofAngle'>>) => void;
-
 }
 
 export const useIrisStore = create<IrisStore>((set) => ({
@@ -143,6 +144,8 @@ export const useIrisStore = create<IrisStore>((set) => ({
   sat2Speed: 1.0,
   isDraggingSat1: false,
   isDraggingSat2: false,
+  cosmicJetsEnabled: false,
+  jetIntensity: 1.0,
   setFXConfig: (config) => set((state) => ({ ...state, ...config })),
 }));
 
@@ -294,7 +297,7 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
   // Inclinação 3D acumulada do arrasto central (spring-return)
   const currentDragRotation = useRef({ x: 0, y: 0 });
 
-  const RING_R = 2.0;
+  const RING_R = 1.8;
 
   // Configuração inicial da câmera e renderizador
   useEffect(() => {
@@ -586,6 +589,16 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         );
         // Aplicar o boost de glow na cor final (HDR)
         color.multiplyScalar(glowMultiplier);
+
+        // Efeito visual dos jatos cósmicos - Plasma superaquecido e boost de brilho nos pólos
+        const cosmicJetsEnabled = useIrisStore.getState().cosmicJetsEnabled;
+        const jetIntensity = useIrisStore.getState().jetIntensity;
+        if (cosmicJetsEnabled && Math.abs(Math.sin(data[i].angle)) > 0.93) {
+          const jetFactor = (Math.abs(Math.sin(data[i].angle)) - 0.93) / 0.07;
+          color.lerp(new THREE.Color('#ffffff'), jetFactor * 0.95);
+          color.multiplyScalar(1.0 + jetIntensity * 2.0 * jetFactor);
+        }
+        
         instMesh.setColorAt(i, color);
       }
       if (instMesh.instanceColor) {
@@ -633,7 +646,7 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
       const cursor = mouse3D.current;
 
       // Parâmetros de física dinâmicos conforme Zustand (Gel, Mecânico ou Líquido)
-      const rInfluence = type === 'tall' ? 2.2 : 1.5;
+      const rInfluence = type === 'tall' ? 2.0 : 1.35;
       const fMax = (type === 'tall' ? 0.08 : 0.05) * repulsionStrength;
       const maxVel = 0.35; // Limite fixo de velocidade linear para reatividade física máxima e estabilidade (independente de repulsionStrength)
       
@@ -737,8 +750,22 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         b.velocity.addScaledVector(direction2, radialForce2);
         b.velocity.addScaledVector(tangent2, tangentialForce2);
         
-        const sat2ScaleFactor = (0.75 * Math.abs(waveForce2) * 0.9) / (distSat2 * 0.22 + 0.9);
-        targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + sat2ScaleFactor * (type === 'tall' ? 1.4 : 0.7)));
+        // 3.8 Efeito de Jatos Cósmicos Relativísticos (Pólos Y)
+        const cosmicJetsEnabled = useIrisStore.getState().cosmicJetsEnabled;
+        const jetIntensity = useIrisStore.getState().jetIntensity;
+        
+        if (cosmicJetsEnabled && Math.abs(Math.sin(b.angle)) > 0.93) {
+          const jetFactor = (Math.abs(Math.sin(b.angle)) - 0.93) / 0.07; // atenuação da transição
+          const jetOsc = Math.sin(elapsed * 15.0 + i * 0.4) * 0.5 + 0.5; // cintilação de alta frequência
+          
+          // Esticar a escala Y por um multiplicador massivo
+          const jetStretch = jetFactor * jetIntensity * (6.0 + 4.0 * jetOsc);
+          targetScaleY = targetScaleY * (1.0 + jetStretch);
+          
+          // Adicionar aceleração vertical (Y) para o jato projetar a base das barras para fora
+          const pushForce = Math.sign(Math.sin(b.angle)) * jetFactor * jetIntensity * 0.15 * jetOsc;
+          b.velocity.y += pushForce;
+        }
 
         // 4. Interpolação linear (Lerp) para suavização total da escala (evita transição seca/brusca)
         if (b.currentScaleY === undefined) b.currentScaleY = targetScaleY;
@@ -989,16 +1016,16 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
     prevSat1Pos.current = { x: x1, y: y1 };
     prevSat2Pos.current = { x: x2, y: y2 };
 
-    // Mapeamento linear direto: 160px (raio do orbe no DOM) = 2.0 unidades no Three.js (RING_R)
-    // Fator de escala: 2.0 / 160 = 0.0125
-    const satPos3DX = (satelliteCoords?.x ?? 180) * 0.0125;
-    const satPos3DY = -(satelliteCoords?.y ?? 0) * 0.0125; // inverter Y
-    const satPos3DZ = (satelliteCoords?.z ?? 0) * 0.0125; // Profundidade mapeada para 3D!
+    // Mapeamento linear direto: 160px (raio do orbe no DOM) = 1.8 unidades no Three.js (RING_R)
+    // Fator de escala: 1.8 / 160 = 0.01125
+    const satPos3DX = (satelliteCoords?.x ?? 180) * 0.01125;
+    const satPos3DY = -(satelliteCoords?.y ?? 0) * 0.01125; // inverter Y
+    const satPos3DZ = (satelliteCoords?.z ?? 0) * 0.01125; // Profundidade mapeada para 3D!
     satellitePosRef.current.set(satPos3DX, satPos3DY, satPos3DZ);
 
-    const sat2Pos3DX = (satellite2Coords?.x ?? -180) * 0.0125;
-    const sat2Pos3DY = -(satellite2Coords?.y ?? 0) * 0.0125; // inverter Y
-    const sat2Pos3DZ = (satellite2Coords?.z ?? 0) * 0.0125; // Profundidade mapeada para 3D!
+    const sat2Pos3DX = (satellite2Coords?.x ?? -180) * 0.01125;
+    const sat2Pos3DY = -(satellite2Coords?.y ?? 0) * 0.01125; // inverter Y
+    const sat2Pos3DZ = (satellite2Coords?.z ?? 0) * 0.01125; // Profundidade mapeada para 3D!
     satellite2PosRef.current.set(sat2Pos3DX, sat2Pos3DY, sat2Pos3DZ);
   });
 
@@ -1024,7 +1051,7 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
 
         {/* Buraco negro central (Garante contraste e buraco limpo) */}
         <mesh ref={centralVoidRef} position={[0, 0, 0.005]}>
-          <circleGeometry args={[1.72, 96]} />
+          <circleGeometry args={[1.55, 96]} />
           <meshBasicMaterial color={0x02020a} side={THREE.DoubleSide} />
         </mesh>
       </group>
