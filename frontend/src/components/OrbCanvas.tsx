@@ -702,15 +702,15 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         
         const forceDirSat = new THREE.Vector3().subVectors(absolutePos, satPos);
         forceDirSat.z = 0; // focado no plano XY
-        const baseForce = type === 'tall' ? 0.08 : 0.05;
+        
+        // baseForce reduzida em ~3.5x para linearidade total dos controles (evita saturação precoce da velocidade)
+        const baseForce = type === 'tall' ? 0.022 : 0.014;
         
         // Ondulação vibratória de energia viva no tempo e espaço (ripple)
-        // Isso impede as barras de congelarem no ponto de equilíbrio quando o satélite está estático
         const waveForce1 = sat1Force * (1.0 + 0.22 * Math.sin(elapsed * 6.0 + i * 0.1));
         
-        // Decaimento linear contínuo lento: F = (baseForce * waveForce1) / (dist * 0.22 + 0.8)
-        // O multiplicador 0.22 garante alcance global por toda a tela (retenção de 40% da força nos cantos)
-        const forceMagSat = (baseForce * waveForce1) / (distSat * 0.22 + 0.8);
+        // Decaimento linear mais localizado (0.35 + 0.75) para concentrar o efeito de maré
+        const forceMagSat = (baseForce * waveForce1) / (distSat * 0.35 + 0.75);
         
         // Aplicar forças Radiais (Atração/Repulsão) e Tangenciais (Swirl/Vórtice de Acreção)
         const direction = forceDirSat.normalize();
@@ -723,7 +723,7 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         b.velocity.addScaledVector(tangent, tangentialForce);
         
         // Esticar as barras de forma contínua conforme proximidade (Deformação de Maré)
-        const satScaleFactor = (0.75 * Math.abs(waveForce1)) / (distSat * 0.22 + 0.9);
+        const satScaleFactor = (0.75 * Math.abs(waveForce1)) / (distSat * 0.35 + 0.85);
         targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + satScaleFactor * (type === 'tall' ? 1.4 : 0.7)));
 
         // 3.5 Interação física com o Segundo Satélite Gravitacional (Fúcsia) - Sem cutoff rígido
@@ -733,13 +733,15 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         
         const forceDirSat2 = new THREE.Vector3().subVectors(absolutePos, sat2Pos);
         forceDirSat2.z = 0;
-        const baseForce2 = type === 'tall' ? 0.08 : 0.05;
         
-        // Ondulação senoidal defasada (cria interferência harmônica com o satélite 1)
+        // baseForce2 reduzida para linearidade
+        const baseForce2 = type === 'tall' ? 0.022 : 0.014;
+        
+        // Ondulação senoidal defasada
         const waveForce2 = sat2Force * (1.0 + 0.22 * Math.cos(elapsed * 7.5 + i * 0.1));
         
-        // Decaimento linear contínuo lento
-        const forceMagSat2 = (baseForce2 * waveForce2 * 0.9) / (distSat2 * 0.22 + 0.8);
+        // Decaimento linear localizado
+        const forceMagSat2 = (baseForce2 * waveForce2 * 0.9) / (distSat2 * 0.35 + 0.75);
         
         const direction2 = forceDirSat2.normalize();
         const tangent2 = new THREE.Vector3(-direction2.y, direction2.x, 0);
@@ -750,19 +752,20 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         b.velocity.addScaledVector(direction2, radialForce2);
         b.velocity.addScaledVector(tangent2, tangentialForce2);
         
+        const sat2ScaleFactor = (0.75 * Math.abs(waveForce2) * 0.9) / (distSat2 * 0.35 + 0.85);
+        targetScaleY = Math.max(targetScaleY, b.baseHeight * (1.0 + sat2ScaleFactor * (type === 'tall' ? 1.4 : 0.7)));
+        
         // 3.8 Efeito de Jatos Cósmicos Relativísticos (Pólos Y)
         const cosmicJetsEnabled = useIrisStore.getState().cosmicJetsEnabled;
         const jetIntensity = useIrisStore.getState().jetIntensity;
         
         if (cosmicJetsEnabled && Math.abs(Math.sin(b.angle)) > 0.93) {
-          const jetFactor = (Math.abs(Math.sin(b.angle)) - 0.93) / 0.07; // atenuação da transição
-          const jetOsc = Math.sin(elapsed * 15.0 + i * 0.4) * 0.5 + 0.5; // cintilação de alta frequência
+          const jetFactor = (Math.abs(Math.sin(b.angle)) - 0.93) / 0.07;
+          const jetOsc = Math.sin(elapsed * 15.0 + i * 0.4) * 0.5 + 0.5;
           
-          // Esticar a escala Y por um multiplicador massivo
           const jetStretch = jetFactor * jetIntensity * (6.0 + 4.0 * jetOsc);
           targetScaleY = targetScaleY * (1.0 + jetStretch);
           
-          // Adicionar aceleração vertical (Y) para o jato projetar a base das barras para fora
           const pushForce = Math.sign(Math.sin(b.angle)) * jetFactor * jetIntensity * 0.15 * jetOsc;
           b.velocity.y += pushForce;
         }
