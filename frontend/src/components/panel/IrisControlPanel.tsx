@@ -1,13 +1,13 @@
 import { useRef } from 'react';
 import { IrisSection } from './IrisSection';
 import { IrisSliderRow } from './IrisSliderRow';
-import { IrisSelectRow } from './IrisSelectRow';
 import { IrisToggleRow } from './IrisToggleRow';
 import { SatelliteBlock } from './SatelliteBlock';
 import { PresetBar } from './PresetBar';
 import { ColorZoneEditor } from './ColorZoneEditor';
 import { SLIDER_PARAMS, PHYSICS_OPTIONS } from '../../config/irisPanelParams';
 import { useIrisStore } from '../../store/irisStore';
+
 
 type Props = {
   onClose?: () => void;
@@ -23,6 +23,7 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
   
   // Parametros para a grade da Seção 5
   const glowIntensityBars = useIrisStore((s) => s.glowIntensityBars);
+  const glowIntensityLines = useIrisStore((s) => s.glowIntensityLines);
   const barPulseSpeed = useIrisStore((s) => s.barPulseSpeed);
   const pulseSpeed = useIrisStore((s) => s.pulseSpeed);
 
@@ -160,13 +161,12 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
         </IrisSection>
 
         <IrisSection title="SECTION 5 - GLOW">
-          {/* Row 1: GLOW BARRA (left toggle) + slider (glowIntensityBars) + GLOW LINHA (right toggle) */}
+          {/* Row 1: GLOW BARRA (label) + toggle + slider (glowIntensityBars) + value */}
           <div className="flex items-center gap-2 mb-2 select-none text-[9px] font-mono">
             <span className="text-[var(--iris-phosphor)] font-bold w-[120px] uppercase">GLOW BARRA</span>
-            
             <button
               type="button"
-              className={`px-2 py-0.5 border text-[9px] ${
+              className={`px-2 py-0.5 border text-[9px] w-10 text-center ${
                 glowBarsEnabled 
                   ? 'bg-[var(--iris-phosphor)] text-black border-[var(--iris-phosphor)]' 
                   : 'bg-black text-[var(--iris-phosphor)] border-[var(--iris-border)]'
@@ -175,8 +175,7 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
             >
               {glowBarsEnabled ? 'ON' : 'OFF'}
             </button>
-
-            <span className="text-[var(--iris-phosphor-dim)] font-bold ml-1">·</span>
+            <span className="text-[var(--iris-phosphor-dim)] font-bold">·</span>
             <span className="text-[var(--iris-phosphor)] font-bold mr-0.5">■</span>
             
             <div className="flex-1 relative flex items-center">
@@ -191,9 +190,13 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
                 onChange={(e) => setFXConfig({ glowIntensityBars: parseFloat(e.target.value) })}
               />
             </div>
-
             <span className="text-[var(--iris-phosphor-dim)] font-bold ml-0.5">·</span>
-            
+            <span className="iris-value text-right w-8">{glowIntensityBars.toFixed(2)}</span>
+          </div>
+
+          {/* Row 2: GLOW LINHA (label) + toggle + slider (glowIntensityLines) + value */}
+          <div className="flex items-center gap-2 mb-2 select-none text-[9px] font-mono">
+            <span className="text-[var(--iris-phosphor)] font-bold w-[120px] uppercase">GLOW LINHA</span>
             <button
               type="button"
               className={`px-2 py-0.5 border text-[9px] w-10 text-center ${
@@ -205,11 +208,28 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
             >
               {glowLinesEnabled ? 'ON' : 'OFF'}
             </button>
+            <span className="text-[var(--iris-phosphor-dim)] font-bold">·</span>
+            <span className="text-[var(--iris-phosphor)] font-bold mr-0.5">■</span>
+            
+            <div className="flex-1 relative flex items-center">
+              <input
+                type="range"
+                className="iris-slider w-full"
+                min={0}
+                max={2.5}
+                step={0.05}
+                value={glowIntensityLines}
+                disabled={!glowLinesEnabled}
+                onChange={(e) => setFXConfig({ glowIntensityLines: parseFloat(e.target.value) })}
+              />
+            </div>
+            <span className="text-[var(--iris-phosphor-dim)] font-bold ml-0.5">·</span>
+            <span className="iris-value text-right w-8">{glowIntensityLines.toFixed(2)}</span>
           </div>
 
-          {/* Row 2: PULSAÇÃO BARRA (label) + slider (barPulseSpeed) + value */}
+          {/* Row 3: PULSAÇÃO BARRA (label) + slider (barPulseSpeed) + value */}
           <div className="flex items-center gap-2 mb-2 select-none text-[9px] font-mono">
-            <span className="text-[var(--iris-phosphor)] font-bold w-[156px] uppercase">PULSAÇÃO BARRA</span>
+            <span className="text-[var(--iris-phosphor)] font-bold w-[168px] uppercase">PULSAÇÃO BARRA</span>
             <span className="text-[var(--iris-phosphor-dim)] font-bold">·</span>
             <span className="text-[var(--iris-phosphor)] font-bold mr-0.5">■</span>
             
@@ -225,14 +245,13 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
                 onChange={(e) => setFXConfig({ barPulseSpeed: parseFloat(e.target.value) })}
               />
             </div>
-
             <span className="text-[var(--iris-phosphor-dim)] font-bold ml-0.5">·</span>
             <span className="iris-value text-right w-8">{barPulseSpeed.toFixed(2)}</span>
           </div>
 
-          {/* Row 3: PULSAÇÃO LINHA (label) + slider (pulseSpeed) + value */}
+          {/* Row 4: PULSAÇÃO LINHA (label) + slider (pulseSpeed) + value */}
           <div className="flex items-center gap-2 mb-2 select-none text-[9px] font-mono">
-            <span className="text-[var(--iris-phosphor)] font-bold w-[156px] uppercase">PULSAÇÃO LINHA</span>
+            <span className="text-[var(--iris-phosphor)] font-bold w-[168px] uppercase">PULSAÇÃO LINHA</span>
             <span className="text-[var(--iris-phosphor-dim)] font-bold">·</span>
             <span className="text-[var(--iris-phosphor)] font-bold mr-0.5">■</span>
             
@@ -248,7 +267,6 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
                 onChange={(e) => setFXConfig({ pulseSpeed: parseFloat(e.target.value) })}
               />
             </div>
-
             <span className="text-[var(--iris-phosphor-dim)] font-bold ml-0.5">·</span>
             <span className="iris-value text-right w-8">{pulseSpeed.toFixed(2)}</span>
           </div>

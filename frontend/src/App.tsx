@@ -72,7 +72,8 @@ export default function App() {
     activePanel,
     setActivePanel,
     satelliteCoords,
-    satellite2Coords
+    satellite2Coords,
+    customThemeActive
   } = useIrisStore();
     const R1_dyn = Math.max(500, (window.innerWidth / 2) - 40);
   const R2_dyn = R1_dyn * 0.8;
@@ -591,35 +592,44 @@ export default function App() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] rounded-full border border-dashed border-white/10 animate-spin-slow pointer-events-none z-20" />
       )}
 
-      {/* 3. Cabeçalho Central Fixo Superior (Status IRIS e Controle de Teste de Modos) */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2 pointer-events-auto">
-        <div className="glass-panel px-6 py-2 rounded-full border border-cyan-500/20 flex items-center gap-3 shadow-neon-cyan transition-all duration-300">
-          <span className={`w-2.5 h-2.5 rounded-full ${isWebSocketConnected ? 'bg-cyan-400 animate-pulse' : 'bg-amber-500'}`} />
-          <h1 className="font-mono text-sm tracking-wider uppercase font-semibold text-cyan-400">
-            IRIS_SYSTEM_R2.0 // <span className="text-white">{irisState}</span>
-          </h1>
-          <div className="w-[1px] h-4 bg-white/10" />
-          <div className="flex items-center gap-1.5 font-mono text-xs text-slate-400">
-            <Thermometer className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{temperature}°C</span>
-          </div>
-          <div className="w-[1px] h-4 bg-white/10" />
-          <div className="flex items-center gap-1.5 font-mono text-xs uppercase text-slate-400">
-            <span className={`w-1.5 h-1.5 rounded-full ${pcState === 'on' ? 'bg-emerald-450 animate-pulse' : 'bg-zinc-600'}`} />
-            <span className="font-semibold text-white">HOST: {pcState}</span>
-          </div>
+      {/* 3. Diagnósticos e Telemetria (Lista CRT no Canto Superior Esquerdo) */}
+      <div className="absolute top-6 left-6 z-30 flex flex-col gap-1.5 font-mono text-[10px] pointer-events-auto bg-black/85 border border-[var(--iris-border)] p-3 text-[var(--iris-phosphor)] w-48 shadow-[0_0_10px_rgba(42,92,58,0.25)] select-none">
+        {/* Cabeçalho do Monitor */}
+        <div className="text-[var(--iris-phosphor-dim)] font-bold border-b border-[var(--iris-border)] pb-1 mb-1 tracking-widest flex items-center justify-between">
+          <span>IRIS_MONITOR</span>
+          <span className={`w-1.5 h-1.5 rounded-full ${isWebSocketConnected ? 'bg-cyan-400 animate-pulse' : 'bg-amber-500'}`} />
+        </div>
+        
+        {/* Linhas de Telemetria */}
+        <div className="flex justify-between items-center">
+          <span className="text-[var(--iris-phosphor-dim)]">STATE:</span>
+          <span className="font-bold text-white tracking-wide">{irisState}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-[var(--iris-phosphor-dim)]">TEMP:</span>
+          <span className="font-bold text-white">{temperature}°C</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-[var(--iris-phosphor-dim)]">HOST:</span>
+          <span className={`font-bold ${pcState === 'on' ? 'text-[var(--iris-phosphor)]' : 'text-zinc-500'}`}>{pcState.toUpperCase()}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-[var(--iris-phosphor-dim)]">CONN:</span>
+          <span className={`font-bold ${isWebSocketConnected ? 'text-[var(--iris-phosphor)]' : 'text-amber-500'}`}>
+            {isWebSocketConnected ? 'ONLINE' : 'OFFLINE'}
+          </span>
         </div>
 
-        {/* Console de Teste Rápido de Estados da IRIS (Colapsável) */}
-        <div className="flex flex-col items-center gap-1 bg-black/40 backdrop-blur-sm px-4 py-1.5 rounded-xl border border-white/5 text-xs font-mono">
+        {/* Console de Debug (Colapsável) */}
+        <div className="border-t border-[var(--iris-border)] pt-1.5 mt-1 flex flex-col gap-1">
           <button 
             onClick={() => setShowDebug(!showDebug)}
-            className="text-[9px] tracking-widest text-slate-400 hover:text-cyan-400 transition-colors uppercase font-bold flex items-center gap-1.5"
+            className="w-full text-left text-[9px] tracking-wider text-[var(--iris-phosphor-dim)] hover:text-[var(--iris-phosphor)] transition-colors uppercase font-bold flex items-center justify-between"
           >
-            <span className={`w-1.5 h-1.5 rounded-full ${showDebug ? 'bg-cyan-400' : 'bg-slate-500'}`} />
-            {showDebug ? 'HIDE_SYS_DEBUG' : 'SHOW_SYS_DEBUG'}
+            <span>[ DEBUG_CONSOLE ]</span>
+            <span className="font-bold">{showDebug ? '▼' : '►'}</span>
           </button>
-          
+
           <AnimatePresence>
             {showDebug && (
               <motion.div 
@@ -627,40 +637,38 @@ export default function App() {
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="overflow-hidden flex items-center gap-2 mt-1.5 pt-1.5 border-t border-white/5"
+                className="overflow-hidden flex flex-col gap-1.5 mt-1.5 bg-black/60 p-1.5 border border-[var(--iris-border)]/50"
               >
-                <span className="text-slate-500">MOCK:</span>
-                <button 
-                  onClick={() => setIrisState('idle')}
-                  className={`px-2 py-0.5 rounded transition ${irisState === 'idle' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white'}`}
-                >
-                  Idle
-                </button>
-                <button 
-                  onClick={() => setIrisState('listening')}
-                  className={`px-2 py-0.5 rounded transition ${irisState === 'listening' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'text-slate-400 hover:text-white'}`}
-                >
-                  Listen
-                </button>
-                <button 
-                  onClick={() => setIrisState('speaking')}
-                  className={`px-2 py-0.5 rounded transition ${irisState === 'speaking' ? 'bg-slate-300/20 text-white border border-white/20' : 'text-slate-400 hover:text-white'}`}
-                >
-                  Speak
-                </button>
-                <button 
-                  onClick={() => setIrisState('critical')}
-                  className={`px-2 py-0.5 rounded transition ${irisState === 'critical' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'text-slate-400 hover:text-white'}`}
-                >
-                  Crit
-                </button>
-                <div className="w-[1px] h-3 bg-white/10 mx-0.5" />
-                <button 
-                  onClick={() => setPcState(pcState === 'on' ? 'off' : 'on')}
-                  className={`px-2 py-0.5 rounded transition ${pcState === 'on' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-zinc-800 text-slate-400 border border-transparent hover:text-white'}`}
-                >
-                  PC: {pcState.toUpperCase()}
-                </button>
+                <span className="text-[8px] text-[var(--iris-phosphor-dim)] font-bold">FORCE STATE:</span>
+                <div className="grid grid-cols-3 gap-1">
+                  <button 
+                    onClick={() => setIrisState('idle')}
+                    className={`py-0.5 text-[8px] border font-bold ${irisState === 'idle' ? 'bg-[var(--iris-phosphor)] text-black border-[var(--iris-phosphor)]' : 'border-[var(--iris-border)] text-[var(--iris-phosphor)] hover:bg-emerald-500/10'}`}
+                  >
+                    IDLE
+                  </button>
+                  <button 
+                    onClick={() => setIrisState('listening')}
+                    className={`py-0.5 text-[8px] border font-bold ${irisState === 'listening' ? 'bg-[var(--iris-phosphor)] text-black border-[var(--iris-phosphor)]' : 'border-[var(--iris-border)] text-[var(--iris-phosphor)] hover:bg-emerald-500/10'}`}
+                  >
+                    LIST
+                  </button>
+                  <button 
+                    onClick={() => setIrisState('speaking')}
+                    className={`py-0.5 text-[8px] border font-bold ${irisState === 'speaking' ? 'bg-[var(--iris-phosphor)] text-black border-[var(--iris-phosphor)]' : 'border-[var(--iris-border)] text-[var(--iris-phosphor)] hover:bg-emerald-500/10'}`}
+                  >
+                    SPK
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1 border-t border-[var(--iris-border)]/30 pt-1 mt-0.5">
+                  <span className="text-[8px] text-[var(--iris-phosphor-dim)] font-bold">FORCE HOST:</span>
+                  <button 
+                    onClick={() => setPcState(pcState === 'on' ? 'off' : 'on')}
+                    className={`w-full py-0.5 text-[8px] border font-bold ${pcState === 'on' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-zinc-800 text-slate-400 border-transparent hover:text-white'}`}
+                  >
+                    TOGGLE
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -668,7 +676,7 @@ export default function App() {
       </div>
 
       {/* 4. Overlay de Cantoneiras Guia (HUD Dinâmico e Responsivo) */}
-      <div className="absolute inset-[8%] pointer-events-none z-30">
+      <div className="absolute top-[8%] bottom-[8%] left-[16%] right-[16%] pointer-events-none z-30">
         {/* Canto Superior Esquerdo - Telemetria */}
         <div className="absolute top-0 left-0 flex flex-col gap-2">
           <div className={`w-5 h-5 border-t-2 border-l-2 transition-all duration-300 ${
@@ -1307,7 +1315,9 @@ export default function App() {
       {settingsOpen && (
         <>
           <div
-            className="iris-backdrop fixed inset-0 z-40 bg-black/55"
+            className={`iris-backdrop fixed inset-0 z-40 bg-black/55 transition-all duration-300 ${
+              customThemeActive ? '' : 'backdrop-blur-[1.5px]'
+            }`}
             aria-hidden
             onClick={closePanel}
           />

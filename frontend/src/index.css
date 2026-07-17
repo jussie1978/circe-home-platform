@@ -703,3 +703,193 @@ select.iris-select:hover {
   background: var(--iris-fuchsia) !important;
   box-shadow: 0 0 6px var(--iris-fuchsia) !important;
 }
+
+/* Color presets grid */
+.cyber-preset-btn {
+  border: 1px solid var(--iris-border);
+  background: #020402;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+}
+.cyber-preset-btn:hover {
+  border-color: var(--iris-phosphor);
+  box-shadow: 0 0 8px rgba(61, 255, 122, 0.2);
+}
+.cyber-preset-btn.active {
+  border-color: var(--iris-phosphor);
+  background: rgba(26, 107, 56, 0.1);
+  box-shadow: inset 0 0 4px rgba(61, 255, 122, 0.2);
+}
+
+/* Radar Wheel Styles */
+.radar-wheel-wrapper {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto;
+  border-radius: 50% !important;
+  border: 2px solid var(--iris-border);
+  background: #000;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 0 10px rgba(42, 92, 58, 0.15);
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.radar-wheel-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50% !important;
+  background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red);
+  position: absolute;
+  inset: 0;
+}
+
+/* Radial / Concentric lines overlay to look like a scope */
+.radar-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% !important;
+  pointer-events: none;
+  background: 
+    radial-gradient(circle, transparent 30%, rgba(42, 92, 58, 0.2) 31%, transparent 32%,
+                            transparent 55%, rgba(42, 92, 58, 0.25) 56%, transparent 57%,
+                            transparent 78%, rgba(42, 92, 58, 0.3) 79%, transparent 80%);
+}
+
+.radar-crosshair-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(42, 92, 58, 0.35);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.radar-crosshair-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(42, 92, 58, 0.35);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* A slow rotation overlay scanner line */
+.radar-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% !important;
+  background: conic-gradient(from 0deg, rgba(61, 255, 122, 0.12) 0deg, rgba(61, 255, 122, 0) 90deg);
+  animation: radar-spin 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes radar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Radar cursor reticle */
+.radar-reticle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 1px solid #ffffff;
+  border-radius: 50% !important;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 0 6px #ffffff, 0 0 2px #000000;
+}
+.radar-reticle::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: -3px; right: -3px;
+  height: 1px; background: #ffffff;
+}
+.radar-reticle::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: -3px; bottom: -3px;
+  width: 1px; background: #ffffff;
+}
+
+/* Sliders specific visual controls */
+.iris-channel-slider-row {
+  margin-bottom: 8px;
+}
+
+.custom-slider-num-input {
+  width: 34px;
+  background: #000;
+  border: 1px solid var(--iris-border);
+  color: var(--iris-phosphor);
+  text-align: center;
+  font-family: inherit;
+  font-size: 9px;
+  outline: none;
+}
+.custom-slider-num-input:focus {
+  border-color: var(--iris-phosphor);
+}
+
+.iris-channel-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  outline: none;
+  cursor: pointer;
+  border: 1px solid var(--iris-border);
+}
+.iris-channel-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 6px;
+  height: 12px;
+  background: var(--iris-phosphor);
+  border: 1px solid #000;
+  box-shadow: 0 0 4px var(--iris-phosphor);
+  border-radius: 0 !important;
+}
+.iris-channel-slider::-moz-range-thumb {
+  width: 6px;
+  height: 12px;
+  background: var(--iris-phosphor);
+  border: 1px solid #000;
+  box-shadow: 0 0 4px var(--iris-phosphor);
+  border-radius: 0 !important;
+}
+.cyber-swatches-container {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  border: 1px solid var(--iris-border);
+}
+.cyber-swatch-btn {
+  height: 20px;
+  border: 1px solid var(--iris-border);
+  background: #000;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cyber-swatch-btn:hover {
+  border-color: var(--iris-phosphor);
+  box-shadow: 0 0 6px rgba(61, 255, 122, 0.25);
+}
+.cyber-swatch-btn.active {
+  border-color: var(--iris-phosphor);
+  box-shadow: inset 0 0 4px var(--iris-phosphor);
+}
