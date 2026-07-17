@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useIrisStore } from '../../store/irisStore';
 import { ColorZoneCell } from './ColorZoneCell';
 
@@ -14,48 +14,24 @@ const ZONE_KEYS = [
   'ringColorCustom'
 ] as const;
 
-function hexToHsl(hex: string): { h: number; s: number; l: number } {
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
   hex = hex.replace(/^#/, '');
   if (hex.length === 3) {
     hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
   }
-  const r = parseInt(hex.substring(0, 2), 16) / 255;
-  const g = parseInt(hex.substring(2, 4), 16) / 255;
-  const b = parseInt(hex.substring(4, 6), 16) / 255;
-
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h = 0, s = 0, l = (max + min) / 2;
-
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
-    }
-    h /= 6;
-  }
-  return { h: h * 360, s: s * 100, l: l * 100 };
+  const num = parseInt(hex, 16);
+  if (isNaN(num)) return { r: 0, g: 0, b: 0 };
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255,
+  };
 }
 
-function hslToHex(h: number, s: number, l: number): string {
-  s /= 100;
-  l /= 100;
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  const m = l - c / 2;
-  let r = 0, g = 0, b = 0;
-
-  if (0 <= h && h < 60) { r = c; g = x; b = 0; }
-  else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
-  else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
-  else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
-  else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
-  else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
-
+function rgbToHex(r: number, g: number, b: number): string {
+  const clamp = (val: number) => Math.min(255, Math.max(0, Math.round(val)));
   const toHex = (val: number) => {
-    const hex = Math.round((val + m) * 255).toString(16);
+    const hex = clamp(val).toString(16);
     return hex.length === 1 ? '0' + hex : hex;
   };
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
@@ -65,63 +41,82 @@ export function ColorZoneEditor() {
   const customThemeActive = useIrisStore((s) => s.customThemeActive);
   const setFXConfig = useIrisStore((s) => s.setFXConfig);
   const [activeZoneIndex, setActiveZoneIndex] = useState<number>(0);
-  const [isDragging, setIsDragging] = useState(false);
   const saturation = useIrisStore((s) => s.saturation);
 
   const activeZoneKey = ZONE_KEYS[activeZoneIndex];
   const activeColor = useIrisStore((s) => s[activeZoneKey]);
 
+  const [localHex, setLocalHex] = useState(activeColor);
+  const lastHexSetRef = useRef('');
+
+  useEffect(() => {
+    if (activeColor.toLowerCase() !== lastHexSetRef.current.toLowerCase()) {
+      setLocalHex(activeColor.toUpperCase());
+    }
+  }, [activeColor]);
+
   if (!customThemeActive) {
     return <p className="iris-label">ATIVE PALETA PERSONALIZADA PARA EDITAR ZONAS.</p>;
   }
 
-  // Converter cor ativa para coordenadas x, y para o cursor na Color Wheel
-  const hsl = hexToHsl(activeColor);
-  const angle = (hsl.h / 180) * Math.PI;
-  const radius = 36;
-  const dist = (hsl.s / 100) * radius;
-  const cursorX = 40 + Math.cos(angle) * dist;
-  const cursorY = 40 + Math.sin(angle) * dist;
+  const triggerEyeDropper = async () => {
+    if ('EyeDropper' in window) {
+      try {
+        // @ts-ignore
+        const eyeDropper = new window.EyeDropper();
+        const result = await eyeDropper.open();
+        setFXConfig({ [activeZoneKey]: result.sRGBHex });
+      } catch (err) {
+        console.log('EyeDropper cancelled or failed:', err);
+      }
+    } else {
+      const input = document.createElement('input');
+      input.type = 'color';
+      input.value = activeColor;
+      input.onchange = (e) => {
+        const val = (e.target as HTMLInputElement).value;
+        if (val) {
+          setFXConfig({ [activeZoneKey]: val });
+        }
+      };
+      input.click();
+    }
+  };
 
-  const updateColorFromEvent = (clientX: number, clientY: number, rect: DOMRect) => {
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
-    const x = clientX - rect.left - cx;
-    const y = clientY - rect.top - cy;
+  const handleHexChange = (val: string) => {
+    setLocalHex(val);
+    const hexRegex = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+    if (hexRegex.test(val)) {
+      const normalized = val.startsWith('#') ? val : `#${val}`;
+      lastHexSetRef.current = normalized;
+      setFXConfig({ [activeZoneKey]: normalized });
+    }
+  };
 
-    const clickAngle = Math.atan2(y, x);
-    const clickDist = Math.sqrt(x * x + y * y);
-    const maxRadius = rect.width / 2;
-    const normalizedDist = Math.min(1.0, clickDist / maxRadius);
+  const rgb = hexToRgb(activeColor);
 
-    const h = (clickAngle * 180 / Math.PI + 360) % 360;
-    const s = normalizedDist * 100;
-    const l = 50;
-
-    const hex = hslToHex(h, s, l);
+  const handleChannelChange = (channel: 'r' | 'g' | 'b', value: number) => {
+    const newRgb = { ...rgb, [channel]: value };
+    const hex = rgbToHex(newRgb.r, newRgb.g, newRgb.b);
+    lastHexSetRef.current = hex;
     setFXConfig({ [activeZoneKey]: hex });
   };
 
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setIsDragging(true);
-    updateColorFromEvent(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect());
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    updateColorFromEvent(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect());
-  };
-
-  const handlePointerUp = () => {
-    setIsDragging(false);
-  };
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 select-none">
       {/* Seletor de Zona Ativa */}
-      <div className="iris-label mb-1.5">SELECIONAR ZONA PARA AJUSTE:</div>
-      <div className="grid grid-cols-5 gap-1.5 mb-3 select-none">
+      <div className="flex justify-between items-center mb-1.5">
+        <span className="iris-label text-[10px]">SELECIONAR ZONA PARA AJUSTE:</span>
+        <button 
+          type="button"
+          className="iris-btn py-0.5 px-2 text-[8px] cursor-pointer"
+          onClick={triggerEyeDropper}
+        >
+          CONTA-GOTAS
+        </button>
+      </div>
+
+      <div className="grid grid-cols-5 gap-1.5 mb-3">
         {ZONE_KEYS.map((key, i) => {
           const isRing = key === 'ringColorCustom';
           return (
@@ -138,32 +133,32 @@ export function ColorZoneEditor() {
         })}
       </div>
 
-      {/* Editor Radial & Slider Saturation */}
-      <div className="flex items-center gap-6 bg-black/10 p-2 border border-[var(--iris-border)]">
-        {/* Color Wheel */}
+      {/* Visualização de Cor e Input HEX */}
+      <div className="flex items-center gap-3 bg-black/10 p-2 border border-[var(--iris-border)]">
         <div 
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          className="color-wheel-circle flex-shrink-0"
-        >
-          {/* Cursor Cruz de seleção */}
-          <div 
-            className="color-wheel-pointer"
-            style={{ left: `${cursorX}px`, top: `${cursorY}px` }}
-          >
-            +
-          </div>
+          className="w-8 h-8 border border-[var(--iris-border)] flex-shrink-0"
+          style={{ backgroundColor: activeColor }}
+        />
+        <div className="flex items-center gap-2 text-[10px] font-mono select-text flex-grow">
+          <span className="text-[var(--iris-phosphor-dim)] font-bold">HEX:</span>
+          <input
+            type="text"
+            className="bg-black border border-[var(--iris-border)] px-2 py-0.5 text-[var(--iris-phosphor)] w-[75px] uppercase font-bold outline-none text-[10px]"
+            value={localHex}
+            onChange={(e) => handleHexChange(e.target.value)}
+            placeholder="#000000"
+            maxLength={7}
+          />
         </div>
-
+        
         {/* Saturation Slider */}
-        <div className="flex-1 min-w-0 pr-1 select-none">
-          <div className="text-[var(--iris-phosphor)] font-bold mb-1.5 uppercase text-[9px]">SATURAÇÃO</div>
-          <div className="flex items-center gap-2 text-[9px] font-mono">
+        <div className="w-[180px] select-none text-[9px] font-mono">
+          <div className="text-[var(--iris-phosphor)] font-bold mb-1 uppercase">SATURAÇÃO</div>
+          <div className="flex items-center gap-2">
             <span className="text-[var(--iris-phosphor-dim)] font-bold">·</span>
             <span className="text-[var(--iris-phosphor)] font-bold mr-0.5">■</span>
             
-            <div className="flex-1 relative flex items-center">
+            <div className="flex-grow relative flex items-center">
               <input
                 type="range"
                 className="iris-slider w-full"
@@ -181,8 +176,73 @@ export function ColorZoneEditor() {
         </div>
       </div>
 
+      {/* Sliders de Canais RGB */}
+      <div className="space-y-2.5 bg-black/10 p-2 border-x border-b border-[var(--iris-border)]">
+        {/* Red Channel */}
+        <div className="flex items-center gap-2 text-[9px] font-mono">
+          <span className="text-[var(--iris-fuchsia)] font-bold w-14 uppercase">CANAL R</span>
+          <span className="text-[var(--iris-phosphor-dim)] font-bold">·</span>
+          <span className="text-[var(--iris-fuchsia)] font-bold mr-0.5">■</span>
+          <div className="flex-grow relative flex items-center">
+            <input
+              type="range"
+              className="iris-slider w-full"
+              data-accent="fuchsia"
+              min={0}
+              max={255}
+              step={1}
+              value={rgb.r}
+              onChange={(e) => handleChannelChange('r', parseInt(e.target.value, 10))}
+            />
+          </div>
+          <span className="text-[var(--iris-phosphor-dim)] font-bold ml-0.5">·</span>
+          <span className="text-[var(--iris-fuchsia)] text-right w-8 font-bold">{rgb.r}</span>
+        </div>
+
+        {/* Green Channel */}
+        <div className="flex items-center gap-2 text-[9px] font-mono">
+          <span className="text-[var(--iris-phosphor)] font-bold w-14 uppercase">CANAL G</span>
+          <span className="text-[var(--iris-phosphor-dim)] font-bold">·</span>
+          <span className="text-[var(--iris-phosphor)] font-bold mr-0.5">■</span>
+          <div className="flex-grow relative flex items-center">
+            <input
+              type="range"
+              className="iris-slider w-full"
+              min={0}
+              max={255}
+              step={1}
+              value={rgb.g}
+              onChange={(e) => handleChannelChange('g', parseInt(e.target.value, 10))}
+            />
+          </div>
+          <span className="text-[var(--iris-phosphor-dim)] font-bold ml-0.5">·</span>
+          <span className="text-[var(--iris-phosphor)] text-right w-8 font-bold">{rgb.g}</span>
+        </div>
+
+        {/* Blue Channel */}
+        <div className="flex items-center gap-2 text-[9px] font-mono">
+          <span className="text-[var(--iris-cyan)] font-bold w-14 uppercase">CANAL B</span>
+          <span className="text-[var(--iris-phosphor-dim)] font-bold">·</span>
+          <span className="text-[var(--iris-cyan)] font-bold mr-0.5">■</span>
+          <div className="flex-grow relative flex items-center">
+            <input
+              type="range"
+              className="iris-slider w-full"
+              data-accent="cyan"
+              min={0}
+              max={255}
+              step={1}
+              value={rgb.b}
+              onChange={(e) => handleChannelChange('b', parseInt(e.target.value, 10))}
+            />
+          </div>
+          <span className="text-[var(--iris-phosphor-dim)] font-bold ml-0.5">·</span>
+          <span className="text-[var(--iris-cyan)] text-right w-8 font-bold">{rgb.b}</span>
+        </div>
+      </div>
+
       <p className="iris-label text-[8px] mt-1.5 text-center leading-normal">
-        CLIQUE OU ARRASTE NO CÍRCULO CONCENTRICO PARA ESCOLHER O TOM DA ZONA SELECIONADA.
+        AJUSTE OS SLIDERS DOS CANAIS R, G, B OU DIGITE O HEX DA COR PARA EDITAR A ZONA.
       </p>
     </div>
   );

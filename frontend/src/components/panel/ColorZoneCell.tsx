@@ -36,7 +36,7 @@ export function ColorZoneCell({ index, zoneKey, isRing, active, onSelect, onDese
         active
           ? 'border-[var(--iris-phosphor)] bg-[rgba(26,107,56,0.15)]'
           : 'border-[var(--iris-border)] bg-transparent hover:border-[var(--iris-phosphor-dim)]'
-      } ${!enabled ? 'opacity-25 pointer-events-none' : ''}`}
+      } ${!enabled ? 'opacity-30' : ''}`}
     >
       <span className="text-[8px] font-mono font-bold text-[var(--iris-phosphor-dim)]">{label}</span>
       <div

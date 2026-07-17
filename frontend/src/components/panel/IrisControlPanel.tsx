@@ -26,6 +26,10 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
   const barPulseSpeed = useIrisStore((s) => s.barPulseSpeed);
   const pulseSpeed = useIrisStore((s) => s.pulseSpeed);
 
+  const physicsMode = useIrisStore((s) => s.physicsMode);
+  const snapToCenter = useIrisStore((s) => s.snapToCenter);
+  const repulsionStrength = useIrisStore((s) => s.repulsionStrength);
+
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, origX: 0, origY: 0 });
 
   const onHeaderPointerDown = (e: React.PointerEvent) => {
@@ -83,27 +87,58 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
         </IrisSection>
 
         <IrisSection title="SECTION 2 - FÍSICA E DINÂMICA">
-          <IrisSelectRow 
-            label="FÍSICA" 
-            storeKey="physicsMode" 
-            options={PHYSICS_OPTIONS} 
-            passiveText="GEL | RÍGIDA | LÍQUIDA" 
-          />
-          <IrisToggleRow 
-            label="ORB SNAP" 
-            storeKey="snapToCenter" 
-            passiveText="[ON/OFF]" 
-          />
-          
-          {/* Barra de nível decorativa do mockup */}
-          <div className="flex items-center gap-2 mb-3 select-none text-[9px] font-mono">
-            <div className="w-[180px] flex items-center">
-              <span className="text-[var(--iris-phosphor)] border border-[var(--iris-border)] px-1.5 py-0.5 bg-black tracking-widest">
-                ████████████░░░░░
-              </span>
+          {/* Linha combinada: FÍSICA + ORB SNAP */}
+          <div className="flex items-center justify-between mb-3 select-none text-[9px] font-mono">
+            {/* Física Dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--iris-phosphor)] font-bold uppercase w-[60px]">FÍSICA</span>
+              <select
+                className="iris-select bg-black border px-1 py-0.5 text-[var(--iris-phosphor)] border-[var(--iris-border)]"
+                value={physicsMode}
+                onChange={(e) => setFXConfig({ physicsMode: e.target.value as any })}
+              >
+                {PHYSICS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value} className="bg-black text-current">
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="flex-grow h-[1px] bg-[var(--iris-border)] opacity-20" />
+
+            {/* Orb Snap Toggle */}
+            <div className="flex items-center gap-2 pr-1">
+              <span className="text-[var(--iris-phosphor)] font-bold uppercase">ORB SNAP</span>
+              <button
+                type="button"
+                onClick={() => setFXConfig({ snapToCenter: !snapToCenter })}
+                className={`iris-btn-toggle px-2 py-0.5 border ${
+                  snapToCenter 
+                    ? 'bg-[var(--iris-phosphor)] text-black border-[var(--iris-phosphor)]' 
+                    : 'bg-black text-[var(--iris-phosphor)] border-[var(--iris-border)]'
+                }`}
+              >
+                {snapToCenter ? 'ON' : 'OFF'}
+              </button>
+            </div>
           </div>
+          
+          {/* Barra de nível reativa ao slider de Repulsão do Mouse */}
+          {(() => {
+            const totalBlocks = 15;
+            const activeBlocks = Math.min(totalBlocks, Math.max(0, Math.round((repulsionStrength / 2.5) * totalBlocks)));
+            const progressStr = '█'.repeat(activeBlocks) + '░'.repeat(totalBlocks - activeBlocks);
+            return (
+              <div className="flex items-center gap-2 mb-3 select-none text-[9px] font-mono">
+                <span className="text-[var(--iris-phosphor-dim)] font-bold uppercase w-[110px]">REPULSION FORCE</span>
+                <div className="flex items-center">
+                  <span className="text-[var(--iris-phosphor)] border border-[var(--iris-border)] px-1.5 py-0.5 bg-black tracking-widest font-bold">
+                    {progressStr}
+                  </span>
+                </div>
+                <div className="flex-grow h-[1px] bg-[var(--iris-border)] opacity-20" />
+              </div>
+            );
+          })()}
 
           {SLIDER_PARAMS.filter((p) => p.section === 'physics').map(({ key, ...rest }) => (
             <IrisSliderRow key={key} paramKey={key} {...rest} />
