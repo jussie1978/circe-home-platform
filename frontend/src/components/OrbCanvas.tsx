@@ -381,7 +381,7 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
 
     // Interpolação suave (lerp) para o efeito de arrastar em 3D
     const targetDrag = useIrisStore.getState().dragOffset || { x: 0, y: 0 };
-    const dragLerpFactor = targetDrag.x === 0 && targetDrag.y === 0 ? 0.08 : 0.15; // retorno é mais suave, arrasto é mais responsivo
+    const dragLerpFactor = targetDrag.x === 0 && targetDrag.y === 0 ? 0.08 : 0.45; // retorno suave, tracking ultra responsivo
     currentDragRotation.current.x = THREE.MathUtils.lerp(currentDragRotation.current.x, targetDrag.x, dragLerpFactor);
     currentDragRotation.current.y = THREE.MathUtils.lerp(currentDragRotation.current.y, targetDrag.y, dragLerpFactor);
 

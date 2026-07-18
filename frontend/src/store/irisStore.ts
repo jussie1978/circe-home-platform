@@ -68,6 +68,10 @@ export interface IrisStore {
   isDraggingSat2: boolean;
   cosmicJetsEnabled: boolean;
   jetIntensity: number;
+  faceDetected: boolean;
+  faceX: number;
+  faceY: number;
+  voiceText: string;
 
   setFXConfig: (config: FXConfigPatch) => void;
 }
@@ -153,5 +157,9 @@ export const useIrisStore = create<IrisStore>((set) => ({
   isDraggingSat2: false,
   cosmicJetsEnabled: false,
   jetIntensity: 1.0,
+  faceDetected: false,
+  faceX: 0.0,
+  faceY: 0.0,
+  voiceText: '',
   setFXConfig: (config) => set((state) => ({ ...state, ...config })),
 }));

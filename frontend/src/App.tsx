@@ -73,7 +73,9 @@ export default function App() {
     setActivePanel,
     satelliteCoords,
     satellite2Coords,
-    customThemeActive
+    customThemeActive,
+    faceDetected,
+    voiceText
   } = useIrisStore();
     const R1_dyn = Math.max(500, (window.innerWidth / 2) - 40);
   const R2_dyn = R1_dyn * 0.8;
@@ -215,7 +217,8 @@ export default function App() {
   // Conexão WebSocket com o Backend FastAPI
   useEffect(() => {
     const connectWS = () => {
-      const socket = new WebSocket('ws://localhost:8000/ws');
+      // Usando 127.0.0.1 para evitar problemas de resolução de localhost (IPv6 vs IPv4) no Windows
+      const socket = new WebSocket('ws://127.0.0.1:8001/ws');
       wsRef.current = socket;
 
       socket.onopen = () => {
@@ -245,6 +248,23 @@ export default function App() {
             setRoofAngle(data.roofAngle);
             if (data.finsState === undefined) {
               setFinsState(data.roofAngle > 10 ? 'open' : 'closed');
+            }
+          }
+          if (data.voiceText !== undefined) {
+            useIrisStore.setState({ voiceText: data.voiceText });
+          }
+          if (data.faceDetected !== undefined) {
+            useIrisStore.setState({ faceDetected: data.faceDetected });
+            if (data.faceDetected && data.faceX !== undefined && data.faceY !== undefined) {
+              // faceX (horizontal -1..1) → dragOffset.y (rotation.y do orbe)
+              // faceY (vertical -1..1)   → dragOffset.x (rotation.x do orbe), invertido (câmera espelha Y)
+              const gain = 1.6;
+              const maxAngle = 40 * Math.PI / 180;
+              const rotX = Math.max(-maxAngle, Math.min(maxAngle, data.faceY * gain));
+              const rotY = Math.max(-maxAngle, Math.min(maxAngle, data.faceX * gain));
+              useIrisStore.setState({ dragOffset: { x: rotX, y: rotY } });
+            } else if (useIrisStore.getState().snapToCenter) {
+              useIrisStore.setState({ dragOffset: { x: 0, y: 0 } });
             }
           }
         } catch (err) {
@@ -279,55 +299,16 @@ export default function App() {
     setRoofAngle
   ]);
 
-  // Simulação Local Inteligente (Física Térmica, Histórico, RPMs e Aletas)
   useEffect(() => {
-    if (isWebSocketConnected) return;
-
-    const interval = setInterval(() => {
-      const store = useIrisStore.getState();
-      
-      // 1. Simulação Térmica
-      const coolingFactor = (store.fan1Speed / 100) * 0.45;
-      const heatingFactor = 0.18;
-      const noise = (Math.random() - 0.5) * 0.3;
-      const tempDelta = heatingFactor - coolingFactor + noise;
-      const nextTemp = parseFloat(Math.max(30, Math.min(85, store.temperature + tempDelta)).toFixed(1));
-      setTemperature(nextTemp);
-
-      // Automação de Alerta Crítico
-      if (nextTemp >= 75) {
-        setIrisState('critical');
-      } else if (store.irisState === 'critical' && nextTemp < 70) {
-        setIrisState('idle');
-      }
-
-      // 2. Histórico de Temperatura (24 pontos)
-      const currentHistory = [...store.tempHistory];
-      currentHistory.push(nextTemp);
-      if (currentHistory.length > 24) currentHistory.shift();
-      setTempHistory(currentHistory);
-
-      // 3. Simulação de Umidade
-      const humidityNoise = (Math.random() - 0.5) * 0.5;
-      const nextHumidity = parseFloat(Math.max(20, Math.min(90, 75.0 - (nextTemp - 30.0) * 0.6 + humidityNoise)).toFixed(1));
-      setHumidity(nextHumidity);
-
-      // 4. Simulação de RPMs dos Ventiladores (com flutuação realista de ±15 RPM)
-      const rpm1Fluctuation = Math.floor((Math.random() - 0.5) * 30);
-      const rpm2Fluctuation = Math.floor((Math.random() - 0.5) * 30);
-      setFan1Rpm(store.fan1Speed > 0 ? Math.floor(store.fan1Speed * 20 + rpm1Fluctuation) : 0);
-      setFan2Rpm(store.fan2Speed > 0 ? Math.floor(store.fan2Speed * 19.5 + rpm2Fluctuation) : 0);
-    }, 2000);
-
-    return () => clearInterval(interval);
+    // O fallback local foi inteiramente removido para forçar a depuração real do sistema
+    // console.log("Aguardando conexão WebSocket...");
   }, [
     isWebSocketConnected,
     setTemperature,
-    setIrisState,
-    setTempHistory,
     setHumidity,
     setFan1Rpm,
-    setFan2Rpm
+    setFan2Rpm,
+    setIrisState
   ]);
 
   // Função para enviar comandos via REST ou WebSocket
@@ -342,13 +323,13 @@ export default function App() {
     // Fallback REST (POST para o backend FastAPI)
     try {
       if (topic === 'alx/case/fans/set') {
-        await fetch('http://localhost:8000/api/v1/controls/fans', {
+        await fetch('http://127.0.0.1:8001/api/v1/controls/fans', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ speed: parseInt(value) }),
         });
       } else if (topic === 'alx/case/leds/set') {
-        await fetch('http://localhost:8000/api/v1/controls/leds', {
+        await fetch('http://127.0.0.1:8001/api/v1/controls/leds', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ color: value }),
@@ -617,6 +598,12 @@ export default function App() {
           <span className="text-[var(--iris-phosphor-dim)]">CONN:</span>
           <span className={`font-bold ${isWebSocketConnected ? 'text-[var(--iris-phosphor)]' : 'text-amber-500'}`}>
             {isWebSocketConnected ? 'ONLINE' : 'OFFLINE'}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-[var(--iris-phosphor-dim)]">AI_VISION:</span>
+          <span className={`font-bold ${faceDetected ? 'text-[var(--iris-phosphor)]' : 'text-zinc-500'}`}>
+            {faceDetected ? 'TRACKING' : 'LOCKED'}
           </span>
         </div>
 
@@ -1294,6 +1281,16 @@ export default function App() {
         <span>SECURITY_PROTOCOL // ENCRYPTED</span>
         <span>SYS_STATUS // ACTIVE_LOCAL_HOST</span>
       </div>
+      
+      {/* Legendas CRT de Voz */}
+      {(irisState === 'speaking' || irisState === 'listening') && voiceText && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 max-w-[600px] text-center bg-black/80 border border-[var(--iris-phosphor)]/30 px-4 py-2 font-mono text-[10px] text-[var(--iris-phosphor)] shadow-[0_0_10px_rgba(6,182,212,0.15)] select-none pointer-events-none tracking-wide rounded-sm">
+          <span className="opacity-60 mr-1.5">&gt;&gt; IRIS:</span>
+          <span>{voiceText}</span>
+          <span className="inline-block w-1 h-2.5 ml-1 bg-[var(--iris-phosphor)] animate-pulse align-middle" />
+        </div>
+      )}
+
       <div className="absolute bottom-4 right-6 pointer-events-none z-10 font-mono text-[9px] text-cyan-500/40 animate-pulse">
         <span>Passe o mouse nos quadrantes para controlar o sistema</span>
       </div>
