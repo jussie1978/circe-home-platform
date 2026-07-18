@@ -12,12 +12,12 @@ Servo roofServo;
 // CONFIGURAÇÃO DE PINOS
 // ==========================================
 // Pino de SINAL do Servo MG996R (Fio Laranja/Amarelo)
-const int PIN_SERVO_ROOF = 18;
+const int PIN_SERVO_ROOF = 15;
 
 // Pinos dos Switches (Chaves de Fim de Curso originais)
 // Conecte um lado da chave ao GND e o outro a este pino (usa PULLUP interno)
-const int PIN_SWITCH_OPEN = 19;
-const int PIN_SWITCH_CLOSED = 21;
+const int PIN_SWITCH_OPEN = 4;
+const int PIN_SWITCH_CLOSED = 5;
 
 // ==========================================
 // CONTROLE DO SERVO 360
@@ -26,14 +26,14 @@ enum RoofState { ROOF_STOPPED, ROOF_OPENING, ROOF_CLOSING };
 RoofState currentRoofState = ROOF_STOPPED;
 unsigned long motorStartTime = 0;
 
-// Timeout de segurança: 5 segundos. 
-// Se o switch falhar, o motor para antes de estourar as engrenagens.
-const unsigned long MOTOR_TIMEOUT_MS = 5000; 
+// Timeout de segurança: 15 segundos para dar tempo de sobra.
+const unsigned long MOTOR_TIMEOUT_MS = 15000; 
 
 // Valores em microssegundos para servo de rotação contínua
 const int SERVO_STOP = 1500;
-const int SERVO_FORWARD = 1800; // Velocidade segura (abrir)
-const int SERVO_REVERSE = 1200; // Velocidade segura (fechar)
+// Usando força e velocidade MÁXIMAS para o MG996R vencer o peso das aletas
+const int SERVO_FORWARD = 2000; // Força máxima (abrir)
+const int SERVO_REVERSE = 1000; // Força máxima (fechar)
 
 void stopRoofMotor() {
   roofServo.writeMicroseconds(SERVO_STOP);

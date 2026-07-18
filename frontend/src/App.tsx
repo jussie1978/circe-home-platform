@@ -328,6 +328,12 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ speed: parseInt(value) }),
         });
+      } else if (topic === 'alx/case/servos/angle') {
+        await fetch('http://127.0.0.1:8001/api/v1/controls/servos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ angle: parseInt(value) }),
+        });
       } else if (topic === 'alx/case/leds/set') {
         await fetch('http://127.0.0.1:8001/api/v1/controls/leds', {
           method: 'POST',
