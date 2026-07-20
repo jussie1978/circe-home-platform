@@ -995,79 +995,133 @@ export default function App() {
               animate="visible"
               exit="exit"
               onClick={(e) => e.stopPropagation()}
-              className="absolute bottom-[12%] left-[8%] w-80 diesel-panel glow-panel-orange p-5 rounded-2xl pointer-events-auto flex flex-col gap-4 shadow-2xl border-2 border-zinc-700 backdrop-blur-md bg-opacity-90 select-none"
+              className="absolute top-[55%] left-[8%] w-80 iris-panel-container pointer-events-auto select-none"
               drag
               dragControls={dragServos}
               dragListener={false}
               dragMomentum={false}
             >
-              {/* Rebites mecânicos nos cantos */}
-              <div className="mechanical-rivet top-2 left-2" />
-              <div className="mechanical-rivet top-2 right-2" />
-              <div className="mechanical-rivet bottom-2 left-2" />
-              <div className="mechanical-rivet bottom-2 right-2" />
+              {/* Detalhes de cantos metálicos no Bezel */}
+              <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-[var(--iris-border)]" />
+              <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-[var(--iris-border)]" />
+              <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-[var(--iris-border)]" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-[var(--iris-border)]" />
 
-              {/* Visor CRT que atua como alça de arrasto */}
-              <div 
-                onPointerDown={(e) => dragServos.start(e)}
-                className="crt-screen w-full py-2 px-3.5 rounded-lg flex items-center justify-between border border-zinc-950 cursor-grab active:cursor-grabbing select-none"
+              <aside 
+                className="iris-panel shrink-0"
+                style={{ height: 'auto', minHeight: 'unset', maxHeight: 'none', width: '100%', padding: '12px 14px 16px' }}
               >
-                <div className="flex items-center gap-2">
-                  <Settings className="w-4.5 h-4.5 text-crt-orange" />
-                  <h2 className="font-bold tracking-wider uppercase font-mono text-xs text-crt-orange">ALETAS ALX</h2>
-                </div>
-                <Cpu className="w-3.5 h-3.5 text-crt-orange animate-pulse" />
-              </div>
+                <div className="iris-panel-screen-glow" />
 
-              <div className="flex flex-col gap-3">
+                <header 
+                  onPointerDown={(e) => dragServos.start(e)}
+                  className="iris-panel-header mb-4 flex justify-between items-center border-b border-[var(--iris-border)] pb-2 cursor-grab active:cursor-grabbing font-mono font-bold text-[10px] tracking-widest text-[var(--iris-phosphor)]"
+                >
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>ALETAS_ALX // CONTROL</span>
+                  </div>
+                  <Cpu className="w-3.5 h-3.5 animate-pulse" />
+                </header>
+
+                <div className="flex flex-col gap-3 relative z-10">
                 {/* Status Físico de Diagnóstico */}
-                <div className="flex justify-between items-center bg-black/25 p-2.5 rounded-xl border border-zinc-850 shadow-inner">
-                  <span className="font-mono text-[10px] text-slate-400 font-bold uppercase">Estado Físico</span>
-                  <span className={`font-mono text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${
-                    finsState === 'open' ? 'bg-emerald-950/20 border-emerald-500/30 text-crt-green' :
-                    finsState === 'closed' ? 'bg-zinc-950/40 border-zinc-700/30 text-slate-400' :
-                    finsState === 'moving' ? 'bg-amber-950/20 border-amber-500/30 text-crt-orange animate-pulse' :
-                    'bg-red-950/20 border-red-500/30 text-crt-red animate-pulse'
+                <div className="flex justify-between items-center bg-black/60 p-2.5 border border-[var(--iris-border)] shadow-inner">
+                  <span className="font-mono text-[9px] text-[var(--iris-phosphor-dim)] font-bold uppercase">ESTADO FÍSICO</span>
+                  <span className={`font-mono text-[9px] uppercase font-bold px-2 py-0.5 border ${
+                    finsState === 'open' ? 'bg-[var(--iris-phosphor)]/20 border-[var(--iris-phosphor)]/50 text-[var(--iris-phosphor)]' :
+                    finsState === 'closed' ? 'bg-black/80 border-[var(--iris-border)]/50 text-[var(--iris-phosphor-dim)]' :
+                    'bg-amber-950/40 border-amber-500/50 text-amber-400 animate-pulse'
                   }`}>
                     {finsState}
                   </span>
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between font-mono text-xs items-center">
-                    <span className="text-slate-400">Abertura do Servo</span>
-                    <span className="text-crt-orange font-mono font-bold text-sm bg-black/40 px-1.5 py-0.5 rounded border border-zinc-800">{roofAngle}°</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="180" 
-                    value={roofAngle} 
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      setFinsState('moving');
-                      setRoofAngle(val);
-                      sendControl('alx/case/servos/angle', val.toString());
+                <div className="flex flex-col gap-2 mt-1">
+                  
+                  {finsState === 'homing' ? (
+                    <div className="w-full bg-amber-950/40 border border-amber-500/50 p-3 flex flex-col items-center justify-center gap-2 animate-pulse">
+                      <Cpu className="w-5 h-5 text-amber-400 animate-spin" />
+                      <span className="font-mono text-[10px] text-amber-400 font-bold tracking-widest text-center">
+                        CALIBRANDO ALETAS...
+                      </span>
+                      <span className="font-mono text-[8px] text-amber-500/70 text-center">
+                        Aguarde a deteccao de limite zero.
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between font-mono text-[10px] items-center px-1">
+                        <span className="text-[var(--iris-phosphor-dim)]">ABERTURA: <span className="text-[var(--iris-phosphor)] font-bold">{roofAngle}%</span></span>
+                      </div>
                       
-                      if (!isWebSocketConnected) {
-                        if ((window as any).finsTimeout) clearTimeout((window as any).finsTimeout);
-                        (window as any).finsTimeout = setTimeout(() => {
-                          setFinsState(val > 10 ? 'open' : 'closed');
-                        }, 700);
-                      }
-                    }}
-                    className="w-full cursor-pointer accent-slider-orange" 
-                  />
+                      <div className="px-1 py-2">
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="100" 
+                          value={roofAngle} 
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            setFinsState('moving');
+                            setRoofAngle(val);
+                            sendControl('alx/case/servos/angle', val.toString());
+                            if (!isWebSocketConnected) {
+                              if ((window as any).finsTimeout) clearTimeout((window as any).finsTimeout);
+                              (window as any).finsTimeout = setTimeout(() => {
+                                setFinsState(val > 10 ? 'open' : 'closed');
+                              }, 2000);
+                            }
+                          }}
+                          className="iris-slider w-full cursor-pointer" 
+                        />
+                      </div>
+
+                      <div className="flex justify-between gap-2 mt-1">
+                        <button 
+                          onClick={() => { 
+                            setFinsState('moving');
+                            setRoofAngle(100); 
+                            sendControl('alx/case/servos/angle', '100');
+                          }}
+                          className={`iris-btn flex-1 flex justify-center items-center gap-2 ${
+                            roofAngle === 100 
+                            ? 'bg-[var(--iris-phosphor)]/20 shadow-[0_0_8px_rgba(61,255,122,0.15)] border-[var(--iris-phosphor)]' 
+                            : ''
+                          }`}
+                        >
+                          <div className={`w-1.5 h-1.5 rounded-full ${roofAngle === 100 ? 'bg-[var(--iris-phosphor)]' : 'bg-[var(--iris-phosphor-dim)]'}`}></div>
+                          MAX (100%)
+                        </button>
+                        
+                        <button 
+                          onClick={() => { 
+                            setFinsState('moving');
+                            setRoofAngle(0); 
+                            sendControl('alx/case/servos/angle', '0');
+                          }}
+                          className={`iris-btn flex-1 flex justify-center items-center gap-2 ${
+                            roofAngle === 0 
+                            ? 'bg-[var(--iris-phosphor)]/20 shadow-[0_0_8px_rgba(61,255,122,0.15)] border-[var(--iris-phosphor)]' 
+                            : ''
+                          }`}
+                        >
+                          <div className={`w-1.5 h-1.5 rounded-full ${roofAngle === 0 ? 'bg-[var(--iris-phosphor)]' : 'bg-[var(--iris-phosphor-dim)]'}`}></div>
+                          MIN (0%)
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Visualizador Esquemático de Aletas */}
-                <div className="crt-screen p-2 rounded-xl border border-zinc-950 flex flex-col items-center justify-center gap-1 h-14 relative overflow-hidden">
-                  <div className="absolute top-0.5 left-2 text-[7px] font-mono text-crt-orange/60 uppercase">MECHANICAL_FINS_PROFILE</div>
+                <div className="mt-2 bg-black/60 p-2 border border-[var(--iris-border)] flex flex-col items-center justify-center gap-1 h-14 relative overflow-hidden">
+                  <div className="absolute top-0.5 left-2 text-[7px] font-mono text-[var(--iris-phosphor-dim)] uppercase">MECHANICAL_FINS_PROFILE</div>
                   <div className="flex gap-6 items-center justify-center mt-2.5">
                     {[0, 1, 2, 3].map((i) => (
                       <div 
                         key={i} 
-                        className="w-8 h-1 bg-crt-orange rounded-full transition-transform duration-300 shadow-[0_0_6px_rgba(249,115,22,0.85)]"
+                        className="w-8 h-1 bg-[var(--iris-phosphor)] transition-transform duration-300 shadow-[0_0_6px_var(--iris-phosphor)]"
                         style={{
                           transform: `rotate(${-(roofAngle * 0.5)}deg)`,
                           transformOrigin: 'center'
@@ -1076,42 +1130,8 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-                
-                <div className="flex justify-between gap-2 mt-1">
-                  <button 
-                    onClick={() => { 
-                      setFinsState('moving');
-                      setRoofAngle(180); 
-                      sendControl('alx/case/servos/angle', '180');
-                      if (!isWebSocketConnected) {
-                        if ((window as any).finsTimeout) clearTimeout((window as any).finsTimeout);
-                        (window as any).finsTimeout = setTimeout(() => {
-                          setFinsState('open');
-                        }, 700);
-                      }
-                    }}
-                    className="flex-1 bg-orange-950/20 hover:bg-orange-900/40 border border-orange-500/30 text-orange-300 font-mono text-[10px] py-1.5 rounded-lg transition active:translate-y-0.5 shadow"
-                  >
-                    100% Aberto
-                  </button>
-                  <button 
-                    onClick={() => { 
-                      setFinsState('moving');
-                      setRoofAngle(0); 
-                      sendControl('alx/case/servos/angle', '0'); 
-                      if (!isWebSocketConnected) {
-                        if ((window as any).finsTimeout) clearTimeout((window as any).finsTimeout);
-                        (window as any).finsTimeout = setTimeout(() => {
-                          setFinsState('closed');
-                        }, 700);
-                      }
-                    }}
-                    className="flex-1 bg-black/55 hover:bg-black/75 border border-zinc-800 text-slate-400 font-mono text-[10px] py-1.5 rounded-lg transition active:translate-y-0.5 shadow"
-                  >
-                    Fechado
-                  </button>
-                </div>
               </div>
+              </aside>
             </motion.div>
           )}
 

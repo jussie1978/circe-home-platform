@@ -48,6 +48,7 @@ class SystemState:
         self.face_x = 0.0
         self.face_y = 0.0
         self.voice_text = ""
+        self.fins_state = "closed"
 
 state = SystemState()
 mqtt_manager = None
@@ -124,6 +125,7 @@ async def broadcast_state():
         "faceX": state.face_x,
         "faceY": state.face_y,
         "voiceText": state.voice_text,
+        "finsState": state.fins_state,
         "tempHistory": temp_history
     })
     
@@ -162,6 +164,14 @@ def handle_mqtt_message(topic: str, payload_str: str):
             state.voice_text = data.get("text", "")
         elif topic == "alx/status":
             logger.info(f"Status do dispositivo recebido via MQTT: {payload_str}")
+            if "homing" in payload_str.lower():
+                state.fins_state = "homing"
+            elif "online" in payload_str.lower():
+                # Se terminou de calibrar ou ligou, volta ao normal
+                if state.roof_angle > 10:
+                    state.fins_state = "open"
+                else:
+                    state.fins_state = "closed"
 
         # Envia atualização para os clientes WebSocket se o loop estiver ativo
         if loop:
