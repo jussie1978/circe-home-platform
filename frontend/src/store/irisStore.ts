@@ -14,7 +14,7 @@ export interface IrisStore {
   fan2Speed: number;
   fan2Rpm: number;
   fanMode: 'auto' | 'manual' | 'silent';
-  finsState: 'open' | 'closed' | 'moving' | 'error';
+  finsState: 'open' | 'closed' | 'moving' | 'error' | 'homing';
   pcState: 'on' | 'off';
   roofAngle: number;
   setHumidity: (humidity: number) => void;

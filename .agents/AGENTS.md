@@ -6,8 +6,8 @@ Welcome to the **CIRCE Home Platform** workspace. As an Antigravity agent, you m
 
 ## 1. Core Architecture & Philosophy
 
-*   **🔒 Privacy-First / Local-First**: The system operates 100% locally. Do NOT introduce external cloud services, analytics trackers, or remote dependencies.
-*   **🤖 Conversational Interface (IRIS)**: All voice interactions are handled locally using Whisper, Ollama, and Piper. Ensure that APIs support clean, asynchronous local streams.
+*   **🔒 Privacy-First / Local-First**: The system operates locally for device control, automation, and state management. External cloud services (such as Gemini Live or GPT Realtime APIs) are permitted exclusively for streaming conversational voice intelligence and ambient multimodal analysis under demand, ensuring no personal data trackers are introduced.
+*   **🤖 Conversational Interface (IRIS)**: Voice interactions are handled through a hybrid architecture, using low-latency WebSockets APIs (Gemini Live API, with GPT Realtime backup) for conversational fluidity, while local function calling executes commands on the local IoT network.
 *   **⚡ Real-Time Messaging**: Communication between components (Frontend, Backend, Firmware) is orchestrated using local MQTT (via Mosquitto) and WebSockets.
 *   **📐 Spec-Driven Development (SDD)**: Never write product code without an approved specification (`docs/SPEC-*.md` and/or ADRs in `docs/adrs/`). Any architectural changes must be documented via Architecture Decision Records (ADRs).
 

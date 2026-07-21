@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import OrbCanvas from './components/OrbCanvas';
 import { useIrisStore } from './store/irisStore';
+import { voiceService } from './services/voiceService';
 import { IrisControlPanel } from './components/panel/IrisControlPanel';
 
 const PANEL_W = 400;
@@ -211,6 +212,7 @@ export default function App() {
   const [ledColor, setLedColor] = useState('#06B6D4');
   const [ledMode, setLedMode] = useState('Breath');
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
+  const [voiceActive, setVoiceActive] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -344,6 +346,46 @@ export default function App() {
     } catch (e) {
       // Ignora erro se backend não estiver rodando
     }
+  };
+
+  const toggleVoiceSession = () => {
+    if (voiceActive) {
+      voiceService.disconnect();
+      setVoiceActive(false);
+      useIrisStore.setState({ irisState: 'idle', voiceText: '' });
+    } else {
+      const apiKey = localStorage.getItem('GEMINI_API_KEY') || (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
+      if (!apiKey) {
+        const inputKey = prompt("Por favor, insira sua GEMINI_API_KEY do Google AI Studio para conversar com a IRIS:");
+        if (inputKey) {
+          localStorage.setItem('GEMINI_API_KEY', inputKey);
+          startVoiceSession(inputKey);
+        }
+      } else {
+        startVoiceSession(apiKey);
+      }
+    }
+  };
+
+  const startVoiceSession = (key: string) => {
+    voiceService.connect(key, 'gemini-2.0-flash-exp', {
+      onStateChange: (state) => {
+        if (state === 'connecting') {
+          setIrisState('listening');
+        } else if (state === 'error') {
+          setIrisState('critical');
+        } else {
+          setIrisState(state);
+        }
+      },
+      onTextReceived: (text) => {
+        useIrisStore.setState({ voiceText: text });
+      },
+      onToolExecuted: (name, _args, result) => {
+        console.log(`Função local ${name} executada com sucesso. Resultado:`, result);
+      }
+    });
+    setVoiceActive(true);
   };
 
   // Variantes de animação para os cards de controle (Framer Motion) - Suavizados e menos bruscos
@@ -556,7 +598,11 @@ export default function App() {
             }
             
             if (!hasDraggedRef.current) {
-              setActivePanel(null);
+              if (activePanel && activePanel.length > 0) {
+                setActivePanel(null);
+              } else {
+                toggleVoiceSession();
+              }
             }
           }
         }}
@@ -1318,7 +1364,7 @@ export default function App() {
       )}
 
       <div className="absolute bottom-4 right-6 pointer-events-none z-10 font-mono text-[9px] text-cyan-500/40 animate-pulse">
-        <span>Passe o mouse nos quadrantes para controlar o sistema</span>
+        <span>Clique no centro para conversar com a IRIS // Passe nos quadrantes para controlar</span>
       </div>
 
         {!settingsOpen && (

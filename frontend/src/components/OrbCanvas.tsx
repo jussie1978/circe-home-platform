@@ -1,8 +1,10 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, Vignette, ChromaticAberration, Noise } from '@react-three/postprocessing';
+
 import * as THREE from 'three';
 import { useIrisStore } from '../store/irisStore';
+import { globalAudioAnalyser } from '../utils/audioAnalyser';
 
 interface OrbCanvasProps {
   rotSpeed?: number;
@@ -52,9 +54,9 @@ function getZoneColor(
     const h = 260 + norm * 40;
     color.setHSL(h / 360, 0.95, 0.45 + norm * 0.1);
   } else if (mode === 'speaking') {
-    // Branco iridescente/ciano suave
-    const h = 180 + norm * 60;
-    color.setHSL(h / 360, 0.25, 0.85);
+    // Azul elétrico/ciano brilhante ultra-saturado e vivo
+    const h = 185 + norm * 35;
+    color.setHSL(h / 360, 0.95, 0.5);
   } else if (mode === 'critical' || temp > 75) {
     // Vermelho crítico vibrante
     color.setHSL(0 / 360, 1.0, 0.5);
@@ -93,18 +95,9 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
   const octonaryColor = useIrisStore((s) => s.octonaryColor);
   const customThemeActive = useIrisStore((s) => s.customThemeActive);
   const colorZonesEnabled = useIrisStore((s) => s.colorZonesEnabled);
-  const rotationSpeed = useIrisStore((s) => s.rotationSpeed);
   const physicsMode = useIrisStore((s) => s.physicsMode);
-  const repulsionStrength = useIrisStore((s) => s.repulsionStrength);
-  const starSpeed = useIrisStore((s) => s.starSpeed);
   const saturation = useIrisStore((s) => s.saturation);
   const ringColorCustom = useIrisStore((s) => s.ringColorCustom);
-  const ringSpeed = useIrisStore((s) => s.ringSpeed);
-  const pulseSpeed = useIrisStore((s) => s.pulseSpeed);
-  const glowIntensityBars = useIrisStore((s) => s.glowIntensityBars);
-  const glowIntensityLines = useIrisStore((s) => s.glowIntensityLines);
-  const barPulseSpeed = useIrisStore((s) => s.barPulseSpeed);
-  const barGlowPulseSpeed = useIrisStore((s) => s.barGlowPulseSpeed);
 
 
 
@@ -144,6 +137,7 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
 
   // Fases acumuladas para evitar saltos bruscos (flicker de fase) ao alterar as velocidades
   const pulsePhaseRef = useRef(0);
+  const voidPulsePhaseRef = useRef(0);
   const barGlowPulsePhaseRef = useRef(0);
   const ringRotationPhaseRef = useRef(0);
   const colorRotationPhaseRef = useRef(0);
@@ -221,13 +215,21 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
     };
   }, []);
 
-  // 2. Materiais compartilhados habilitando cores de vértice e Blending Aditivo para efeito Glow
+  // 2. Materiais físicos compartilhados habilitando verniz acrílico brilhante
   const material = useMemo(() => {
-    return new THREE.MeshBasicMaterial({
+    return new THREE.MeshPhysicalMaterial({
       vertexColors: true,
       transparent: true,
-      blending: THREE.AdditiveBlending,
-      opacity: 0.85,
+      blending: THREE.NormalBlending,
+      opacity: 0.96,
+      roughness: 0.12,
+      metalness: 0.04,   // Metalicidade ultra-baixa para preservar as cores difusas saturadas
+      clearcoat: 1.0,    // Camada externa brilhante (tipo verniz/acrílico polido)
+      clearcoatRoughness: 0.04,
+      transmission: 0.15, // Efeito translúcido leve nas bordas
+      thickness: 0.5,
+      ior: 1.48,
+      depthWrite: true,
     });
   }, []);
 
@@ -243,10 +245,10 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         const zOff = (Math.random() - 0.5) * zMax;
         
         // Altura padrão baseada no tipo (reduzida em mais 10% adicionais R2.2 final)
-        let baseHeight = 0.55;
-        if (type === 'tall') baseHeight = 0.24 + Math.pow(Math.random(), 0.7) * 0.74;
-        else if (type === 'med') baseHeight = 0.056 + Math.random() * 0.28;
-        else baseHeight = 0.012 + Math.random() * 0.056;
+        let baseHeight = 0.55 * 0.85;
+        if (type === 'tall') baseHeight = (0.24 + Math.pow(Math.random(), 0.7) * 0.74) * 0.85;
+        else if (type === 'med') baseHeight = (0.056 + Math.random() * 0.28) * 0.85;
+        else baseHeight = (0.012 + Math.random() * 0.056) * 0.85;
 
         // Posição no anel
         const x = Math.cos(angle) * rBase;
@@ -311,8 +313,8 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const zOff = (Math.random() - 0.5) * 1.8;
-      const startR = RING_R * (0.95 + Math.random() * 0.1);
-      const endR = RING_R * (1.0 + Math.pow(Math.random(), 0.6) * 0.55); // Alcance reduzido em mais 10% adicionais R2.2 final
+      const startR = RING_R * (0.95 + Math.random() * 0.1) * 0.85;
+      const endR = RING_R * (1.0 + Math.pow(Math.random(), 0.6) * 0.55) * 0.85; // Alcance reduzido em mais 15%
 
       const sx = Math.cos(angle) * startR;
       const sy = Math.sin(angle) * startR;
@@ -376,6 +378,21 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
 
   // 7. Loop de Animação em tempo real de altíssima performance (useFrame executando na GPU)
   useFrame((state, delta) => {
+    const freshState = useIrisStore.getState();
+    const glowBarsEnabled = freshState.glowBarsEnabled;
+    const glowLinesEnabled = freshState.glowLinesEnabled;
+    
+    // Se o glow estiver desligado, as velocidades são forçadas a 0 para congelar as pulsações
+    const pulseSpeed = glowLinesEnabled ? freshState.pulseSpeed : 0;
+    const barPulseSpeed = glowBarsEnabled ? freshState.barPulseSpeed : 0;
+    const barGlowPulseSpeed = glowBarsEnabled ? freshState.barGlowPulseSpeed : 0;
+    const ringSpeed = freshState.ringSpeed;
+    const rotationSpeed = freshState.rotationSpeed;
+    const starSpeed = freshState.starSpeed;
+    const repulsionStrength = freshState.repulsionStrength;
+    const glowIntensityBars = freshState.glowIntensityBars;
+    const glowIntensityLines = freshState.glowIntensityLines;
+
     const elapsed = state.clock.getElapsedTime();
     const safeDelta = Math.min(0.03, delta); // usar delta nativo do scheduler do Fiber para evitar clock.getDelta() = 0
 
@@ -386,7 +403,12 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
     currentDragRotation.current.y = THREE.MathUtils.lerp(currentDragRotation.current.y, targetDrag.y, dragLerpFactor);
 
     // Acumular fases baseadas no tempo delta para transições 100% lineares e sem solavancos
-    pulsePhaseRef.current += safeDelta * 1.6 * pulseSpeed;
+    const basePulseRate = irisState === 'listening' ? 4.5 : irisState === 'critical' ? 6.0 : 2.2;
+    pulsePhaseRef.current += safeDelta * basePulseRate * pulseSpeed;
+
+    const baseVoidPulseRate = irisState === 'listening' ? 3.0 : irisState === 'speaking' ? 2.2 : 1.2;
+    voidPulsePhaseRef.current += safeDelta * baseVoidPulseRate * pulseSpeed;
+
     barGlowPulsePhaseRef.current += safeDelta * 1.6 * barGlowPulseSpeed;
     ringRotationPhaseRef.current += safeDelta * 0.22 * ringSpeed;
     colorRotationPhaseRef.current += safeDelta * 0.42 * rotationSpeed;
@@ -467,27 +489,40 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
 
     if (orbGroupRef.current) {
       orbGroupRef.current.rotation.z -= currentSpeed * safeDelta; // Gira no sentido horário ( -= )
-      orbGroupRef.current.rotation.y = Math.sin(elapsed * 0.15) * 0.12 + currentDragRotation.current.y;
-      orbGroupRef.current.rotation.x = Math.cos(elapsed * 0.1) * 0.08 + currentDragRotation.current.x;
+      orbGroupRef.current.rotation.y = Math.sin(elapsed * 0.15 * rotationSpeed) * 0.12 + currentDragRotation.current.y;
+      orbGroupRef.current.rotation.x = Math.cos(elapsed * 0.1 * rotationSpeed) * 0.08 + currentDragRotation.current.x;
     }
 
     if (rayGroupRef.current && orbGroupRef.current) {
       // Rotação em sentido contrário (contra-rotação) com velocidade sutil para criar paralaxe viva tridimensional
       rayGroupRef.current.rotation.z = orbGroupRef.current.rotation.z * -0.55;
-      rayGroupRef.current.rotation.y = Math.cos(elapsed * 0.12) * 0.08 + currentDragRotation.current.y; // Alinhado com o ângulo de rotação/inclinação do Orbe
-      rayGroupRef.current.rotation.x = Math.sin(elapsed * 0.08) * 0.05 + currentDragRotation.current.x; // Alinhado com o ângulo de rotação/inclinação do Orbe
+      rayGroupRef.current.rotation.y = Math.cos(elapsed * 0.12 * rotationSpeed) * 0.08 + currentDragRotation.current.y; // Alinhado com o ângulo de rotação/inclinação do Orbe
+      rayGroupRef.current.rotation.x = Math.sin(elapsed * 0.08 * rotationSpeed) * 0.05 + currentDragRotation.current.x; // Alinhado com o ângulo de rotação/inclinação do Orbe
       
       // Aplicar opacidade de glow das barras
       if (material) {
-        material.opacity = 0.85;
+        material.opacity = 0.96;
       }
 
       // Pulsação contínua da opacidade das linhas de fuga
       if (rayLinesMaterial) {
         const linesGlowEnabled = useIrisStore.getState().glowLinesEnabled;
         if (linesGlowEnabled) {
-          const baseOpacity = pulseSpeed === 0 ? 0.45 : 0.22 + 0.23 * Math.sin(pulsePhaseRef.current);
-          (rayLinesMaterial as THREE.LineBasicMaterial).opacity = Math.max(0.0, baseOpacity) * (glowIntensityLines / 1.2);
+          const baseOpacity = pulseSpeed === 0 ? 0.65 : 0.35 + 0.35 * Math.sin(pulsePhaseRef.current);
+          (rayLinesMaterial as THREE.LineBasicMaterial).opacity = Math.max(0.0, baseOpacity) * (glowIntensityLines * 1.25);
+          
+          // Cor neon dinâmica para as linhas baseada no estado IRIS
+          const activeColor = customThemeActive
+            ? new THREE.Color(ringColorCustom)
+            : new THREE.Color(irisState === 'listening' ? 0x7C3AED : irisState === 'critical' || temperature > 75 ? 0xEF4444 : 0x06B6D4);
+          
+          const tempHSL = { h: 0, s: 0, l: 0 };
+          activeColor.getHSL(tempHSL);
+          activeColor.setHSL(tempHSL.h, tempHSL.s * saturation, tempHSL.l);
+          
+          // Boost de intensidade física
+          activeColor.multiplyScalar(2.0 + (glowIntensityLines * 1.5));
+          (rayLinesMaterial as THREE.LineBasicMaterial).color.copy(activeColor);
         } else {
           (rayLinesMaterial as THREE.LineBasicMaterial).opacity = 0.0; // Desliga totalmente o glow e as linhas
         }
@@ -519,13 +554,25 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         lerpSpeed = 0.05; // estica de forma muito suave e viscosa, com atraso líquido
       }
 
+      // Obter dados de frequência do áudio para deformação em tempo real
+      const freqData = globalAudioAnalyser.getFrequencyData();
+      const hasAudio = freqData.length > 0;
+
       for (let i = 0; i < data.length; i++) {
         const b = data[i];
         b.phase += b.phaseSpd * barPulseSpeed;
 
-        // 1. Oscilação base / pulso natural
-        const amp = type === 'tall' ? 0.12 : type === 'med' ? 0.06 : 0.03;
-        let targetScaleY = b.baseHeight * (1.0 - amp + amp * Math.abs(Math.sin(b.phase)));
+        // 1. Oscilação base / pulso natural visível controlado por barPulseSpeed
+        const amp = (type === 'tall' ? 0.35 : type === 'med' ? 0.22 : 0.12) * Math.min(1.5, barPulseSpeed);
+        
+        let audioDeform = 0;
+        if (hasAudio) {
+          const freqIdx = Math.floor((i / data.length) * freqData.length);
+          const freqVal = freqData[freqIdx] / 255;
+          audioDeform = freqVal * (type === 'tall' ? 2.5 : type === 'med' ? 1.6 : 0.8);
+        }
+
+        let targetScaleY = b.baseHeight * (1.0 - amp + amp * Math.abs(Math.sin(b.phase)) + audioDeform);
 
         // 2. Interação física com mouse 3D (raycast)
         const absolutePos = b.currentPos.clone();
@@ -561,8 +608,8 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         // baseForce reduzida em ~3.5x para linearidade total dos controles (evita saturação precoce da velocidade)
         const baseForce = type === 'tall' ? 0.022 : 0.014;
         
-        // Ondulação vibratória de energia viva no tempo e espaço (ripple)
-        const waveForce1 = sat1Force * (1.0 + 0.22 * Math.sin(elapsed * 6.0 + i * 0.1));
+        // Ondulação vibratória de energia viva no tempo e espaço (ripple) - Escala com pulseSpeed
+        const waveForce1 = sat1Force * (1.0 + 0.22 * Math.sin(elapsed * 6.0 + i * 0.1) * pulseSpeed);
         
         // Decaimento linear mais localizado (0.35 + 0.75) para concentrar o efeito de maré
         const forceMagSat = (baseForce * waveForce1) / (distSat * 0.35 + 0.75);
@@ -592,8 +639,8 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         // baseForce2 reduzida para linearidade
         const baseForce2 = type === 'tall' ? 0.022 : 0.014;
         
-        // Ondulação senoidal defasada
-        const waveForce2 = sat2Force * (1.0 + 0.22 * Math.cos(elapsed * 7.5 + i * 0.1));
+        // Ondulação senoidal defasada - Escala com pulseSpeed
+        const waveForce2 = sat2Force * (1.0 + 0.22 * Math.cos(elapsed * 7.5 + i * 0.1) * pulseSpeed);
         
         // Decaimento linear localizado
         const forceMagSat2 = (baseForce2 * waveForce2 * 0.9) / (distSat2 * 0.35 + 0.75);
@@ -616,7 +663,7 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
         
         if (cosmicJetsEnabled && Math.abs(Math.sin(b.angle)) > 0.93) {
           const jetFactor = (Math.abs(Math.sin(b.angle)) - 0.93) / 0.07;
-          const jetOsc = Math.sin(elapsed * 15.0 + i * 0.4) * 0.5 + 0.5;
+          const jetOsc = Math.sin(elapsed * 15.0 * pulseSpeed + i * 0.4) * 0.5 + 0.5;
           
           const jetStretch = jetFactor * jetIntensity * (6.0 + 4.0 * jetOsc);
           targetScaleY = targetScaleY * (1.0 + jetStretch);
@@ -658,8 +705,9 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
 
     // Pulsação e rotação rápidas das partículas do anel principal (no sentido horário)
     if (ringRef.current) {
-      const pulseRate = irisState === 'listening' ? 4.5 : irisState === 'critical' ? 6.0 : 2.2;
-      const pulseVal = 0.82 + 0.18 * Math.sin(elapsed * pulseRate);
+      const avgFreq = globalAudioAnalyser.getAverageFrequency() / 255;
+      const audioPulse = 1.0 + avgFreq * 0.65;
+      const pulseVal = (0.82 + 0.18 * Math.sin(pulsePhaseRef.current)) * audioPulse;
       
       const ringColor = customThemeActive
         ? new THREE.Color(ringColorCustom)
@@ -671,10 +719,10 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
       ringColor.setHSL(tempHSL.h, tempHSL.s * saturation, tempHSL.l);
       
       // HDR booster para as partículas do anel brilharem
-      ringColor.multiplyScalar(3.0);
+      ringColor.multiplyScalar(3.0 + avgFreq * 6.0);
       
       (ringRef.current.material as THREE.PointsMaterial).color.copy(ringColor);
-      (ringRef.current.material as THREE.PointsMaterial).opacity = 0.85 * pulseVal;
+      (ringRef.current.material as THREE.PointsMaterial).opacity = Math.min(1.0, 0.85 * pulseVal);
       
       // Rotação orbital simulando cinto orbital de plasma no sentido horário via fase acumulada
       ringRef.current.rotation.z = -ringRotationPhaseRef.current;
@@ -683,9 +731,10 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
 
     // Pulsação orgânica da pupila/buraco negro central (respiração do organismo)
     if (centralVoidRef.current) {
-      const voidPulseRate = irisState === 'listening' ? 3.0 : irisState === 'speaking' ? 2.2 : 1.2;
-      const voidScale = 0.96 + 0.04 * Math.sin(elapsed * voidPulseRate);
-      centralVoidRef.current.scale.set(voidScale, voidScale, 1.0);
+      const avgFreq = globalAudioAnalyser.getAverageFrequency() / 255;
+      const audioScale = 1.0 + avgFreq * 0.25;
+      const voidScale = (0.96 + 0.04 * Math.sin(voidPulsePhaseRef.current)) * audioScale;
+      centralVoidRef.current.scale.set(voidScale, voidScale, voidScale);
     }
 
     // Vórtice Espiral Cósmico (Física baseada em tempo absoluto, 100% contínua e sem jitters/brusquidão)
@@ -889,6 +938,14 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
 
   return (
     <>
+      {/* Iluminação física do estúdio fotorrealista */}
+      <ambientLight intensity={0.25} />
+      <directionalLight position={[5, 10, 5]} intensity={1.8} color="#ffffff" />
+      <pointLight position={[-6, -6, 3]} intensity={2.5} color="#06B6D4" />
+      <pointLight position={[6, 6, 3]} intensity={2.5} color="#7C3AED" />
+      
+
+
       {/* Grupo do Orbe central */}
       <group ref={orbGroupRef}>
         <instancedMesh ref={tallInstRef} args={[geometries.tall, material, 700]} />
@@ -907,10 +964,22 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
           />
         </points>
 
-        {/* Buraco negro central (Garante contraste e buraco limpo) */}
-        <mesh ref={centralVoidRef} position={[0, 0, 0.005]}>
-          <circleGeometry args={[1.55, 96]} />
-          <meshBasicMaterial color={0x02020a} side={THREE.DoubleSide} />
+        {/* Cristal/Esfera central de Vidro Fumê Obsidian (Garante contraste e refração tridimensional) */}
+        <mesh ref={centralVoidRef} position={[0, 0, 0]}>
+          <sphereGeometry args={[1.54, 64, 64]} />
+          <meshPhysicalMaterial 
+            color={0x02020a}
+            roughness={0.06}
+            metalness={0.12}
+            clearcoat={1.0}
+            clearcoatRoughness={0.04}
+            transmission={0.88}
+            thickness={1.5}
+            ior={1.52}
+            transparent
+            opacity={0.96}
+            depthWrite={false}
+          />
         </mesh>
       </group>
 
@@ -924,7 +993,6 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
       <points ref={bgPtsRef} geometry={bgParticlesGeometry}>
         <pointsMaterial color={0xdfe9ff} size={0.007} transparent opacity={0.3} sizeAttenuation />
       </points>
-
     </>
   );
 }
@@ -954,18 +1022,26 @@ const OrbCanvas: React.FC<OrbCanvasProps> = ({ rotSpeed = 0.45 }) => {
       >
         <OrbScene rotSpeed={rotSpeed} />
         
-        {/* Filtro de Bloom refinado e vinheta para alto contraste sem perder definição */}
+        {/* Filtro de Bloom refinado, Aberração Cromática suave, Ruído sutil e Vinheta */}
         <EffectComposer multisampling={8}>
           <Bloom
-            intensity={glowIntensityBars * 1.5}
-            luminanceThreshold={1.0}
-            luminanceSmoothing={0.5}
+            intensity={glowIntensityBars * 2.8}
+            luminanceThreshold={0.15}
+            luminanceSmoothing={0.75}
             height={480}
             mipmapBlur
           />
+          <ChromaticAberration
+            offset={new THREE.Vector2(0.0006, 0.0006)}
+            radialModulation={true}
+            modulationOffset={0.1}
+          />
+          <Noise
+            opacity={0.006} // Quase imperceptível, apenas para quebrar banding de cor
+          />
           <Vignette
             eskil={false}
-            offset={0.4}
+            offset={0.45}
             darkness={0.6}
           />
         </EffectComposer>

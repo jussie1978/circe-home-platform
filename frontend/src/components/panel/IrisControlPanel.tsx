@@ -26,6 +26,7 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
   const glowIntensityLines = useIrisStore((s) => s.glowIntensityLines);
   const barPulseSpeed = useIrisStore((s) => s.barPulseSpeed);
   const pulseSpeed = useIrisStore((s) => s.pulseSpeed);
+  const barGlowPulseSpeed = useIrisStore((s) => s.barGlowPulseSpeed);
 
   const physicsMode = useIrisStore((s) => s.physicsMode);
   const snapToCenter = useIrisStore((s) => s.snapToCenter);
@@ -249,9 +250,31 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
             <span className="iris-value text-right w-8">{barPulseSpeed.toFixed(2)}</span>
           </div>
 
-          {/* Row 4: PULSAÇÃO LINHA (label) + slider (pulseSpeed) + value */}
+          {/* Row 4: PULSAÇÃO GLOW BARRA (label) + slider (barGlowPulseSpeed) + value */}
           <div className="flex items-center gap-2 mb-2 select-none text-[9px] font-mono">
-            <span className="text-[var(--iris-phosphor)] font-bold w-[168px] uppercase">PULSAÇÃO LINHA</span>
+            <span className="text-[var(--iris-phosphor)] font-bold w-[168px] uppercase">PULSAÇÃO GLOW BARRA</span>
+            <span className="text-[var(--iris-phosphor-dim)] font-bold">·</span>
+            <span className="text-[var(--iris-phosphor)] font-bold mr-0.5">■</span>
+            
+            <div className="flex-1 relative flex items-center">
+              <input
+                type="range"
+                className="iris-slider w-full"
+                min={0}
+                max={3}
+                step={0.1}
+                value={barGlowPulseSpeed}
+                disabled={!glowBarsEnabled}
+                onChange={(e) => setFXConfig({ barGlowPulseSpeed: parseFloat(e.target.value) })}
+              />
+            </div>
+            <span className="text-[var(--iris-phosphor-dim)] font-bold ml-0.5">·</span>
+            <span className="iris-value text-right w-8">{barGlowPulseSpeed.toFixed(2)}</span>
+          </div>
+
+          {/* Row 5: PULSAÇÃO GLOW LINHA (label) + slider (pulseSpeed) + value */}
+          <div className="flex items-center gap-2 mb-2 select-none text-[9px] font-mono">
+            <span className="text-[var(--iris-phosphor)] font-bold w-[168px] uppercase">PULSAÇÃO GLOW LINHA</span>
             <span className="text-[var(--iris-phosphor-dim)] font-bold">·</span>
             <span className="text-[var(--iris-phosphor)] font-bold mr-0.5">■</span>
             
