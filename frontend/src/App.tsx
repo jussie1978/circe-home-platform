@@ -215,10 +215,15 @@ export default function App() {
   const [voiceActive, setVoiceActive] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Conexão WebSocket com o Backend FastAPI
   useEffect(() => {
+    let shouldReconnect = true;
+
     const connectWS = () => {
+      if (!shouldReconnect) return;
+
       // Usando 127.0.0.1 para evitar problemas de resolução de localhost (IPv6 vs IPv4) no Windows
       const socket = new WebSocket('ws://127.0.0.1:8001/ws');
       wsRef.current = socket;
@@ -276,15 +281,23 @@ export default function App() {
 
       socket.onclose = () => {
         setIsWebSocketConnected(false);
+        if (!shouldReconnect) return;
+
         console.log('Conexão fechada. Tentando reconectar em 3s...');
-        setTimeout(connectWS, 3000);
+        reconnectTimeoutRef.current = setTimeout(connectWS, 3000);
       };
     };
 
     connectWS();
 
     return () => {
-      if (wsRef.current) wsRef.current.close();
+      shouldReconnect = false;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      wsRef.current?.close();
+      wsRef.current = null;
     };
   }, [
     setTemperature, 

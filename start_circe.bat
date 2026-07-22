@@ -6,12 +6,23 @@ echo =======================================================
 echo.
 
 echo [1/4] Inicializando Broker MQTT (Mosquitto Nativo)...
-start "CIRCE Mosquitto" /MIN cmd /k ""C:\Program Files\mosquitto\mosquitto.exe" -c "%~dp0local_mqtt.conf""
+if exist "C:\Program Files\mosquitto\mosquitto.exe" (
+  start "CIRCE Mosquitto" /MIN cmd /k ""C:\Program Files\mosquitto\mosquitto.exe" -c "%~dp0local_mqtt.conf""
+) else (
+  echo [AVISO] Mosquitto nao encontrado. Backend iniciara sem MQTT.
+)
 echo.
 
 echo [2/4] Iniciando Backend FastAPI...
+set "CIRCE_PYTHON=%~dp0backend\.venv\Scripts\python.exe"
+if not exist "%CIRCE_PYTHON%" (
+  echo [ERRO] Ambiente Python nao encontrado em backend\.venv.
+  echo Execute a configuracao do backend antes de iniciar o CIRCE.
+  pause
+  exit /b 1
+)
 cd "%~dp0backend"
-start "CIRCE Backend" /MIN cmd /k "python -m uvicorn app.main:app --host 0.0.0.0 --port 8001"
+start "CIRCE Backend" /MIN cmd /k ""%CIRCE_PYTHON%" -m uvicorn app.main:app --host 0.0.0.0 --port 8001"
 echo.
 
 echo [3/4] Iniciando Modulo de Visao Computacional (Headless)...

@@ -143,7 +143,6 @@ export const useIrisStore = create<IrisStore>((set) => ({
   octonaryColor: '#00ff55',
   // Configurações do App
   customThemeActive: false,
-  ringColorCustom: '#06B6D4',
   rotationSpeed: 1.0,
   physicsMode: 'gel',
   repulsionStrength: 1.0,
