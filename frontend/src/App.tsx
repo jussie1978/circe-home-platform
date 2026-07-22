@@ -260,8 +260,8 @@ export default function App() {
             if (data.faceDetected && data.faceX !== undefined && data.faceY !== undefined) {
               // faceX (horizontal -1..1) → dragOffset.y (rotation.y do orbe)
               // faceY (vertical -1..1)   → dragOffset.x (rotation.x do orbe), invertido (câmera espelha Y)
-              const gain = 1.6;
-              const maxAngle = 40 * Math.PI / 180;
+              const gain = 0.5; // Gain muito mais baixo para estabilizar tracking
+              const maxAngle = 20 * Math.PI / 180; // Limite de 20 graus
               const rotX = Math.max(-maxAngle, Math.min(maxAngle, data.faceY * gain));
               const rotY = Math.max(-maxAngle, Math.min(maxAngle, data.faceX * gain));
               useIrisStore.setState({ dragOffset: { x: rotX, y: rotY } });
@@ -368,7 +368,7 @@ export default function App() {
   };
 
   const startVoiceSession = (key: string) => {
-    voiceService.connect(key, 'gemini-2.0-flash-exp', {
+    voiceService.connect(key, 'gemini-2.5-flash', {
       onStateChange: (state) => {
         if (state === 'connecting') {
           setIrisState('listening');
@@ -1356,7 +1356,7 @@ export default function App() {
       
       {/* Legendas CRT de Voz */}
       {(irisState === 'speaking' || irisState === 'listening') && voiceText && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 max-w-[600px] text-center bg-black/80 border border-[var(--iris-phosphor)]/30 px-4 py-2 font-mono text-[10px] text-[var(--iris-phosphor)] shadow-[0_0_10px_rgba(6,182,212,0.15)] select-none pointer-events-none tracking-wide rounded-sm">
+        <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-[600px] text-center bg-black/80 border border-[var(--iris-phosphor)]/30 px-4 py-2 font-mono text-[10px] text-[var(--iris-phosphor)] shadow-[0_0_10px_rgba(6,182,212,0.15)] select-none pointer-events-none tracking-wide rounded-sm">
           <span className="opacity-60 mr-1.5">&gt;&gt; IRIS:</span>
           <span>{voiceText}</span>
           <span className="inline-block w-1 h-2.5 ml-1 bg-[var(--iris-phosphor)] animate-pulse align-middle" />

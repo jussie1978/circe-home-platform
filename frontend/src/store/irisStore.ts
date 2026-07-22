@@ -1,5 +1,16 @@
-// src/store/irisStore.ts
 import { create } from 'zustand';
+
+export interface CustomStar {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+  size: number;
+  intensity: number;
+  color: string;
+  haloSize: number;
+  haloIntensity: number;
+}
 
 export interface IrisStore {
   temperature: number;
@@ -36,17 +47,20 @@ export interface IrisStore {
   senaryColor: string;
   septenaryColor: string;
   octonaryColor: string;
+  // Configurações do App
   customThemeActive: boolean;
+  ringColorCustom: string;
   rotationSpeed: number;
   physicsMode: 'gel' | 'mechanical' | 'liquid';
   repulsionStrength: number;
   starSpeed: number;
   glowIntensityBars: number;
   glowIntensityLines: number;
+  nanobotTremorSpeed: number;
+  clearcoat: number;
   barPulseSpeed: number;
   barGlowPulseSpeed: number;
   saturation: number;
-  ringColorCustom: string;
   ringSpeed: number;
   pulseSpeed: number;
   activePanel: ('top-left' | 'top-right' | 'bottom-left' | 'bottom-right')[];
@@ -73,6 +87,11 @@ export interface IrisStore {
   faceY: number;
   voiceText: string;
 
+  customStars: CustomStar[];
+  addCustomStar: () => void;
+  updateCustomStar: (id: string, updates: Partial<CustomStar>) => void;
+  removeCustomStar: (id: string) => void;
+
   setFXConfig: (config: FXConfigPatch) => void;
 }
 
@@ -80,7 +99,7 @@ type StoreMethods =
   | 'setTemperature' | 'setIrisState' | 'setHumidity' | 'setTempHistory'
   | 'setFan1Speed' | 'setFan1Rpm' | 'setFan2Speed' | 'setFan2Rpm'
   | 'setFanMode' | 'setFinsState' | 'setPcState' | 'setRoofAngle'
-  | 'setActivePanel' | 'setFXConfig';
+  | 'setActivePanel' | 'setFXConfig' | 'addCustomStar' | 'updateCustomStar' | 'removeCustomStar';
 
 export type FXConfigPatch = Partial<Omit<IrisStore, StoreMethods | 'temperature' | 'irisState'>>;
 
@@ -122,13 +141,17 @@ export const useIrisStore = create<IrisStore>((set) => ({
   senaryColor: '#aaff00',
   septenaryColor: '#ffff00',
   octonaryColor: '#00ff55',
+  // Configurações do App
   customThemeActive: false,
+  ringColorCustom: '#06B6D4',
   rotationSpeed: 1.0,
   physicsMode: 'gel',
   repulsionStrength: 1.0,
   starSpeed: 1.0,
-  glowIntensityBars: 1.2,
+  glowIntensityBars: 1.0,
   glowIntensityLines: 1.2,
+  nanobotTremorSpeed: 1.0,
+  clearcoat: 1.0,
   barPulseSpeed: 1.0,
   barGlowPulseSpeed: 1.0,
   saturation: 1.0,
@@ -161,5 +184,32 @@ export const useIrisStore = create<IrisStore>((set) => ({
   faceX: 0.0,
   faceY: 0.0,
   voiceText: '',
+  
+  customStars: [
+    { id: 'star-initial', x: 0.8, y: -2.2, z: -3.0, size: 0.08, intensity: 8.0, color: '#ffebb8', haloSize: 4.5, haloIntensity: 0.2 }
+  ],
+  addCustomStar: () => set((state) => ({
+    customStars: [
+      ...state.customStars,
+      {
+        id: `star-${Date.now()}`,
+        x: (Math.random() - 0.5) * 4,
+        y: (Math.random() - 0.5) * 4,
+        z: -2.0 - Math.random() * 2,
+        size: 0.06 + Math.random() * 0.04,
+        intensity: 5.0,
+        color: '#ffffff',
+        haloSize: 4.0,
+        haloIntensity: 0.15
+      }
+    ]
+  })),
+  updateCustomStar: (id, updates) => set((state) => ({
+    customStars: state.customStars.map(s => s.id === id ? { ...s, ...updates } : s)
+  })),
+  removeCustomStar: (id) => set((state) => ({
+    customStars: state.customStars.filter(s => s.id !== id)
+  })),
+
   setFXConfig: (config) => set((state) => ({ ...state, ...config })),
 }));

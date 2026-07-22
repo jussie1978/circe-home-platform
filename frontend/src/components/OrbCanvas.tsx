@@ -120,6 +120,7 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
   // Referências para os grupos de rotação
   const orbGroupRef = useRef<THREE.Group>(null);
   const rayGroupRef = useRef<THREE.Group>(null);
+  const rayDotsInstRef = useRef<THREE.InstancedMesh>(null);
 
   // Instanced Meshes para os 3 tipos de barras (700 altas, 600 médias, 800 curtas)
   const tallInstRef = useRef<THREE.InstancedMesh>(null);
@@ -304,47 +305,50 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
     return geo;
   }, []);
 
-  // 4. Otimização de Linhas de Fuga (Agrupadas em 1 único LineSegments para renderização em 1 draw call)
-  const rayLinesGeometry = useMemo(() => {
-    const count = 1800;
-    const positions: number[] = [];
-    const colors: number[] = [];
+  // 4. Linhas de fuga de fundo feitas de partículas refrativas (Nanobots)
+  const rayDotsGeometry = useMemo(() => new THREE.OctahedronGeometry(0.007, 0), []); // Partículas muito menores
 
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const zOff = (Math.random() - 0.5) * 1.8;
-      const startR = RING_R * (0.95 + Math.random() * 0.1) * 0.85;
-      const endR = RING_R * (1.0 + Math.pow(Math.random(), 0.6) * 0.55) * 0.85; // Alcance reduzido em mais 15%
-
-      const sx = Math.cos(angle) * startR;
-      const sy = Math.sin(angle) * startR;
-      const ex = Math.cos(angle) * endR;
-      const ey = Math.sin(angle) * endR;
-      const ez = zOff + (Math.random() - 0.5) * 0.3;
-
-      // Vértice inicial (perto do anel)
-      positions.push(sx, sy, zOff);
-      // Vértice final (ponta)
-      positions.push(ex, ey, ez);
-
-      // Gradiente de cor nas linhas (Brilhante na base -> Escuro/Fade nas pontas)
-      colors.push(1.0, 1.0, 1.0); // cor inicial
-      colors.push(0.0, 0.0, 0.0); // cor final (fade-out na ponta)
+  const rayDotsData = useMemo(() => {
+    const data = [];
+    const linesCount = 800; // 800 linhas radiantes
+    const dotsPerLine = 12; // Cada linha formada por 12 partículas
+    
+    for (let i = 0; i < linesCount; i++) {
+      const baseAngle = Math.random() * Math.PI * 2;
+      const baseZOff = (Math.random() - 0.5) * 2.2;
+      const startR = RING_R * (0.9 + Math.random() * 0.2) * 0.85;
+      const length = RING_R * (0.4 + Math.pow(Math.random(), 0.7) * 0.8);
+      
+      for(let j = 0; j < dotsPerLine; j++) {
+         // Distribuição randômica ao longo do raio, concentrando um pouco mais perto da base
+         const progress = Math.pow(Math.random(), 1.5);
+         const r = startR + progress * length;
+         
+         // Desalinhamento (jitter) angular e de profundidade muito maior para o aspecto caótico
+         const angle = baseAngle + (Math.random() - 0.5) * 0.05;
+         const z = baseZOff + (Math.random() - 0.5) * 0.4;
+         
+         const x = Math.cos(angle) * r;
+         const y = Math.sin(angle) * r;
+         
+         const dummy = new THREE.Object3D();
+         dummy.position.set(x, y, z);
+         // Orientação radial com rotações locais aleatórias para que a refração brilhe caoticamente
+         dummy.lookAt(new THREE.Vector3(x * 2, y * 2, z));
+         dummy.rotateX(Math.random() * Math.PI);
+         dummy.rotateY(Math.random() * Math.PI);
+         
+         const scaleBase = 0.2 + Math.random() * 1.8; // tamanhos extremamente variados
+         
+         data.push({
+             position: dummy.position.clone(),
+             quaternion: dummy.quaternion.clone(),
+             scaleBase: scaleBase,
+             intensity: Math.max(0.1, 1.0 - progress)
+         });
+      }
     }
-
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    return geo;
-  }, []);
-
-  const rayLinesMaterial = useMemo(() => {
-    return new THREE.LineBasicMaterial({
-      vertexColors: true,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      opacity: 0.35,
-    });
+    return data;
   }, []);
 
   // 5. Partículas de Fundo (Vórtice Espiral Cósmico)
@@ -499,32 +503,56 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
       rayGroupRef.current.rotation.y = Math.cos(elapsed * 0.12 * rotationSpeed) * 0.08 + currentDragRotation.current.y; // Alinhado com o ângulo de rotação/inclinação do Orbe
       rayGroupRef.current.rotation.x = Math.sin(elapsed * 0.08 * rotationSpeed) * 0.05 + currentDragRotation.current.x; // Alinhado com o ângulo de rotação/inclinação do Orbe
       
-      // Aplicar opacidade de glow das barras
+      // Atualizar opacidade base do vidro das barras principais
       if (material) {
         material.opacity = 0.96;
       }
 
-      // Pulsação contínua da opacidade das linhas de fuga
-      if (rayLinesMaterial) {
+      // Animação e Coloração dos Nanobots de Fundo (Ray Dots)
+      if (rayDotsInstRef.current) {
         const linesGlowEnabled = useIrisStore.getState().glowLinesEnabled;
+        const nanobotTremorSpeed = useIrisStore.getState().nanobotTremorSpeed;
+        const activeColor = customThemeActive
+          ? new THREE.Color(ringColorCustom)
+          : new THREE.Color(irisState === 'listening' ? 0x7C3AED : irisState === 'critical' || temperature > 75 ? 0xEF4444 : 0x06B6D4);
+        
         if (linesGlowEnabled) {
-          const baseOpacity = pulseSpeed === 0 ? 0.65 : 0.35 + 0.35 * Math.sin(pulsePhaseRef.current);
-          (rayLinesMaterial as THREE.LineBasicMaterial).opacity = Math.max(0.0, baseOpacity) * (glowIntensityLines * 1.25);
-          
-          // Cor neon dinâmica para as linhas baseada no estado IRIS
-          const activeColor = customThemeActive
-            ? new THREE.Color(ringColorCustom)
-            : new THREE.Color(irisState === 'listening' ? 0x7C3AED : irisState === 'critical' || temperature > 75 ? 0xEF4444 : 0x06B6D4);
-          
           const tempHSL = { h: 0, s: 0, l: 0 };
           activeColor.getHSL(tempHSL);
           activeColor.setHSL(tempHSL.h, tempHSL.s * saturation, tempHSL.l);
           
-          // Boost de intensidade física
-          activeColor.multiplyScalar(2.0 + (glowIntensityLines * 1.5));
-          (rayLinesMaterial as THREE.LineBasicMaterial).color.copy(activeColor);
+          const pulseVal = pulseSpeed === 0 ? 1.0 : 0.65 + 0.35 * Math.sin(pulsePhaseRef.current);
+          activeColor.multiplyScalar((1.8 + glowIntensityLines * 1.5) * pulseVal);
         } else {
-          (rayLinesMaterial as THREE.LineBasicMaterial).opacity = 0.0; // Desliga totalmente o glow e as linhas
+          activeColor.setRGB(0, 0, 0);
+        }
+
+        const dummyDot = new THREE.Object3D();
+        
+        // Evitando alocar nova cor a cada iteração
+        const instanceColor = new THREE.Color();
+        
+        for (let i = 0; i < rayDotsData.length; i++) {
+          const s = rayDotsData[i];
+          
+          // Tremor caótico: velocidades de cintilação diferentes para cada nanobot
+          const speedMod = 2.0 + (i % 4); 
+          const tremor = s.scaleBase * (1.0 + 0.3 * Math.sin(elapsed * speedMod * nanobotTremorSpeed + (i * 0.1)));
+          
+          dummyDot.position.copy(s.position);
+          dummyDot.quaternion.copy(s.quaternion);
+          dummyDot.scale.setScalar(tremor);
+          dummyDot.updateMatrix();
+          
+          rayDotsInstRef.current.setMatrixAt(i, dummyDot.matrix);
+          
+          instanceColor.copy(activeColor).multiplyScalar(s.intensity);
+          rayDotsInstRef.current.setColorAt(i, instanceColor);
+        }
+        
+        rayDotsInstRef.current.instanceMatrix.needsUpdate = true;
+        if (rayDotsInstRef.current.instanceColor) {
+          rayDotsInstRef.current.instanceColor.needsUpdate = true;
         }
       }
     }
@@ -984,9 +1012,12 @@ function OrbScene({ rotSpeed = 0.45 }: { rotSpeed: number }) {
       </group>
 
 
-      {/* Linhas de fuga tridimensionais (1 draw call) */}
+      {/* Linhas radiais de fundo compostas por Enxames de Partículas (Nanobots Refrativos) */}
       <group ref={rayGroupRef}>
-        <lineSegments geometry={rayLinesGeometry} material={rayLinesMaterial} />
+        <instancedMesh 
+          ref={rayDotsInstRef} 
+          args={[rayDotsGeometry, material, rayDotsData.length]} 
+        />
       </group>
 
       {/* Partículas flutuantes de fundo (estrelas) */}

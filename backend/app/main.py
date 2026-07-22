@@ -351,7 +351,7 @@ async def startup_event():
     mqtt_manager.start()
     
     # 4. Inicia loop de simulação física realista
-    asyncio.create_task(simulation_loop())
+    # asyncio.create_task(simulation_loop()) # REMOVIDO: A simulação de voz estava conflitando com a IRIS real
 
 async def simulation_loop():
     iris_cycle = ["idle", "listening", "speaking", "idle"]

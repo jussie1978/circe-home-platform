@@ -21,12 +21,18 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
   const glowBarsEnabled = useIrisStore((s) => s.glowBarsEnabled);
   const glowLinesEnabled = useIrisStore((s) => s.glowLinesEnabled);
   
+  const customStars = useIrisStore((s) => s.customStars);
+  const addCustomStar = useIrisStore((s) => s.addCustomStar);
+  const updateCustomStar = useIrisStore((s) => s.updateCustomStar);
+  const removeCustomStar = useIrisStore((s) => s.removeCustomStar);
+  
   // Parametros para a grade da Seção 5
   const glowIntensityBars = useIrisStore((s) => s.glowIntensityBars);
   const glowIntensityLines = useIrisStore((s) => s.glowIntensityLines);
-  const barPulseSpeed = useIrisStore((s) => s.barPulseSpeed);
+  const nanobotTremorSpeed = useIrisStore((s) => s.nanobotTremorSpeed);
   const pulseSpeed = useIrisStore((s) => s.pulseSpeed);
   const barGlowPulseSpeed = useIrisStore((s) => s.barGlowPulseSpeed);
+  const barPulseSpeed = useIrisStore((s) => s.barPulseSpeed);
 
   const physicsMode = useIrisStore((s) => s.physicsMode);
   const snapToCenter = useIrisStore((s) => s.snapToCenter);
@@ -89,6 +95,21 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
         </IrisSection>
 
         <IrisSection title="SECTION 2 - FÍSICA E DINÂMICA">
+          {/* Row 3: NANOBOTS SPD */}
+          <div className="flex items-center gap-3 mb-3">
+            <span className="iris-label text-cyan-400/70 w-24">NANOBOTS SPD</span>
+            <input
+              type="range"
+              min="0"
+              max="5"
+              step="0.1"
+              className="iris-slider flex-1"
+              value={nanobotTremorSpeed}
+              onChange={(e) => setFXConfig({ nanobotTremorSpeed: parseFloat(e.target.value) })}
+            />
+            <span className="iris-value text-right w-8">{nanobotTremorSpeed.toFixed(1)}x</span>
+          </div>
+
           {/* Linha combinada: FÍSICA + ORB SNAP */}
           <div className="flex items-center justify-between mb-3 select-none text-[9px] font-mono">
             {/* Física Dropdown */}
@@ -293,6 +314,55 @@ export function IrisControlPanel({ onClose, position, onPositionChange, onDragEn
             <span className="text-[var(--iris-phosphor-dim)] font-bold ml-0.5">·</span>
             <span className="iris-value text-right w-8">{pulseSpeed.toFixed(2)}</span>
           </div>
+        </IrisSection>
+
+        <IrisSection title="SECTION 6 - ESTRELAS CUSTOMIZADAS">
+          <button 
+            type="button"
+            className="iris-btn w-full mb-4 text-[10px] py-1 border border-[var(--iris-border)] text-[var(--iris-phosphor)] hover:bg-[var(--iris-phosphor)] hover:text-black transition-colors"
+            onClick={addCustomStar}
+          >
+            + ADICIONAR ESTRELA
+          </button>
+          
+          {customStars.map((star) => (
+            <div key={star.id} className="mb-4 border border-[var(--iris-border)] p-2 bg-black/50">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[9px] font-mono text-[var(--iris-phosphor)] font-bold">ESTRELA [{star.id.split('-').pop()?.slice(-4)}]</span>
+                <button 
+                  type="button"
+                  className="iris-btn py-0.5 px-2 text-[8px] border border-[var(--iris-border)] text-[var(--iris-phosphor)] hover:bg-[var(--iris-phosphor)] hover:text-black transition-colors"
+                  onClick={() => removeCustomStar(star.id)}
+                >
+                  REMOVER
+                </button>
+              </div>
+              
+              {[
+                { label: 'X', field: 'x', min: -5, max: 5, step: 0.1 },
+                { label: 'Y', field: 'y', min: -5, max: 5, step: 0.1 },
+                { label: 'Z', field: 'z', min: -10, max: 2, step: 0.1 },
+                { label: 'LUZ', field: 'intensity', min: 0, max: 20, step: 0.5 },
+                { label: 'TAM', field: 'size', min: 0.01, max: 0.3, step: 0.01 },
+                { label: 'H. TAM', field: 'haloSize', min: 1.0, max: 20.0, step: 0.5 },
+                { label: 'H. INT', field: 'haloIntensity', min: 0, max: 1, step: 0.05 },
+              ].map((ctrl) => (
+                <div key={ctrl.field} className="flex items-center gap-2 mb-1 select-none text-[8px] font-mono">
+                  <span className="text-[var(--iris-phosphor)] w-[24px] uppercase">{ctrl.label}</span>
+                  <input
+                    type="range"
+                    className="iris-slider flex-1"
+                    min={ctrl.min}
+                    max={ctrl.max}
+                    step={ctrl.step}
+                    value={star[ctrl.field as keyof typeof star]}
+                    onChange={(e) => updateCustomStar(star.id, { [ctrl.field]: parseFloat(e.target.value) })}
+                  />
+                  <span className="iris-value text-right w-6">{(star[ctrl.field as keyof typeof star] as number).toFixed(1)}</span>
+                </div>
+              ))}
+            </div>
+          ))}
         </IrisSection>
 
         <footer className="sticky bottom-0 py-2 mt-6 text-[9px] border-t border-[var(--iris-border)] bg-black font-mono font-bold text-center">
