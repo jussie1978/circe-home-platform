@@ -3,6 +3,7 @@ import json
 import random
 import logging
 from datetime import datetime, timedelta
+from typing import Literal
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -37,6 +38,7 @@ class SystemState:
         self.temperature = 42.0
         self.humidity = 62.5
         self.fan_speed = 60 # 0% a 100%
+        self.fan_mode = "auto"
         self.roof_angle = 90 # 0° a 180°
         self.led_color = "#06B6D4"
         self.led_mode = "breath"
@@ -48,7 +50,7 @@ class SystemState:
         self.face_x = 0.0
         self.face_y = 0.0
         self.voice_text = ""
-        self.fins_state = "closed"
+        self.fins_state = "open"
 
 state = SystemState()
 mqtt_manager = None
@@ -58,8 +60,17 @@ loop = None
 class FanControl(BaseModel):
     speed: int
 
+class FanModeControl(BaseModel):
+    mode: Literal["auto", "manual", "silent"]
+
+class ServoControl(BaseModel):
+    angle: int
+
 class LedControl(BaseModel):
     color: str
+
+class LedModeControl(BaseModel):
+    mode: Literal["solid", "breath", "rainbow"]
 
 # Funções auxiliares de Banco de Dados
 def save_sensor_log(temperature=None, humidity=None):
@@ -118,6 +129,7 @@ async def broadcast_state():
         "humidity": state.humidity,
         "irisState": state.iris_state,
         "fanSpeed": state.fan_speed,
+        "fanMode": state.fan_mode,
         "roofAngle": state.roof_angle,
         "ledColor": state.led_color,
         "ledMode": state.led_mode,
@@ -191,7 +203,9 @@ async def get_status():
             "temperature": state.temperature,
             "humidity": state.humidity,
             "fan_speed": state.fan_speed,
+            "fan_mode": state.fan_mode,
             "roof_angle": state.roof_angle,
+            "fins_state": state.fins_state,
             "led_color": state.led_color,
             "led_mode": state.led_mode,
             "iris_state": state.iris_state,
@@ -236,6 +250,35 @@ async def control_fans(control: FanControl):
         return {"status": "success", "fan_speed": state.fan_speed}
     return {"status": "error", "message": "Velocidade deve ser entre 0 e 100"}
 
+@app.post("/api/v1/controls/fans/mode")
+async def control_fan_mode(control: FanModeControl):
+    state.fan_mode = control.mode
+    logger.info(f"REST: Modo dos fans alterado para {control.mode}")
+
+    if mqtt_manager and mqtt_manager.client.is_connected():
+        mqtt_manager.publish("alx/case/fans/mode", control.mode)
+
+    await broadcast_state()
+    return {"status": "success", "fan_mode": state.fan_mode}
+
+@app.post("/api/v1/controls/servos")
+async def control_servos(control: ServoControl):
+    if 0 <= control.angle <= 100:
+        state.roof_angle = control.angle
+        state.fins_state = "open" if control.angle > 10 else "closed"
+        logger.info(f"REST: Abertura das aletas alterada para {control.angle}%")
+
+        if mqtt_manager and mqtt_manager.client.is_connected():
+            mqtt_manager.publish("alx/case/servos/angle", str(control.angle))
+
+        await broadcast_state()
+        return {
+            "status": "success",
+            "roof_angle": state.roof_angle,
+            "fins_state": state.fins_state,
+        }
+    return {"status": "error", "message": "Abertura deve ser entre 0 e 100"}
+
 @app.post("/api/v1/controls/leds")
 async def control_leds(control: LedControl):
     state.led_color = control.color
@@ -247,6 +290,17 @@ async def control_leds(control: LedControl):
         
     await broadcast_state()
     return {"status": "success", "led_color": state.led_color}
+
+@app.post("/api/v1/controls/leds/mode")
+async def control_led_mode(control: LedModeControl):
+    state.led_mode = control.mode
+    logger.info(f"REST: Modo dos LEDs alterado para {control.mode}")
+
+    if mqtt_manager and mqtt_manager.client.is_connected():
+        mqtt_manager.publish("alx/case/leds/mode", control.mode)
+
+    await broadcast_state()
+    return {"status": "success", "led_mode": state.led_mode}
 
 # 3. WebSocket Endpoint
 @app.websocket("/ws")
@@ -266,6 +320,7 @@ async def websocket_endpoint(websocket: WebSocket):
             "humidity": state.humidity,
             "irisState": state.iris_state,
             "fanSpeed": state.fan_speed,
+            "fanMode": state.fan_mode,
             "roofAngle": state.roof_angle,
             "ledColor": state.led_color,
             "ledMode": state.led_mode,
@@ -273,6 +328,7 @@ async def websocket_endpoint(websocket: WebSocket):
             "faceX": state.face_x,
             "faceY": state.face_y,
             "voiceText": state.voice_text,
+            "finsState": state.fins_state,
             "tempHistory": temp_history
         }))
         
@@ -287,18 +343,27 @@ async def websocket_endpoint(websocket: WebSocket):
                 value = msg.get("value")
                 
                 if topic == "alx/case/fans/set":
-                    state.fan_speed = int(value)
+                    speed = int(value)
+                    if 0 <= speed <= 100:
+                        state.fan_speed = speed
+                        if mqtt_manager and mqtt_manager.client.is_connected():
+                            mqtt_manager.publish("alx/case/fans/set", str(speed))
+                elif topic == "alx/case/fans/mode" and value in {"auto", "manual", "silent"}:
+                    state.fan_mode = value
                     if mqtt_manager and mqtt_manager.client.is_connected():
-                        mqtt_manager.publish("alx/case/fans/set", str(value))
+                        mqtt_manager.publish("alx/case/fans/mode", value)
                 elif topic == "alx/case/servos/angle":
-                    state.roof_angle = int(value)
-                    if mqtt_manager and mqtt_manager.client.is_connected():
-                        mqtt_manager.publish("alx/case/servos/angle", str(value))
+                    angle = int(value)
+                    if 0 <= angle <= 100:
+                        state.roof_angle = angle
+                        state.fins_state = "open" if angle > 10 else "closed"
+                        if mqtt_manager and mqtt_manager.client.is_connected():
+                            mqtt_manager.publish("alx/case/servos/angle", str(angle))
                 elif topic == "alx/case/leds/set":
                     state.led_color = value
                     if mqtt_manager and mqtt_manager.client.is_connected():
                         mqtt_manager.publish("alx/case/leds/set", str(value))
-                elif topic == "alx/case/leds/mode":
+                elif topic == "alx/case/leds/mode" and value in {"solid", "breath", "rainbow"}:
                     state.led_mode = value
                     if mqtt_manager and mqtt_manager.client.is_connected():
                         mqtt_manager.publish("alx/case/leds/mode", str(value))

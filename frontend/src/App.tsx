@@ -250,6 +250,10 @@ export default function App() {
           if (data.fan2Rpm !== undefined) setFan2Rpm(data.fan2Rpm);
           if (data.fanMode !== undefined) setFanMode(data.fanMode);
           if (data.finsState !== undefined) setFinsState(data.finsState);
+          if (data.ledColor !== undefined) setLedColor(data.ledColor);
+          if (data.ledMode !== undefined) {
+            setLedMode(data.ledMode.charAt(0).toUpperCase() + data.ledMode.slice(1));
+          }
           if (data.pcState !== undefined) setPcState(data.pcState);
           if (data.roofAngle !== undefined) {
             setRoofAngle(data.roofAngle);
@@ -333,6 +337,7 @@ export default function App() {
     // Se o websocket estiver aberto, podemos enviar comandos rápidos por ele
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ topic, value }));
+      return;
     }
 
     // Fallback REST (POST para o backend FastAPI)
@@ -342,6 +347,12 @@ export default function App() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ speed: parseInt(value) }),
+        });
+      } else if (topic === 'alx/case/fans/mode') {
+        await fetch('http://127.0.0.1:8001/api/v1/controls/fans/mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: value }),
         });
       } else if (topic === 'alx/case/servos/angle') {
         await fetch('http://127.0.0.1:8001/api/v1/controls/servos', {
@@ -354,6 +365,12 @@ export default function App() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ color: value }),
+        });
+      } else if (topic === 'alx/case/leds/mode') {
+        await fetch('http://127.0.0.1:8001/api/v1/controls/leds/mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: value }),
         });
       }
     } catch (e) {
