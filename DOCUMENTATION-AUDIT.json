@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-07-22",
+  "source_zip": "circe-home-platform-main(1).zip",
+  "generated_documents": [
+    "API.md",
+    "ARCHITECTURE.md",
+    "BACKLOG.md",
+    "CHANGELOG.md",
+    "DATA-MODEL.md",
+    "DEVELOPMENT.md",
+    "INDEX.md",
+    "MQTT-CONTRACT.md",
+    "PROJECT-STATUS.md",
+    "ROADMAP.md",
+    "SECURITY.md",
+    "TEST-STRATEGY.md",
+    "TRACEABILITY.md",
+    "adrs/ADR-004-hybrid-voice-architecture.md",
+    "adrs/ADR-005-websocket-state-sync.md"
+  ],
+  "source_code_modified": false,
+  "readme_modified": true,
+  "validation": {
+    "backend_tests": "not executed: paho-mqtt missing in analysis environment",
+    "frontend_build": "not executed: node_modules missing in analysis environment",
+    "broken_readme_links_fixed": [
+      "docs/ROADMAP.md",
+      "docs/ARCHITECTURE.md"
+    ]
+  }
+}
