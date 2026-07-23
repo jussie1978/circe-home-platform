@@ -11,6 +11,10 @@
 
 O Compose original sobe apenas Mosquitto. Backend e frontend devem ser iniciados separadamente até a tarefa R0.4 ser concluída.
 
+## Voz OpenAI Realtime
+
+O backend precisa receber `OPENAI_API_KEY` pelo ambiente de execução. A chave não deve usar prefixo `VITE_`, não deve ser gravada no frontend e não deve ser adicionada ao repositório. O navegador envia apenas a oferta SDP para `POST /api/v1/voice/session`.
+
 ## Fluxo Git
 
 - branches curtas: `feat/`, `fix/`, `docs/`, `chore/`;

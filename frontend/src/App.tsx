@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import OrbCanvas from './components/OrbCanvas';
 import { useIrisStore } from './store/irisStore';
-import { voiceService } from './services/voiceService';
+import { openAIRealtimeProvider } from './services/gptRealtimeService';
+import type { VoiceConnectionState } from './services/voiceProvider';
 import { IrisControlPanel } from './components/panel/IrisControlPanel';
 
 const PANEL_W = 400;
@@ -213,6 +214,7 @@ export default function App() {
   const [ledMode, setLedMode] = useState('Breath');
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);
+  const [voiceConnectionState, setVoiceConnectionState] = useState<VoiceConnectionState>('offline');
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -378,44 +380,38 @@ export default function App() {
     }
   };
 
-  const toggleVoiceSession = () => {
+  const toggleVoiceSession = async () => {
+    if (voiceConnectionState === 'connecting') {
+      openAIRealtimeProvider.disconnect();
+      return;
+    }
+
     if (voiceActive) {
-      voiceService.disconnect();
-      setVoiceActive(false);
+      openAIRealtimeProvider.disconnect();
       useIrisStore.setState({ irisState: 'idle', voiceText: '' });
     } else {
-      const apiKey = localStorage.getItem('GEMINI_API_KEY') || (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
-      if (!apiKey) {
-        const inputKey = prompt("Por favor, insira sua GEMINI_API_KEY do Google AI Studio para conversar com a IRIS:");
-        if (inputKey) {
-          localStorage.setItem('GEMINI_API_KEY', inputKey);
-          startVoiceSession(inputKey);
-        }
-      } else {
-        startVoiceSession(apiKey);
-      }
+      await startVoiceSession();
     }
   };
 
-  const startVoiceSession = (key: string) => {
-    voiceService.connect(key, 'gemini-2.5-flash', {
-      onStateChange: (state) => {
-        if (state === 'connecting') {
-          setIrisState('listening');
-        } else if (state === 'error') {
-          setIrisState('critical');
-        } else {
+  const startVoiceSession = async () => {
+    await openAIRealtimeProvider.connect({
+      callbacks: {
+        onStateChange: (state) => {
           setIrisState(state);
+        },
+        onConnectionChange: (state) => {
+          setVoiceConnectionState(state);
+          setVoiceActive(state === 'online');
+        },
+        onTextReceived: (text) => {
+          useIrisStore.setState({ voiceText: text });
+        },
+        onToolExecuted: (name, _args, result) => {
+          console.log(`Função local ${name} executada com sucesso. Resultado:`, result);
         }
       },
-      onTextReceived: (text) => {
-        useIrisStore.setState({ voiceText: text });
-      },
-      onToolExecuted: (name, _args, result) => {
-        console.log(`Função local ${name} executada com sucesso. Resultado:`, result);
-      }
     });
-    setVoiceActive(true);
   };
 
   // Variantes de animação para os cards de controle (Framer Motion) - Suavizados e menos bruscos
@@ -678,8 +674,14 @@ export default function App() {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-[var(--iris-phosphor-dim)]">CONN:</span>
-          <span className={`font-bold ${isWebSocketConnected ? 'text-[var(--iris-phosphor)]' : 'text-amber-500'}`}>
-            {isWebSocketConnected ? 'ONLINE' : 'OFFLINE'}
+          <span className={`font-bold ${
+            voiceConnectionState === 'online'
+              ? 'text-[var(--iris-phosphor)]'
+              : voiceConnectionState === 'error'
+                ? 'text-red-500'
+                : 'text-amber-500'
+          }`}>
+            {voiceConnectionState.toUpperCase()}
           </span>
         </div>
         <div className="flex justify-between items-center">
@@ -1336,14 +1338,16 @@ export default function App() {
             className="w-2.5 h-2.5 rounded-full animate-pulse" 
             style={{
               backgroundColor: 
-                irisState === 'critical' || temperature >= 75 ? '#DC2626' : 
+              irisState === 'critical' || irisState === 'error' || temperature >= 75 ? '#DC2626' :
+              irisState === 'connecting' || irisState === 'thinking' ? '#F59E0B' :
                 temperature >= 68 ? '#EA580C' : 
                 temperature >= 60 ? '#F59E0B' : 
                 irisState === 'listening' ? '#7C3AED' : 
                 irisState === 'speaking' ? '#F8FAFC' : 
                 '#06B6D4', 
               boxShadow: `0 0 8px ${
-                irisState === 'critical' || temperature >= 75 ? '#DC2626' :
+                irisState === 'critical' || irisState === 'error' || temperature >= 75 ? '#DC2626' :
+                irisState === 'connecting' || irisState === 'thinking' ? '#F59E0B' :
                 temperature >= 68 ? '#EA580C' :
                 temperature >= 60 ? '#F59E0B' :
                 irisState === 'listening' ? '#7C3AED' :
@@ -1355,6 +1359,9 @@ export default function App() {
           <span className="font-mono text-[9px] tracking-[3px] uppercase font-bold text-slate-300">
             {
               irisState === 'critical' || temperature >= 75 ? 'ALERTA TÉRMICO' :
+              irisState === 'error' ? 'ERRO DE VOZ' :
+              irisState === 'connecting' ? 'IRIS CONECTANDO' :
+              irisState === 'thinking' ? 'IRIS PROCESSANDO' :
               temperature >= 68 ? 'AQUECIMENTO ALTO' :
               temperature >= 60 ? 'AQUECENDO' :
               irisState === 'listening' ? 'IRIS OUVINDO' :
@@ -1367,7 +1374,7 @@ export default function App() {
             className="font-mono text-[9px] font-bold"
             style={{
               color: 
-                irisState === 'critical' || temperature >= 75 ? '#DC2626' :
+                irisState === 'critical' || irisState === 'error' || temperature >= 75 ? '#DC2626' :
                 temperature >= 68 ? '#EA580C' :
                 temperature >= 60 ? '#F59E0B' :
                 '#94a3b8'
@@ -1385,7 +1392,7 @@ export default function App() {
       </div>
       
       {/* Legendas CRT de Voz */}
-      {(irisState === 'speaking' || irisState === 'listening') && voiceText && (
+      {(irisState === 'speaking' || irisState === 'listening' || irisState === 'error') && voiceText && (
         <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-[600px] text-center bg-black/80 border border-[var(--iris-phosphor)]/30 px-4 py-2 font-mono text-[10px] text-[var(--iris-phosphor)] shadow-[0_0_10px_rgba(6,182,212,0.15)] select-none pointer-events-none tracking-wide rounded-sm">
           <span className="opacity-60 mr-1.5">&gt;&gt; IRIS:</span>
           <span>{voiceText}</span>

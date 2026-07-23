@@ -14,7 +14,7 @@ export interface CustomStar {
 
 export interface IrisStore {
   temperature: number;
-  irisState: 'idle' | 'listening' | 'speaking' | 'critical';
+  irisState: 'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'error' | 'critical';
   setTemperature: (temp: number) => void;
   setIrisState: (state: IrisStore['irisState']) => void;
 

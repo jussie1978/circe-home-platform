@@ -1,18 +1,18 @@
 import { globalAudioAnalyser } from '../utils/audioAnalyser';
+import type {
+  VoiceProvider,
+  VoiceProviderCallbacks,
+  VoiceProviderConnectOptions,
+} from './voiceProvider';
 
-export interface VoiceServiceCallbacks {
-  onStateChange: (state: 'idle' | 'listening' | 'speaking' | 'connecting' | 'error') => void;
-  onTextReceived: (text: string) => void;
-  onToolExecuted: (name: string, args: any, result: any) => void;
-}
-
-class GeminiLiveService {
+class GeminiLiveProvider implements VoiceProvider {
   private ws: WebSocket | null = null;
   private audioCtx: AudioContext | null = null;
   private micStream: MediaStream | null = null;
   private scriptProcessor: ScriptProcessorNode | null = null;
   private micSource: MediaStreamAudioSourceNode | null = null;
-  private callbacks: VoiceServiceCallbacks | null = null;
+  private callbacks: VoiceProviderCallbacks | null = null;
+  private isMuted = false;
   
   // Fila de reprodução de áudio de saída
   private nextPlayTime = 0;
@@ -22,13 +22,26 @@ class GeminiLiveService {
     this.audioCtx = globalAudioAnalyser.getAudioContext();
   }
 
-  connect(apiKey: string, model: string = 'gemini-2.0-flash-exp', callbacks: VoiceServiceCallbacks) {
+  async connect({
+    credential: apiKey,
+    model = 'gemini-2.0-flash-exp',
+    callbacks,
+  }: VoiceProviderConnectOptions) {
     if (this.ws) {
       this.disconnect();
     }
-    
+
+    this.isMuted = false;
     this.callbacks = callbacks;
     this.callbacks.onStateChange('connecting');
+    this.callbacks.onConnectionChange('connecting');
+
+    if (!apiKey) {
+      this.callbacks.onTextReceived('Credencial Gemini ausente para o adaptador legado.');
+      this.callbacks.onStateChange('error');
+      this.callbacks.onConnectionChange('error');
+      return;
+    }
 
     const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${apiKey}`;
     
@@ -42,6 +55,7 @@ class GeminiLiveService {
 
     this.ws.onopen = () => {
       console.log('Gemini Live WebSocket conectado!');
+      this.callbacks?.onConnectionChange('online');
       this.sendSetup(model);
       this.startMicRecording();
     };
@@ -58,16 +72,20 @@ class GeminiLiveService {
     this.ws.onerror = (err) => {
       console.error('Erro no WebSocket do Gemini Live:', err);
       this.callbacks?.onStateChange('error');
+      this.callbacks?.onConnectionChange('error');
     };
 
     this.ws.onclose = () => {
       console.log('Gemini Live WebSocket fechado.');
       this.stopMicRecording();
       this.callbacks?.onStateChange('idle');
+      this.callbacks?.onConnectionChange('offline');
     };
   }
 
   disconnect() {
+    this.callbacks?.onStateChange('idle');
+    this.callbacks?.onConnectionChange('offline');
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -75,6 +93,16 @@ class GeminiLiveService {
     this.stopMicRecording();
     this.stopAudioPlayback();
     this.callbacks = null;
+  }
+
+  mute() {
+    this.isMuted = true;
+    this.setMicrophoneEnabled(false);
+  }
+
+  unmute() {
+    this.isMuted = false;
+    this.setMicrophoneEnabled(true);
   }
 
   private sendSetup(model: string) {
@@ -158,6 +186,7 @@ class GeminiLiveService {
   private async startMicRecording() {
     try {
       this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.setMicrophoneEnabled(!this.isMuted);
       
       // Habilitar analisador visual
       globalAudioAnalyser.init(this.micStream);
@@ -173,7 +202,7 @@ class GeminiLiveService {
       const sampleRate = this.audioCtx.sampleRate;
       
       this.scriptProcessor.onaudioprocess = (e) => {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        if (this.isMuted || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
         const inputData = e.inputBuffer.getChannelData(0);
         
@@ -209,6 +238,7 @@ class GeminiLiveService {
     } catch (e) {
       console.error('Erro ao acessar microfone:', e);
       this.callbacks?.onStateChange('error');
+      this.callbacks?.onConnectionChange('error');
     }
   }
 
@@ -226,6 +256,12 @@ class GeminiLiveService {
       this.micStream = null;
     }
     console.log('Gravação do microfone desativada.');
+  }
+
+  private setMicrophoneEnabled(enabled: boolean) {
+    this.micStream?.getAudioTracks().forEach(track => {
+      track.enabled = enabled;
+    });
   }
 
   private async handleMessage(msg: any) {
@@ -443,4 +479,4 @@ class GeminiLiveService {
   }
 }
 
-export const voiceService = new GeminiLiveService();
+export const geminiLiveProvider: VoiceProvider = new GeminiLiveProvider();

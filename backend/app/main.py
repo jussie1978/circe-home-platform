@@ -1,10 +1,17 @@
 import asyncio
+import os
 import json
 import random
 import logging
+import re
+from collections import deque
 from datetime import datetime, timedelta
+from ipaddress import ip_address
+from math import ceil
+from time import monotonic
 from typing import Literal
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+import httpx
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -23,10 +30,15 @@ app = FastAPI(
     version="0.3.0"
 )
 
-# Configuração de CORS para permitir acesso local do frontend (Vite na porta 3000)
+LOCAL_FRONTEND_ORIGINS = (
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+)
+
+# Configuração de CORS restrita ao frontend local do MVP.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(LOCAL_FRONTEND_ORIGINS),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -71,6 +83,108 @@ class LedControl(BaseModel):
 
 class LedModeControl(BaseModel):
     mode: Literal["solid", "breath", "rainbow"]
+
+OPENAI_REALTIME_URL = "https://api.openai.com/v1/realtime/calls"
+OPENAI_REALTIME_MODEL = "gpt-realtime-2.1"
+OPENAI_REALTIME_VOICE = "marin"
+OPENAI_ERROR_MESSAGE_LIMIT = 500
+VOICE_SESSION_RATE_LIMIT = 3
+VOICE_SESSION_RATE_WINDOW_SECONDS = 60
+voice_session_attempts: dict[str, deque[float]] = {}
+
+
+def is_loopback_client(host: str) -> bool:
+    try:
+        address = ip_address(host)
+    except ValueError:
+        return False
+
+    if address.is_loopback:
+        return True
+    ipv4_mapped = getattr(address, "ipv4_mapped", None)
+    return bool(ipv4_mapped and ipv4_mapped.is_loopback)
+
+
+def require_local_voice_client(request: Request) -> str:
+    client_host = request.client.host if request.client else ""
+    origin = request.headers.get("origin")
+
+    if not is_loopback_client(client_host):
+        raise HTTPException(
+            status_code=403,
+            detail="Sessões de voz são permitidas apenas para clientes loopback.",
+        )
+    if origin not in LOCAL_FRONTEND_ORIGINS:
+        raise HTTPException(
+            status_code=403,
+            detail="Origem não autorizada para criar sessão de voz.",
+        )
+
+    return client_host
+
+
+def enforce_voice_session_rate_limit(client_host: str) -> None:
+    now = monotonic()
+    attempts = voice_session_attempts.setdefault(client_host, deque())
+    window_start = now - VOICE_SESSION_RATE_WINDOW_SECONDS
+
+    while attempts and attempts[0] <= window_start:
+        attempts.popleft()
+
+    if len(attempts) >= VOICE_SESSION_RATE_LIMIT:
+        retry_after = max(
+            1,
+            ceil(VOICE_SESSION_RATE_WINDOW_SECONDS - (now - attempts[0])),
+        )
+        raise HTTPException(
+            status_code=429,
+            detail="Limite local de criação de sessões de voz excedido.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    attempts.append(now)
+
+
+def sanitize_openai_error(response_text: str, status_code: int) -> str:
+    message = ""
+    try:
+        payload = json.loads(response_text)
+        error = payload.get("error", {}) if isinstance(payload, dict) else {}
+        if isinstance(error, dict) and isinstance(error.get("message"), str):
+            message = error["message"]
+    except (json.JSONDecodeError, TypeError):
+        message = response_text
+
+    message = " ".join(message.split())
+    message = re.sub(r"(?i)Bearer\s+\S+", "Bearer [REDACTED]", message)
+    message = re.sub(r"\bsk-[A-Za-z0-9_-]+\b", "[REDACTED]", message)
+    message = re.sub(
+        r"v=0(?:\\r\\n|\\n|\r\n|\n).*",
+        "[SDP REDACTED]",
+        message,
+        flags=re.DOTALL,
+    )
+    message = message[:OPENAI_ERROR_MESSAGE_LIMIT].strip()
+
+    if not message:
+        message = "A API não informou detalhes."
+
+    return f"OpenAI Realtime rejeitou a sessão ({status_code}): {message}"
+
+
+def sanitize_openai_response_for_log(response_text: str) -> str:
+    sanitized = re.sub(
+        r"(?i)(Authorization:\s*Bearer\s+)\S+",
+        r"\1[REDACTED]",
+        response_text,
+    )
+    sanitized = re.sub(r"\bsk-[A-Za-z0-9_-]+\b", "[REDACTED]", sanitized)
+    return re.sub(
+        r"v=0(?:\\r\\n|\\n|\r\n|\n).*",
+        "[SDP REDACTED]",
+        sanitized,
+        flags=re.DOTALL,
+    )
 
 # Funções auxiliares de Banco de Dados
 def save_sensor_log(temperature=None, humidity=None):
@@ -215,6 +329,92 @@ async def get_status():
             "voice_text": state.voice_text
         }
     }
+
+@app.post("/api/v1/voice/session")
+async def create_voice_session(request: Request):
+    client_host = require_local_voice_client(request)
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="OPENAI_API_KEY não configurada no backend.",
+        )
+
+    try:
+        raw_sdp = (await request.body()).decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(status_code=400, detail="Oferta SDP inválida.") from exc
+
+    if not raw_sdp.strip():
+        raise HTTPException(status_code=400, detail="Oferta SDP ausente.")
+    if not raw_sdp.startswith("v=0"):
+        raise HTTPException(
+            status_code=400,
+            detail='Oferta SDP inválida: deve começar com "v=0".',
+        )
+
+    logger.info(
+        "Oferta SDP recebida: length=%s starts_with_v0=%s",
+        len(raw_sdp),
+        raw_sdp.startswith("v=0"),
+    )
+    enforce_voice_session_rate_limit(client_host)
+
+    session = {
+        "type": "realtime",
+        "model": OPENAI_REALTIME_MODEL,
+        "instructions": (
+            "Você é a IRIS, assistente residencial da plataforma CIRCE. "
+            "Responda em português brasileiro, de forma direta, concisa e natural."
+        ),
+        "audio": {
+            "input": {
+                "turn_detection": {
+                    "type": "server_vad",
+                    "create_response": True,
+                    "interrupt_response": True,
+                },
+            },
+            "output": {
+                "voice": OPENAI_REALTIME_VOICE,
+            },
+        },
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            openai_response = await client.post(
+                OPENAI_REALTIME_URL,
+                headers={"Authorization": f"Bearer {api_key}"},
+                files={
+                    "sdp": (None, raw_sdp, "application/sdp"),
+                    "session": (
+                        None,
+                        json.dumps(session),
+                        "application/json",
+                    ),
+                },
+            )
+            if not openai_response.is_success:
+                status_code = openai_response.status_code
+                response_text = openai_response.text
+                logger.warning(
+                    "OpenAI Realtime rejeitou a sessão: status=%s response_text=%s",
+                    status_code,
+                    sanitize_openai_response_for_log(response_text),
+                )
+                raise HTTPException(
+                    status_code=502,
+                    detail=sanitize_openai_error(response_text, status_code),
+                )
+    except httpx.RequestError as exc:
+        logger.warning("OpenAI Realtime indisponível: %s", type(exc).__name__)
+        raise HTTPException(
+            status_code=502,
+            detail="OpenAI Realtime indisponível.",
+        ) from exc
+
+    return Response(content=openai_response.text, media_type="application/sdp")
 
 # Rota de Histórico de Sensores
 @app.get("/api/v1/sensors/history")

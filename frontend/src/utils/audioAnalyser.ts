@@ -3,6 +3,7 @@
 class GlobalAudioAnalyser {
   private audioCtx: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
+  private source: MediaStreamAudioSourceNode | null = null;
   private dataArray: any = new Uint8Array(0);
 
   // Inicializa o analyser com o microfone do usuário
@@ -14,10 +15,12 @@ class GlobalAudioAnalyser {
       if (this.audioCtx.state === 'suspended') {
         this.audioCtx.resume();
       }
-      const source = this.audioCtx.createMediaStreamSource(stream);
+      this.source?.disconnect();
+      this.analyser?.disconnect();
+      this.source = this.audioCtx.createMediaStreamSource(stream);
       this.analyser = this.audioCtx.createAnalyser();
       this.analyser.fftSize = 128; // tamanho compacto para performance ideal no Canvas
-      source.connect(this.analyser);
+      this.source.connect(this.analyser);
       this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
       console.log('AudioAnalyser iniciado com sucesso!');
     } catch (e) {
@@ -61,6 +64,14 @@ class GlobalAudioAnalyser {
     if (!this.analyser) return new Uint8Array(0);
     this.analyser.getByteFrequencyData(this.dataArray);
     return this.dataArray;
+  }
+
+  disconnect(): void {
+    this.source?.disconnect();
+    this.source = null;
+    this.analyser?.disconnect();
+    this.analyser = null;
+    this.dataArray = new Uint8Array(0);
   }
 }
 

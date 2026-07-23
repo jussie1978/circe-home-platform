@@ -25,14 +25,15 @@
 
 ## R0.7 — Voz plugável
 
-- OpenAI Realtime via WebRTC;
-- provedor abstrato;
+- OpenAI Realtime via WebRTC (implementado; validação em navegador pendente);
+- provedor abstrato com OpenAI padrão e Gemini legado;
+- cancelamento/timeout de negociação e contenção local do endpoint faturável;
 - ferramenta de leitura;
 - comandos controlados e métricas de custo/latência.
 
 ## R0.8 — Segurança e operação
 
-- autenticação;
+- autenticação, substituindo a contenção loopback do endpoint de voz antes de exposição em rede;
 - MQTT protegido;
 - segredos;
 - backup e observabilidade.

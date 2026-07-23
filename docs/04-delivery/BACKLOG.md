@@ -5,8 +5,10 @@
 - [ ] converter `backend/requirements.txt` para UTF-8 e validar instalação;
 - [ ] unificar porta do backend;
 - [ ] criar Compose completo e health checks;
-- [ ] remover armazenamento de chave permanente no navegador;
-- [ ] restringir CORS e MQTT para ambiente adequado;
+- [x] remover armazenamento de chave permanente do fluxo de voz padrão no navegador;
+- [x] restringir CORS e sessão de voz às origens/clientes locais do MVP;
+- [ ] proteger MQTT para o ambiente adequado;
+- [ ] substituir a contenção local do endpoint de voz por autenticação e limites compartilhados antes de exposição em rede;
 - [ ] implementar ack e timeout de comandos.
 
 ## P1 — Fundação
@@ -19,9 +21,10 @@
 
 ## P2 — Voz
 
-- [ ] SPEC do OpenAI Realtime;
-- [ ] endpoint de segredo efêmero;
-- [ ] prova WebRTC isolada;
+- [x] criar contrato `VoiceProvider` e adaptar a integração Gemini existente;
+- [x] SPEC do OpenAI Realtime;
+- [x] endpoint backend de negociação SDP sem segredo no navegador;
+- [x] prova WebRTC isolada no código, pendente validação manual em navegador;
 - [ ] ferramenta somente leitura;
 - [ ] controles físicos com confirmação;
 - [ ] painel de custo e latência.
