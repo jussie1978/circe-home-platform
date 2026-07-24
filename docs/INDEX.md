@@ -27,6 +27,7 @@ Esta pasta é a **fonte única da verdade** do projeto. Documentos antigos foram
 
 - [Voz](03-domains/VOICE-ARCHITECTURE.md)
 - [Inteligência](03-domains/INTELLIGENCE-ARCHITECTURE.md)
+- [Memória](03-domains/MEMORY-ARCHITECTURE.md)
 - [Hardware](03-domains/HARDWARE-ARCHITECTURE.md)
 - [Visão computacional](03-domains/VISION-ARCHITECTURE.md)
 
