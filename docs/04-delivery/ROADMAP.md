@@ -30,6 +30,17 @@
 - ferramenta de leitura;
 - comandos controlados e métricas de custo/latência.
 
+## R0.7.1 — Memória portátil do Core
+
+- contrato `MemoryProvider`;
+- contrato `ContextBuilder`;
+- persistência de preferências explícitas;
+- recuperação entre sessões;
+- exclusão e auditoria de memória;
+- teste de troca entre dois provedores sem perda de continuidade.
+
+Não inclui inferência automática de hábitos, memória emocional, RAG amplo ou agentes autônomos.
+
 ## R0.8 — Segurança e operação
 
 - autenticação;
