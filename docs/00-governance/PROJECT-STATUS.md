@@ -2,31 +2,30 @@
 
 **Atualizado em:** 26/07/2026  
 **Branch de referência:** `main`  
-**Classificação atual:** protótipo integrado com base de memória portátil e construção de contexto neutro funcionais; ainda não é uma release operacional reproduzível.
+**Classificação atual:** protótipo integrado com memória portátil e serviço de contexto neutro funcionais; ainda não é uma release operacional reproduzível.
 
 ## Resumo executivo
 
 A CIRCE já possui frontend React com interface espacial, backend FastAPI com REST/WebSocket/MQTT/SQLite, firmware ESP32-S3 para o mecanismo do case e serviços experimentais de voz e visão.
 
-A evolução mais recente implementou o `ContextBuilder` v0.1, capaz de combinar personalidade, histórico recente, memórias explícitas, ferramentas e mensagem atual em um modelo neutro, sem acessar provedores de IA ou persistência.
+A evolução mais recente implementou o `ContextService` v0.1, que recupera memórias ativas pelo `MemoryService` e coordena o `ContextBuilder` sem expor a persistência aos provedores nem criar dependências de fornecedor no Core.
 
 O principal gargalo continua sendo transformar o protótipo integrado em uma baseline reproduzível, observável e validada ponta a ponta.
 
 ## Última entrega concluída
 
-### Context Builder v0.1
+### Context Service v0.1
 
 Concluído:
 
-- contrato abstrato `ContextBuilder`;
-- modelos neutros `ContextBuildInput` e `ModelContext`;
-- composição de personalidade, histórico, memórias, ferramentas e mensagem atual;
-- preservação da ordem recebida do histórico recente;
-- ordenação determinística de memórias por importância, confiança, criação e ID;
-- ordenação determinística de ferramentas por nome e descrição;
-- exclusão de memórias com estado diferente de `active`;
-- seis novos testes unitários;
-- 20 testes passando no backend.
+- integração entre `MemoryService` e `ContextBuilder`;
+- recuperação de memórias ativas sem acesso direto ao repositório;
+- isolamento de contexto por usuário;
+- exclusão de memórias superadas ou excluídas;
+- composição neutra de personalidade, histórico, ferramentas e mensagem atual;
+- SPEC-004 com escopo e critérios de aceite;
+- cinco novos testes de integração;
+- 25 testes passando no backend.
 
 PRs relacionados:
 
@@ -34,7 +33,7 @@ PRs relacionados:
 - PR #3 — contratos e persistência do Memory Core;
 - PR #4 — Memory Runtime v0.1 e API REST explícita.
 - commit `0353d4d` — validação de persistência após reinício, publicado na `main`;
-- entrega atual do `ContextBuilder` v0.1 ainda não publicada.
+- commits `41990e5` e `e6f814f` — `ContextBuilder` v0.1, publicados na `main`.
 
 ## Maturidade
 
@@ -43,13 +42,13 @@ PRs relacionados:
 | Produto | visão definida, escopo amplo | 3/5 |
 | Frontend | protótipo avançado e build validado | 3/5 |
 | Backend | MVP funcional com memória explícita | 3/5 |
-| Memória | Core e construção de contexto funcionais; integração de recuperação pendente | 3/5 |
+| Memória | Core, recuperação e construção de contexto funcionais; troca de provedor pendente | 3/5 |
 | Firmware | controle mecânico parcial | 2/5 |
 | Voz | experimental, sem baseline confiável | 1/5 |
 | Visão | protótipo isolado | 2/5 |
 | DevOps | broker apenas no Compose | 1/5 |
 | Segurança | laboratório | 1/5 |
-| Testes | cobertura inicial com 20 testes | 2/5 |
+| Testes | cobertura inicial com 25 testes | 2/5 |
 
 ## Implementado e comprovado
 
@@ -65,7 +64,9 @@ PRs relacionados:
 - API REST de memória com ciclo completo de CRUD;
 - contrato e modelo neutro do `ContextBuilder` v0.1;
 - composição determinística de contexto sem dependência de provedor;
-- 20 testes passando no backend.
+- `ContextService` v0.1 com recuperação de memória isolada por usuário;
+- memórias superadas ou excluídas bloqueadas antes da composição do contexto;
+- 25 testes passando no backend.
 
 ## Ainda não comprovado
 
@@ -75,37 +76,34 @@ PRs relacionados:
 - DHT22, PWM de fans e WS2812B no firmware atual;
 - voz confiável em produção;
 - CI/CD e release reproduzível;
-- troca entre dois provedores de IA preservando continuidade;
-- recuperação de memórias pelo serviço de contexto sem acesso direto do provedor;
 - injeção do contexto em adaptadores de IA;
+- troca entre dois adaptadores de IA preservando o mesmo contexto e memória;
 
 ## Próximo passo exato
 
-Implementar o `ContextService` v0.1:
+Implementar o contrato de provedor de IA v0.1:
 
-1. recuperar memórias ativas do usuário por meio do `MemoryService`;
-2. entregar essas memórias ao `ContextBuilder`;
-3. comprovar isolamento por usuário;
-4. comprovar que memórias excluídas ou superadas não entram no contexto;
-5. não integrar ainda OpenAI, Gemini, embeddings, banco vetorial ou endpoint HTTP.
+1. definir um contrato neutro que receba `ModelContext`;
+2. impedir que adaptadores recebam `MemoryService` ou repositórios;
+3. comprovar com dois adaptadores de teste que o mesmo contexto preserva as memórias;
+4. manter fora do escopo chamadas reais de rede, voz e streaming.
 
 ## Próxima entrega planejada
 
-### Context Service v0.1
+### Provider Contract v0.1
 
 Objetivo:
 
-- integrar recuperação de memória e construção de contexto dentro do Core;
-- manter o provedor sem acesso direto ao armazenamento;
-- preparar a validação posterior de troca entre provedores.
+- definir a fronteira entre o Core e qualquer provedor de IA;
+- entregar somente o `ModelContext` neutro ao adaptador;
+- validar a troca de adaptador sem perda de continuidade.
 
 Não inclui:
 
-- embeddings;
-- banco vetorial;
-- memória automática;
-- inferência de hábitos;
-- memória emocional;
+- integração real com OpenAI ou Gemini;
+- voz e streaming;
+- embeddings ou banco vetorial;
+- memória automática ou emocional;
 - agentes autônomos.
 
 ## Bloqueios e riscos conhecidos
@@ -140,7 +138,7 @@ python -m pytest -q
 Resultado esperado:
 
 ```text
-20 passed
+25 passed
 ```
 
 Frontend:

@@ -24,6 +24,9 @@
 - modelos neutros `ContextBuildInput`, `ModelContext`, `ConversationTurn` e `ToolDefinition`;
 - implementação determinística `DeterministicContextBuilder`;
 - testes unitários de composição, ordenação, normalização e filtragem do contexto.
+- SPEC-004 para o `ContextService` v0.1;
+- `ContextService` para coordenar recuperação de memória e construção de contexto;
+- testes de integração do serviço de contexto.
 
 ### Changed
 
@@ -37,7 +40,7 @@
 
 ### Validated
 
-- backend com 20 testes passando;
+- backend com 25 testes passando;
 - frontend com build de produção concluído;
 - ciclo completo de memória validado em SQLite temporário;
 - isolamento por usuário e tipo de memória;
@@ -47,6 +50,9 @@
 - contexto neutro construído sem dependências de OpenAI, Gemini, embeddings ou persistência;
 - histórico preservado na ordem de entrada, ferramentas ordenadas e memórias ativas priorizadas de forma determinística;
 - memórias superadas ou excluídas impedidas de entrar no contexto.
+- recuperação de memórias ativas pelo `MemoryService` antes da construção do contexto;
+- isolamento do contexto por usuário;
+- composição completa sem acesso do serviço a repositórios ou provedores.
 
 ### Deprecated
 

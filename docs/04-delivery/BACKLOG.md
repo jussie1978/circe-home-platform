@@ -11,6 +11,9 @@
 
 ## P1 — Fundação
 
+- [x] integrar `MemoryService` e `ContextBuilder` no `ContextService` v0.1;
+- [ ] definir contrato neutro de provedor que consome `ModelContext`;
+- [ ] validar troca entre dois adaptadores sem perda de continuidade;
 - [ ] schemas Pydantic versionados;
 - [ ] persistir comandos e estados;
 - [ ] CI com testes backend e build frontend;

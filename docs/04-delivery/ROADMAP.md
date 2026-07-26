@@ -41,7 +41,7 @@ Legenda:
 - [x] contrato de repositório de memória;
 - [x] contrato `ContextBuilder`;
 - [x] modelo neutro e composição determinística de contexto;
-- [ ] integração entre recuperação de memória e `ContextBuilder`;
+- [x] integração entre recuperação de memória e `ContextBuilder`;
 - [x] persistência de preferências explícitas;
 - [x] recuperação entre sessões e reinício do backend;
 - [x] exclusão de memória;
@@ -54,7 +54,8 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 
 ### Próximo marco
 
-Implementar o `ContextService` v0.1 para integrar recuperação de memórias ativas e construção de contexto.
+Implementar o contrato de provedor de IA v0.1 e validar, com dois adaptadores de
+teste, que o mesmo `ModelContext` preserva as memórias durante a troca.
 
 ## R0.8 — Segurança e operação
 

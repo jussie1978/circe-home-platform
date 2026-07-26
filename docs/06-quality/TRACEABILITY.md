@@ -10,3 +10,4 @@
 | CAP-007 visão | script MediaPipe | manual | serviço e privacidade |
 | CAP-008 setup único | inexistente | inexistente | R0.4 |
 | CAP-009 autenticação | inexistente | inexistente | R0.8 |
+| CAP-010 memória portátil | `MemoryService` + `ContextService` | 25 testes backend | troca entre dois adaptadores |

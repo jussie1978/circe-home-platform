@@ -120,9 +120,13 @@ OpenAI, Gemini ou qualquer outro provedor. A implementação v0.1 mantém a orde
 do histórico, ordena ferramentas por nome, prioriza memórias por importância e
 confiança e remove memórias inativas.
 
-O Context Builder não consulta o banco. A próxima camada, `ContextService`, será
-responsável por recuperar as memórias pelo `MemoryService` e entregá-las ao
-builder.
+O Context Builder não consulta o banco. O `ContextService` recupera as memórias
+ativas exclusivamente pelo `MemoryService` e as entrega ao builder. Essa
+coordenação preserva o isolamento por usuário e impede que um adaptador de IA
+receba acesso ao repositório ou ao banco.
+
+O próximo limite arquitetural é o contrato neutro de provedor: cada adaptador
+deverá receber somente o `ModelContext` pronto.
 
 ## Critérios de aceitação do primeiro incremento
 
