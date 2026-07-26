@@ -1,35 +1,42 @@
 # Estado atual do projeto
 
 **Atualizado em:** 26/07/2026  
-**Branch de referência:** `main`  
-**Classificação atual:** protótipo integrado com memória portátil e troca neutra de provedor comprovadas no Core; ainda não é uma release operacional reproduzível.
+**Branch de referência:** `feat/provider-integration-v0.1`, baseada em `main` no
+commit `e0618a8`
+
+**Classificação atual:** protótipo integrado com memória portátil e primeiro
+adaptador textual real validado ao vivo; ainda não é uma release operacional
+reproduzível.
 
 ## Resumo executivo
 
 A CIRCE já possui frontend React com interface espacial, backend FastAPI com REST/WebSocket/MQTT/SQLite, firmware ESP32-S3 para o mecanismo do case e serviços experimentais de voz e visão.
 
-A evolução mais recente concluiu o Provider Contract v0.1 e a auditoria técnica
-da memória. Dois adaptadores simulados recebem o mesmo `ModelContext` sem acesso
-à persistência, preservando personalidade e memórias durante a troca.
+A evolução mais recente concluiu o Provider Integration v0.1. O
+`OpenAITextProvider` recebe somente o `ModelContext`, e uma preferência
+persistida é recuperada após reabertura do SQLite e incluída no payload textual.
+Uma única chamada autorizada ao `gpt-5-nano` confirmou que a resposta real usa
+essa memória.
 
 O principal gargalo continua sendo transformar o protótipo integrado em uma baseline reproduzível, observável e validada ponta a ponta.
 
 ## Última entrega concluída
 
-### Provider Contract v0.1 e auditoria técnica da memória
+### Provider Integration v0.1
 
 Concluído:
 
-- contrato abstrato `AIProvider.complete(ModelContext)`;
-- resposta neutra `ProviderResponse`;
-- troca entre dois adaptadores simulados usando a mesma instância de contexto;
-- preservação da personalidade e das memórias durante a troca;
-- fronteira de provedor sem acesso a `MemoryService`, repositórios ou SQLite;
-- auditoria técnica documentada com quatro achados corrigidos;
-- cópia defensiva de metadados, normalização UTC e validação cronológica;
-- validação consistente de identificadores e textos em branco;
-- SPEC-005 implementada;
-- 35 testes passando no backend.
+- adaptador real `OpenAITextProvider` atrás de `AIProvider`;
+- `TextCompletionService` conectando `ContextService` ao provedor;
+- chave e modelo configurados apenas no backend;
+- `store: false` e limite de 256 tokens no payload da Responses API;
+- erros mínimos de configuração, HTTP/rede e resposta vazia;
+- teste com SQLite reaberto comprovando memória no payload;
+- testes HTTP totalmente simulados, sem rede e sem custo;
+- uma chamada real autorizada com `gpt-5-nano` comprovando resposta influenciada
+  pela memória persistente;
+- SPEC-006 concluída;
+- 41 testes passando no backend.
 
 PRs relacionados:
 
@@ -40,7 +47,8 @@ PRs relacionados:
 - commits `41990e5` e `e6f814f` — `ContextBuilder` v0.1, publicados na `main`;
 - commit `ef91ab0` — implementação completa do `ContextService` v0.1 publicada
   na `main`;
-- a entrega atual é o commit que contém a SPEC-005 e este estado consolidado.
+- a entrega atual ainda está sem commit ou push, na branch
+  `feat/provider-integration-v0.1`.
 
 ## Maturidade
 
@@ -49,13 +57,13 @@ PRs relacionados:
 | Produto | visão definida, escopo amplo | 3/5 |
 | Frontend | protótipo avançado e build validado | 3/5 |
 | Backend | MVP funcional com memória explícita | 3/5 |
-| Memória | Core, recuperação, contexto e troca neutra de provedor comprovados | 4/5 |
+| Memória | Core, recuperação, contexto e adaptador textual real testados | 4/5 |
 | Firmware | controle mecânico parcial | 2/5 |
 | Voz | experimental, sem baseline confiável | 1/5 |
 | Visão | protótipo isolado | 2/5 |
 | DevOps | broker apenas no Compose | 1/5 |
 | Segurança | laboratório | 1/5 |
-| Testes | cobertura inicial com 35 testes | 3/5 |
+| Testes | cobertura inicial com 41 testes | 3/5 |
 
 ## Implementado e comprovado
 
@@ -78,7 +86,11 @@ PRs relacionados:
 - auditoria técnica da memória concluída para o escopo local do MVP;
 - metadados desacoplados da entrada, timestamps normalizados em UTC e textos
   obrigatórios validados;
-- 35 testes passando no backend.
+- adaptador real da OpenAI Responses API implementado atrás do contrato neutro;
+- memória persistida recuperada e traduzida para o payload do provedor;
+- resposta real do `gpt-5-nano` influenciada pela memória persistente em uma
+  única chamada autorizada;
+- 41 testes passando no backend sem chamadas externas.
 
 ## Ainda não comprovado
 
@@ -88,7 +100,6 @@ PRs relacionados:
 - DHT22, PWM de fans e WS2812B no firmware atual;
 - voz confiável em produção;
 - CI/CD e release reproduzível;
-- integração do contrato com um adaptador real de IA;
 - resposta visível na interface utilizando memória persistida;
 - autenticação e autorização por proprietário nas operações de memória;
 - trilha imutável de criação, revisão e exclusão de memória;
@@ -96,22 +107,20 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Implementar o primeiro adaptador real de texto atrás do contrato neutro:
-
-1. manter segredos exclusivamente no backend;
-2. conectar `ContextService` → `AIProvider` em uma fatia textual mínima;
-3. demonstrar que uma preferência explícita altera a resposta do modelo;
-4. manter voz, streaming e seleção automática de provedor fora desse incremento.
+Revisar o diff consolidado e criar o commit da Provider Integration v0.1 na
+branch `feat/provider-integration-v0.1`. Solicitar confirmação explícita antes
+de qualquer push.
 
 ## Próxima entrega planejada
 
-### Provider Integration v0.1
+### Publicação da Provider Integration v0.1
 
 Objetivo:
 
-- implementar um adaptador real de texto atrás de `AIProvider`;
-- produzir a primeira resposta observável usando a memória persistida;
-- preservar o Core e o banco independentes do fornecedor.
+- revisar as alterações consolidadas;
+- criar um commit único na branch de feature;
+- publicar a branch somente após confirmação explícita;
+- abrir PR para revisão antes da integração à `main`.
 
 Não inclui:
 
@@ -131,6 +140,8 @@ Não inclui:
 - operações de memória ainda não possuem autenticação, autorização por
   proprietário, trilha imutável, retenção ou backup;
 - proveniência ainda é convenção no campo `metadata`, não um atributo obrigatório.
+- `CIRCE_OPENAI_MODEL` não possui padrão deliberadamente: o modelo deve ser
+  escolhido e autorizado antes da chamada.
 
 ## Como retomar o projeto
 
@@ -141,6 +152,20 @@ Não inclui:
 5. executar os testes do backend;
 6. executar o build do frontend;
 7. iniciar pelo item em **Próximo passo exato**.
+
+## Validações da entrega atual
+
+- baseline anterior: `35 passed`;
+- suíte após a integração: `41 passed`;
+- testes automatizados executados sem rede e sem custo;
+- compilação Python concluída;
+- `git diff --check` sem erros;
+- uma chamada real autorizada ao `gpt-5-nano` em 26/07/2026;
+- resultado observado: a resposta afirmou a preferência por respostas diretas
+  e objetivas, recuperada de um SQLite reaberto;
+- a primeira tentativa com execução direta do arquivo falhou na importação antes
+  de alcançar a API; a chamada válida ocorreu uma única vez com execução como
+  módulo.
 
 ## Validação rápida do ambiente
 
@@ -155,7 +180,7 @@ python -m pytest -q
 Resultado esperado:
 
 ```text
-35 passed
+41 passed
 ```
 
 Frontend:

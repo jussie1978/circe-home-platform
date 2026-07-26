@@ -33,6 +33,14 @@
 - testes com dois adaptadores simulados preservando personalidade e memória;
 - auditoria técnica da memória em 26/07/2026;
 - validações de integridade temporal, metadados e campos textuais da memória.
+- SPEC-006 para o Provider Integration v0.1;
+- adaptador textual real `OpenAITextProvider` para a Responses API;
+- `TextCompletionService` conectando `ContextService` ao contrato neutro;
+- configuração backend por `OPENAI_API_KEY` e `CIRCE_OPENAI_MODEL`;
+- limite de 256 tokens de saída por chamada textual;
+- tratamento neutro de configuração ausente, falha externa e resposta sem texto;
+- demonstrador manual de memória persistente com uma única chamada real;
+- testes HTTP sem rede e sem custo usando `httpx.MockTransport`.
 
 ### Changed
 
@@ -48,6 +56,8 @@
 - `MemoryService.recall` normaliza o identificador do usuário;
 - API de memória rejeita textos compostos apenas por espaços com HTTP 422;
 - roadmap registra a conclusão do marco R0.7.1 no Core.
+- contratos de integração documentam o primeiro adaptador textual real;
+- matriz de rastreabilidade passa a refletir 41 testes no backend.
 
 ### Validated
 
@@ -70,6 +80,15 @@
 - normalização UTC e rejeição de cronologia inválida;
 - validação uniforme de identificadores e conteúdo em branco;
 - backend com 35 testes passando após a auditoria.
+- memória gravada em SQLite, recuperada após reabertura e incluída no payload do
+  adaptador textual;
+- tradução de `ModelContext` para a Responses API validada sem chamada de rede;
+- chave de backend ausente e falha HTTP tratadas sem exposição do segredo;
+- backend com 41 testes passando após o Provider Integration v0.1.
+- uma única chamada real autorizada ao `gpt-5-nano` confirmou que a resposta
+  textual usa a preferência recuperada após reabertura do SQLite;
+- demonstrador validado com `python -m scripts.demo_provider_memory`; a tentativa
+  anterior por caminho direto falhou na importação antes de chamar a API.
 
 ### Deprecated
 

@@ -44,3 +44,15 @@ outro fornecedor pertencem ao adaptador e não alteram o modelo neutro do Core.
 
 O contrato v0.1 é síncrono e textual. Streaming, voz, timeout, cancelamento,
 métricas e tratamento uniforme de falhas serão especificados separadamente.
+
+O primeiro adaptador real textual está em
+`backend/app/providers/openai_text.py`. Ele traduz o `ModelContext` para a
+Responses API sem conhecer persistência e lê chave e modelo exclusivamente de
+variáveis de ambiente do backend. O `TextCompletionService` coordena
+`ContextService` → `AIProvider`; somente o `ContextService` acessa o
+`MemoryService`.
+
+Nesta integração mínima, `store: false` impede o armazenamento da resposta pelo
+provedor e `max_output_tokens: 256` limita a saída. Falhas de configuração e de
+requisição são convertidas em erros neutros. Retry, fallback, streaming e
+métricas permanecem fora do contrato v0.1.

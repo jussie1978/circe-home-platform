@@ -144,4 +144,8 @@ trilha imutável de alterações, proveniência obrigatória, retenção e backu
 - funcionar sem acesso direto do provedor ao armazenamento.
 
 Os critérios arquiteturais estão comprovados. A integração com um adaptador real
-e a resposta observável na interface constituem o próximo incremento.
+foi implementada na fatia textual v0.1. Os testes reabrem o SQLite, recuperam uma
+preferência e comprovam sua inclusão no payload enviado ao adaptador sem acesso
+do provedor à persistência. Uma chamada real autorizada ao `gpt-5-nano` confirmou
+em 26/07/2026 que a resposta utiliza a preferência recuperada. A resposta
+visível no frontend continua fora desse incremento.
