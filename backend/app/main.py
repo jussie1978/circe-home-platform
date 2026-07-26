@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from .database import engine, SessionLocal, get_db
 from . import models
 from .mqtt import MQTTManager
+from .memory.api import router as memory_router
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,8 @@ app = FastAPI(
     description="Backend para automação residencial do case Alienware ALX e assistente de voz IRIS",
     version="0.3.0"
 )
+
+app.include_router(memory_router)
 
 # Configuração de CORS para permitir acesso local do frontend (Vite na porta 3000)
 app.add_middleware(
