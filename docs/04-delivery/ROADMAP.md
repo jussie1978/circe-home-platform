@@ -65,13 +65,13 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 - [x] resposta real influenciada pela memória, validada em uma única chamada
   autorizada ao `gpt-5-nano` em 26/07/2026.
 
-**Incremento concluído em 26/07/2026; publicação da branch pendente.**
+**Incremento concluído e publicado para revisão no PR #6 em 26/07/2026.**
 
 ### Próximo marco
 
-Publicar a Provider Integration v0.1 por branch e PR, após revisão e autorização
-explícita de push. Em seguida, retomar a baseline reproduzível do R0.4 antes de
-expandir voz ou streaming.
+Após a integração do PR #6, retomar a baseline reproduzível do R0.4 antes de
+expandir voz ou streaming. O menor incremento será definido a partir dos itens
+ainda pendentes desse marco.
 
 ## R0.8 — Segurança e operação
 

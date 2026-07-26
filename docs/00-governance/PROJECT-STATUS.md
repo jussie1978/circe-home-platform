@@ -1,8 +1,8 @@
 # Estado atual do projeto
 
 **Atualizado em:** 26/07/2026  
-**Branch de referência:** `feat/provider-integration-v0.1`, baseada em `main` no
-commit `e0618a8`
+**Entrega de referência:** commit `531a831` na branch
+`feat/provider-integration-v0.1`, publicado no PR #6 com destino à `main`
 
 **Classificação atual:** protótipo integrado com memória portátil e primeiro
 adaptador textual real validado ao vivo; ainda não é uma release operacional
@@ -47,8 +47,8 @@ PRs relacionados:
 - commits `41990e5` e `e6f814f` — `ContextBuilder` v0.1, publicados na `main`;
 - commit `ef91ab0` — implementação completa do `ContextService` v0.1 publicada
   na `main`;
-- a entrega atual ainda está sem commit ou push, na branch
-  `feat/provider-integration-v0.1`.
+- PR #6 — Provider Integration v0.1, commit `531a831`, publicado para revisão
+  antes da integração à `main`.
 
 ## Maturidade
 
@@ -107,20 +107,19 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Revisar o diff consolidado e criar o commit da Provider Integration v0.1 na
-branch `feat/provider-integration-v0.1`. Solicitar confirmação explícita antes
-de qualquer push.
+Concluir a revisão do PR #6 e integrá-lo à `main` somente após confirmação
+explícita. Em seguida, sincronizar a cópia local da `main` e retomar a baseline
+reproduzível do R0.4.
 
 ## Próxima entrega planejada
 
-### Publicação da Provider Integration v0.1
+### Continuação da baseline reproduzível do R0.4
 
 Objetivo:
 
-- revisar as alterações consolidadas;
-- criar um commit único na branch de feature;
-- publicar a branch somente após confirmação explícita;
-- abrir PR para revisão antes da integração à `main`.
+- definir o menor incremento pendente do R0.4;
+- priorizar CI básica ou stack reproduzível conforme a arquitetura existente;
+- manter voz e streaming fora do próximo incremento.
 
 Não inclui:
 
