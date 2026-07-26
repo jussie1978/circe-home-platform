@@ -31,3 +31,16 @@ Payload mínimo de comando:
 ## Compatibilidade
 
 Mudanças incompatíveis exigem versão de tópico ou payload e plano de migração.
+
+## Provedor de IA
+
+O Core expõe o contrato `AIProvider.complete(ModelContext)`. Adaptadores recebem
+somente o contexto já construído e devolvem `ProviderResponse`, com identificador
+do provedor e conteúdo textual.
+
+É proibido injetar `MemoryService`, `MemoryRepository`, sessões SQLAlchemy ou
+conexões SQLite em adaptadores. Traduções para formatos de OpenAI, Gemini ou
+outro fornecedor pertencem ao adaptador e não alteram o modelo neutro do Core.
+
+O contrato v0.1 é síncrono e textual. Streaming, voz, timeout, cancelamento,
+métricas e tratamento uniforme de falhas serão especificados separadamente.

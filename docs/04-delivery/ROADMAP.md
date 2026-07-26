@@ -32,7 +32,7 @@ Legenda:
 ## R0.7 — Voz plugável
 
 - [~] OpenAI Realtime via WebRTC;
-- [ ] provedor abstrato;
+- [~] provedor abstrato — contrato textual do Core concluído; streaming pendente;
 - [ ] ferramenta de leitura;
 - [ ] comandos controlados e métricas de custo/latência.
 
@@ -45,21 +45,28 @@ Legenda:
 - [x] persistência de preferências explícitas;
 - [x] recuperação entre sessões e reinício do backend;
 - [x] exclusão de memória;
-- [~] auditoria de memória;
-- [ ] teste de troca entre dois provedores sem perda de continuidade;
+- [x] auditoria técnica do subsistema de memória;
+- [x] teste de troca entre dois provedores simulados sem perda de continuidade;
 - [x] API REST explícita de memória;
 - [x] testes de domínio, persistência, reinício e integração da API.
 
 Não inclui inferência automática de hábitos, memória emocional, RAG amplo ou agentes autônomos.
 
+**Marco do Core concluído em 26/07/2026.**
+
 ### Próximo marco
 
-Implementar o contrato de provedor de IA v0.1 e validar, com dois adaptadores de
-teste, que o mesmo `ModelContext` preserva as memórias durante a troca.
+Implementar o Provider Integration v0.1: um adaptador real de texto atrás do
+contrato neutro e uma fatia mínima `ContextService` → `AIProvider` que demonstre
+uma resposta influenciada por memória explícita. Voz e streaming permanecem fora
+desse incremento.
 
 ## R0.8 — Segurança e operação
 
 - [ ] autenticação;
+- [ ] autorização por proprietário nas operações de memória;
+- [ ] trilha imutável de criação, revisão e exclusão de memória;
+- [ ] política de retenção, exportação e backup;
 - [ ] MQTT protegido;
 - [ ] segredos;
 - [ ] backup e observabilidade.

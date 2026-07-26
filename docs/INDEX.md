@@ -44,6 +44,7 @@ Esta pasta é a **fonte única da verdade** do projeto. Documentos antigos foram
 - [Observabilidade](05-operations/OBSERVABILITY.md)
 - [Estratégia de testes](06-quality/TEST-STRATEGY.md)
 - [Rastreabilidade](06-quality/TRACEABILITY.md)
+- [Auditoria técnica da memória — 26/07/2026](06-quality/MEMORY-AUDIT-2026-07-26.md)
 - [Segurança](07-security/SECURITY-BASELINE.md)
 - [Design system](08-design/DESIGN-SYSTEM.md)
 

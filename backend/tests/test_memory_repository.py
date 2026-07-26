@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -85,3 +86,17 @@ def test_superseded_memory_is_not_returned_as_active():
     service.revise(memory.id, status=MemoryStatus.SUPERSEDED)
 
     assert service.recall("user-1") == []
+
+
+def test_recall_normalizes_and_validates_user_id():
+    service = build_service()
+    saved = service.remember(
+        user_id="user-1",
+        content="Memória recuperável.",
+        memory_type=MemoryType.FACT,
+    )
+
+    assert service.recall("  user-1  ") == [saved]
+
+    with pytest.raises(ValueError, match="user_id cannot be empty"):
+        service.recall(" ")

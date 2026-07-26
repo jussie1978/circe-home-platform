@@ -84,3 +84,42 @@ def test_memory_api_returns_404_for_unknown_memory() -> None:
         "/api/v1/memories/00000000-0000-0000-0000-000000000000"
     )
     assert response.status_code == 404
+
+
+def test_memory_api_rejects_blank_required_text() -> None:
+    client = build_client()
+
+    blank_create = client.post(
+        "/api/v1/memories",
+        json={
+            "user_id": " ",
+            "content": "Memória válida.",
+            "memory_type": "fact",
+        },
+    )
+    blank_query = client.get(
+        "/api/v1/memories",
+        params={"user_id": "   "},
+    )
+
+    assert blank_create.status_code == 422
+    assert blank_query.status_code == 422
+
+
+def test_memory_api_rejects_blank_revision_content() -> None:
+    client = build_client()
+    created = client.post(
+        "/api/v1/memories",
+        json={
+            "user_id": "user-1",
+            "content": "Memória válida.",
+            "memory_type": "fact",
+        },
+    )
+
+    response = client.patch(
+        f"/api/v1/memories/{created.json()['id']}",
+        json={"content": " "},
+    )
+
+    assert response.status_code == 422

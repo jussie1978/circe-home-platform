@@ -2,38 +2,45 @@
 
 **Atualizado em:** 26/07/2026  
 **Branch de referência:** `main`  
-**Classificação atual:** protótipo integrado com memória portátil e serviço de contexto neutro funcionais; ainda não é uma release operacional reproduzível.
+**Classificação atual:** protótipo integrado com memória portátil e troca neutra de provedor comprovadas no Core; ainda não é uma release operacional reproduzível.
 
 ## Resumo executivo
 
 A CIRCE já possui frontend React com interface espacial, backend FastAPI com REST/WebSocket/MQTT/SQLite, firmware ESP32-S3 para o mecanismo do case e serviços experimentais de voz e visão.
 
-A evolução mais recente implementou o `ContextService` v0.1, que recupera memórias ativas pelo `MemoryService` e coordena o `ContextBuilder` sem expor a persistência aos provedores nem criar dependências de fornecedor no Core.
+A evolução mais recente concluiu o Provider Contract v0.1 e a auditoria técnica
+da memória. Dois adaptadores simulados recebem o mesmo `ModelContext` sem acesso
+à persistência, preservando personalidade e memórias durante a troca.
 
 O principal gargalo continua sendo transformar o protótipo integrado em uma baseline reproduzível, observável e validada ponta a ponta.
 
 ## Última entrega concluída
 
-### Context Service v0.1
+### Provider Contract v0.1 e auditoria técnica da memória
 
 Concluído:
 
-- integração entre `MemoryService` e `ContextBuilder`;
-- recuperação de memórias ativas sem acesso direto ao repositório;
-- isolamento de contexto por usuário;
-- exclusão de memórias superadas ou excluídas;
-- composição neutra de personalidade, histórico, ferramentas e mensagem atual;
-- SPEC-004 com escopo e critérios de aceite;
-- cinco novos testes de integração;
-- 25 testes passando no backend.
+- contrato abstrato `AIProvider.complete(ModelContext)`;
+- resposta neutra `ProviderResponse`;
+- troca entre dois adaptadores simulados usando a mesma instância de contexto;
+- preservação da personalidade e das memórias durante a troca;
+- fronteira de provedor sem acesso a `MemoryService`, repositórios ou SQLite;
+- auditoria técnica documentada com quatro achados corrigidos;
+- cópia defensiva de metadados, normalização UTC e validação cronológica;
+- validação consistente de identificadores e textos em branco;
+- SPEC-005 implementada;
+- 35 testes passando no backend.
 
 PRs relacionados:
 
 - PR #2 — arquitetura de memória independente de provedor;
 - PR #3 — contratos e persistência do Memory Core;
-- PR #4 — Memory Runtime v0.1 e API REST explícita.
+- PR #4 — Memory Runtime v0.1 e API REST explícita;
 - commit `0353d4d` — validação de persistência após reinício, publicado na `main`;
-- commits `41990e5` e `e6f814f` — `ContextBuilder` v0.1, publicados na `main`.
+- commits `41990e5` e `e6f814f` — `ContextBuilder` v0.1, publicados na `main`;
+- commit `ef91ab0` — implementação completa do `ContextService` v0.1 publicada
+  na `main`;
+- a entrega atual é o commit que contém a SPEC-005 e este estado consolidado.
 
 ## Maturidade
 
@@ -42,13 +49,13 @@ PRs relacionados:
 | Produto | visão definida, escopo amplo | 3/5 |
 | Frontend | protótipo avançado e build validado | 3/5 |
 | Backend | MVP funcional com memória explícita | 3/5 |
-| Memória | Core, recuperação e construção de contexto funcionais; troca de provedor pendente | 3/5 |
+| Memória | Core, recuperação, contexto e troca neutra de provedor comprovados | 4/5 |
 | Firmware | controle mecânico parcial | 2/5 |
 | Voz | experimental, sem baseline confiável | 1/5 |
 | Visão | protótipo isolado | 2/5 |
 | DevOps | broker apenas no Compose | 1/5 |
 | Segurança | laboratório | 1/5 |
-| Testes | cobertura inicial com 25 testes | 2/5 |
+| Testes | cobertura inicial com 35 testes | 3/5 |
 
 ## Implementado e comprovado
 
@@ -66,7 +73,12 @@ PRs relacionados:
 - composição determinística de contexto sem dependência de provedor;
 - `ContextService` v0.1 com recuperação de memória isolada por usuário;
 - memórias superadas ou excluídas bloqueadas antes da composição do contexto;
-- 25 testes passando no backend.
+- contrato neutro de provedor consumindo somente `ModelContext`;
+- troca entre dois adaptadores simulados sem perda de personalidade ou memória;
+- auditoria técnica da memória concluída para o escopo local do MVP;
+- metadados desacoplados da entrada, timestamps normalizados em UTC e textos
+  obrigatórios validados;
+- 35 testes passando no backend.
 
 ## Ainda não comprovado
 
@@ -76,31 +88,33 @@ PRs relacionados:
 - DHT22, PWM de fans e WS2812B no firmware atual;
 - voz confiável em produção;
 - CI/CD e release reproduzível;
-- injeção do contexto em adaptadores de IA;
-- troca entre dois adaptadores de IA preservando o mesmo contexto e memória;
+- integração do contrato com um adaptador real de IA;
+- resposta visível na interface utilizando memória persistida;
+- autenticação e autorização por proprietário nas operações de memória;
+- trilha imutável de criação, revisão e exclusão de memória;
+- política de retenção, exportação e backup.
 
 ## Próximo passo exato
 
-Implementar o contrato de provedor de IA v0.1:
+Implementar o primeiro adaptador real de texto atrás do contrato neutro:
 
-1. definir um contrato neutro que receba `ModelContext`;
-2. impedir que adaptadores recebam `MemoryService` ou repositórios;
-3. comprovar com dois adaptadores de teste que o mesmo contexto preserva as memórias;
-4. manter fora do escopo chamadas reais de rede, voz e streaming.
+1. manter segredos exclusivamente no backend;
+2. conectar `ContextService` → `AIProvider` em uma fatia textual mínima;
+3. demonstrar que uma preferência explícita altera a resposta do modelo;
+4. manter voz, streaming e seleção automática de provedor fora desse incremento.
 
 ## Próxima entrega planejada
 
-### Provider Contract v0.1
+### Provider Integration v0.1
 
 Objetivo:
 
-- definir a fronteira entre o Core e qualquer provedor de IA;
-- entregar somente o `ModelContext` neutro ao adaptador;
-- validar a troca de adaptador sem perda de continuidade.
+- implementar um adaptador real de texto atrás de `AIProvider`;
+- produzir a primeira resposta observável usando a memória persistida;
+- preservar o Core e o banco independentes do fornecedor.
 
 Não inclui:
 
-- integração real com OpenAI ou Gemini;
 - voz e streaming;
 - embeddings ou banco vetorial;
 - memória automática ou emocional;
@@ -113,7 +127,10 @@ Não inclui:
 - `declarative_base()` usa import antigo do SQLAlchemy;
 - bundle principal do frontend excede 500 kB após minificação;
 - segurança ainda adequada apenas para laboratório local;
-- voz ainda não possui baseline confiável.
+- voz ainda não possui baseline confiável;
+- operações de memória ainda não possuem autenticação, autorização por
+  proprietário, trilha imutável, retenção ou backup;
+- proveniência ainda é convenção no campo `metadata`, não um atributo obrigatório.
 
 ## Como retomar o projeto
 
@@ -138,7 +155,7 @@ python -m pytest -q
 Resultado esperado:
 
 ```text
-25 passed
+35 passed
 ```
 
 Frontend:

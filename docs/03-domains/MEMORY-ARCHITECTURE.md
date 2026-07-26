@@ -125,14 +125,23 @@ ativas exclusivamente pelo `MemoryService` e as entrega ao builder. Essa
 coordenação preserva o isolamento por usuário e impede que um adaptador de IA
 receba acesso ao repositório ou ao banco.
 
-O próximo limite arquitetural é o contrato neutro de provedor: cada adaptador
-deverá receber somente o `ModelContext` pronto.
+O contrato neutro `AIProvider` está implementado em `backend/app/providers/`.
+Cada adaptador recebe somente o `ModelContext` pronto e devolve uma
+`ProviderResponse`. Dois adaptadores simulados comprovam que a troca preserva a
+mesma instância de contexto, personalidade e memórias sem acesso ao banco.
+
+A auditoria técnica de 26/07/2026 aprovou esse desenho para o MVP local e
+registrou como pendências operacionais autenticação/autorização por proprietário,
+trilha imutável de alterações, proveniência obrigatória, retenção e backup.
 
 ## Critérios de aceitação do primeiro incremento
 
 - salvar uma preferência explícita;
 - recuperar a preferência em outra sessão;
-- trocar o adaptador de IA sem perder a preferência;
+- trocar dois adaptadores simulados sem perder a preferência;
 - excluir a preferência e impedir nova injeção no contexto;
 - registrar origem e data da memória;
 - funcionar sem acesso direto do provedor ao armazenamento.
+
+Os critérios arquiteturais estão comprovados. A integração com um adaptador real
+e a resposta observável na interface constituem o próximo incremento.

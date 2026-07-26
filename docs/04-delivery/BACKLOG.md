@@ -8,12 +8,16 @@
 - [ ] remover armazenamento de chave permanente no navegador;
 - [ ] restringir CORS e MQTT para ambiente adequado;
 - [ ] implementar ack e timeout de comandos.
+- [ ] autenticar e autorizar operações de memória antes de exposição externa;
 
 ## P1 — Fundação
 
 - [x] integrar `MemoryService` e `ContextBuilder` no `ContextService` v0.1;
-- [ ] definir contrato neutro de provedor que consome `ModelContext`;
-- [ ] validar troca entre dois adaptadores sem perda de continuidade;
+- [x] definir contrato neutro de provedor que consome `ModelContext`;
+- [x] validar troca entre dois adaptadores sem perda de continuidade;
+- [ ] implementar adaptador real de texto atrás do contrato neutro;
+- [ ] implementar trilha imutável de criação, revisão e exclusão de memória;
+- [ ] formalizar proveniência, retenção, exportação e backup da memória;
 - [ ] schemas Pydantic versionados;
 - [ ] persistir comandos e estados;
 - [ ] CI com testes backend e build frontend;

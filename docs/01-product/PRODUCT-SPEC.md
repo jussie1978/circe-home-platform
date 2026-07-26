@@ -19,7 +19,7 @@
 | CAP-007 | rastrear presença/rosto localmente | protótipo |
 | CAP-008 | instalar stack por comando único | ausente |
 | CAP-009 | autenticar operadores | ausente |
-| CAP-010 | preservar memória ao trocar o provedor de IA | parcial |
+| CAP-010 | preservar memória ao trocar o provedor de IA | Core comprovado; integração real pendente |
 
 ## Requisitos transversais
 

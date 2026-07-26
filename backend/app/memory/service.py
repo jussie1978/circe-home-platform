@@ -46,9 +46,12 @@ class MemoryService:
     ) -> list[MemoryRecord]:
         if limit < 1 or limit > 500:
             raise ValueError("limit must be between 1 and 500")
+        normalized_user_id = user_id.strip()
+        if not normalized_user_id:
+            raise ValueError("user_id cannot be empty")
 
         return self._repository.list_for_user(
-            user_id,
+            normalized_user_id,
             memory_type=memory_type,
             limit=limit,
         )

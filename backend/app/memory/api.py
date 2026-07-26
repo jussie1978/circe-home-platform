@@ -5,7 +5,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .dependencies import get_memory_service
 from .domain import MemoryRecord, MemoryStatus, MemoryType
@@ -23,6 +23,14 @@ class MemoryCreate(BaseModel):
     importance: float = Field(default=0.5, ge=0.0, le=1.0)
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
 
+    @field_validator("user_id", "content")
+    @classmethod
+    def normalize_required_text(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("value cannot be empty")
+        return normalized
+
 
 class MemoryUpdate(BaseModel):
     content: str | None = Field(default=None, min_length=1)
@@ -30,6 +38,16 @@ class MemoryUpdate(BaseModel):
     importance: float | None = Field(default=None, ge=0.0, le=1.0)
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     status: MemoryStatus | None = None
+
+    @field_validator("content")
+    @classmethod
+    def normalize_optional_content(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("value cannot be empty")
+        return normalized
 
 
 class MemoryResponse(BaseModel):
@@ -78,8 +96,14 @@ def list_memories(
     limit: int = Query(default=100, ge=1, le=500),
     service: MemoryService = Depends(get_memory_service),
 ) -> list[MemoryResponse]:
+    normalized_user_id = user_id.strip()
+    if not normalized_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="user_id cannot be empty",
+        )
     memories = service.recall(
-        user_id,
+        normalized_user_id,
         memory_type=memory_type,
         limit=limit,
     )
