@@ -8,31 +8,30 @@
 
 A CIRCE já possui frontend React com interface espacial, backend FastAPI com REST/WebSocket/MQTT/SQLite, firmware ESP32-S3 para o mecanismo do case e serviços experimentais de voz e visão.
 
-A evolução mais recente consolidou a memória como capacidade do Core, independente do provedor de IA. O domínio de memória, o serviço, o contrato de repositório, o adaptador SQLAlchemy e a API REST explícita estão implementados e cobertos por testes.
+A evolução mais recente comprovou que a memória do Core persiste em SQLite após o encerramento e a inicialização de um novo processo do backend. O cenário está protegido por teste automatizado de regressão.
 
 O principal gargalo continua sendo transformar o protótipo integrado em uma baseline reproduzível, observável e validada ponta a ponta.
 
 ## Última entrega concluída
 
-### Memory Runtime v0.1
+### Validação de persistência após reinício
 
 Concluído:
 
-- domínio de memória desacoplado de frameworks e provedores;
-- contrato `MemoryRepository`;
-- `MemoryService`;
-- persistência SQLAlchemy/SQLite;
-- criação, listagem, revisão e exclusão de memórias;
-- API REST explícita em `/api/v1/memories`;
-- normalização de timestamps em UTC na fronteira de persistência;
-- testes de domínio, repositório e integração da API;
-- 13 testes passando.
+- backend iniciado em processo Uvicorn real;
+- memória criada pela API REST;
+- primeiro processo encerrado;
+- segundo processo iniciado usando o mesmo arquivo SQLite;
+- mesma memória recuperada integralmente pela API;
+- teste automatizado `test_memory_survives_backend_restart`;
+- 14 testes passando.
 
 PRs relacionados:
 
 - PR #2 — arquitetura de memória independente de provedor;
 - PR #3 — contratos e persistência do Memory Core;
 - PR #4 — Memory Runtime v0.1 e API REST explícita.
+- branch de entrega `test/memory-restart-persistence`, ainda sem PR.
 
 ## Maturidade
 
@@ -47,7 +46,7 @@ PRs relacionados:
 | Visão | protótipo isolado | 2/5 |
 | DevOps | broker apenas no Compose | 1/5 |
 | Segurança | laboratório | 1/5 |
-| Testes | cobertura inicial com 13 testes | 2/5 |
+| Testes | cobertura inicial com 14 testes | 2/5 |
 
 ## Implementado e comprovado
 
@@ -59,12 +58,12 @@ PRs relacionados:
 - face tracking MediaPipe e simulador MQTT;
 - arquitetura de memória independente de provedor;
 - persistência explícita de preferências, fatos, episódios e decisões;
+- recuperação da memória após reinício completo do backend;
 - API REST de memória com ciclo completo de CRUD;
-- 13 testes passando no backend.
+- 14 testes passando no backend.
 
 ## Ainda não comprovado
 
-- persistência real validada após reinício completo do backend;
 - stack completa iniciada por um único comando;
 - autenticação, autorização e gestão segura de segredos;
 - confirmação física/acknowledgement de comandos;
@@ -76,14 +75,13 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Validar a persistência real ponta a ponta:
+Implementar o contrato e o modelo neutro do `ContextBuilder` v0.1:
 
-1. iniciar o backend;
-2. criar uma memória pela API;
-3. parar o backend;
-4. iniciar novamente;
-5. recuperar a mesma memória do SQLite;
-6. registrar o resultado em teste automatizado ou documento de validação.
+1. definir entrada e saída independentes de provedor;
+2. combinar mensagem atual, histórico recente, memórias explícitas, personalidade e ferramentas;
+3. manter ordenação determinística;
+4. cobrir o contrato com testes unitários;
+5. não integrar ainda OpenAI, Gemini, embeddings ou banco vetorial.
 
 ## Próxima entrega planejada
 
@@ -139,7 +137,7 @@ python -m pytest -q
 Resultado esperado:
 
 ```text
-13 passed
+14 passed
 ```
 
 Frontend:

@@ -41,18 +41,18 @@ Legenda:
 - [x] contrato de repositório de memória;
 - [ ] contrato `ContextBuilder`;
 - [x] persistência de preferências explícitas;
-- [~] recuperação entre sessões;
+- [x] recuperação entre sessões e reinício do backend;
 - [x] exclusão de memória;
 - [~] auditoria de memória;
 - [ ] teste de troca entre dois provedores sem perda de continuidade;
 - [x] API REST explícita de memória;
-- [x] testes de domínio, persistência e integração da API.
+- [x] testes de domínio, persistência, reinício e integração da API.
 
 Não inclui inferência automática de hábitos, memória emocional, RAG amplo ou agentes autônomos.
 
 ### Próximo marco
 
-Validar persistência real após reinício do backend e, em seguida, implementar o `ContextBuilder` v0.1.
+Implementar o contrato e o modelo neutro do `ContextBuilder` v0.1.
 
 ## R0.8 — Segurança e operação
 

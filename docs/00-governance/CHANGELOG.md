@@ -18,7 +18,8 @@
 - adaptador SQLAlchemy e modelo `memory_records`;
 - API REST explícita de memória;
 - endpoints de criação, listagem, atualização e exclusão;
-- testes de domínio, persistência e integração da API.
+- testes de domínio, persistência e integração da API;
+- teste de regressão com dois processos reais do backend para validar persistência após reinício.
 
 ### Changed
 
@@ -32,12 +33,13 @@
 
 ### Validated
 
-- backend com 13 testes passando;
+- backend com 14 testes passando;
 - frontend com build de produção concluído;
 - ciclo completo de memória validado em SQLite temporário;
 - isolamento por usuário e tipo de memória;
 - respostas 404 para memórias inexistentes;
-- memória revisada e excluída pela API.
+- memória revisada e excluída pela API;
+- mesma memória recuperada do SQLite após encerrar o primeiro processo Uvicorn e iniciar um segundo processo.
 
 ### Deprecated
 
