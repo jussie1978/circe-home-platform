@@ -58,6 +58,8 @@
 - roadmap registra a conclusão do marco R0.7.1 no Core.
 - contratos de integração documentam o primeiro adaptador textual real;
 - matriz de rastreabilidade passa a refletir 41 testes no backend.
+- Provider Integration v0.1 integrada à `main` pelo PR #6, com merge commit
+  `e4863d9`.
 
 ### Validated
 
@@ -89,6 +91,8 @@
   textual usa a preferência recuperada após reabertura do SQLite;
 - demonstrador validado com `python -m scripts.demo_provider_memory`; a tentativa
   anterior por caminho direto falhou na importação antes de chamar a API.
+- branch local `main` sincronizada com `origin/main` no merge commit `e4863d9`,
+  com working tree limpa após a integração.
 
 ### Deprecated
 

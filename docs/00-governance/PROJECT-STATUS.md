@@ -1,8 +1,7 @@
 # Estado atual do projeto
 
 **Atualizado em:** 26/07/2026  
-**Entrega de referência:** commit `531a831` na branch
-`feat/provider-integration-v0.1`, publicado no PR #6 com destino à `main`
+**Entrega de referência:** merge commit `e4863d9` na branch `main`, via PR #6
 
 **Classificação atual:** protótipo integrado com memória portátil e primeiro
 adaptador textual real validado ao vivo; ainda não é uma release operacional
@@ -47,8 +46,8 @@ PRs relacionados:
 - commits `41990e5` e `e6f814f` — `ContextBuilder` v0.1, publicados na `main`;
 - commit `ef91ab0` — implementação completa do `ContextService` v0.1 publicada
   na `main`;
-- PR #6 — Provider Integration v0.1, commit `531a831`, publicado para revisão
-  antes da integração à `main`.
+- PR #6 — Provider Integration v0.1, commits `531a831` e `da4cb67`,
+  integrados à `main` pelo merge commit `e4863d9`.
 
 ## Maturidade
 
@@ -107,9 +106,9 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Concluir a revisão do PR #6 e integrá-lo à `main` somente após confirmação
-explícita. Em seguida, sincronizar a cópia local da `main` e retomar a baseline
-reproduzível do R0.4.
+Implementar a CI básica do R0.4 para executar automaticamente os testes do
+backend e o build do frontend em pushes e pull requests, sem refatorar a
+aplicação.
 
 ## Próxima entrega planejada
 
@@ -117,8 +116,9 @@ reproduzível do R0.4.
 
 Objetivo:
 
-- definir o menor incremento pendente do R0.4;
-- priorizar CI básica ou stack reproduzível conforme a arquitetura existente;
+- adicionar um workflow mínimo do GitHub Actions;
+- executar a suíte do backend e o build de produção do frontend;
+- documentar comandos, versões e resultado verificável da pipeline;
 - manter voz e streaming fora do próximo incremento.
 
 Não inclui:
