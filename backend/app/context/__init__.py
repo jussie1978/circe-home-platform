@@ -8,10 +8,12 @@ from .domain import (
     ModelContext,
     ToolDefinition,
 )
+from .service import ContextService
 
 __all__ = [
     "ContextBuildInput",
     "ContextBuilder",
+    "ContextService",
     "ConversationRole",
     "ConversationTurn",
     "DeterministicContextBuilder",
