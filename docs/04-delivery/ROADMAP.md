@@ -32,7 +32,8 @@ Legenda:
 ## R0.7 — Voz plugável
 
 - [~] OpenAI Realtime via WebRTC;
-- [~] provedor abstrato — contrato textual do Core concluído; streaming pendente;
+- [~] provedor abstrato — contrato e adaptador textual real validados; streaming
+  permanece pendente;
 - [ ] ferramenta de leitura;
 - [ ] comandos controlados e métricas de custo/latência.
 
@@ -54,12 +55,23 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 
 **Marco do Core concluído em 26/07/2026.**
 
+## Provider Integration v0.1
+
+- [x] adaptador real implementando `AIProvider`;
+- [x] configuração somente por variáveis de ambiente do backend;
+- [x] tratamento mínimo de configuração ausente e falha externa;
+- [x] testes automatizados sem rede ou custo;
+- [x] memória persistida recuperada após reabertura e incluída no payload;
+- [x] resposta real influenciada pela memória, validada em uma única chamada
+  autorizada ao `gpt-5-nano` em 26/07/2026.
+
+**Incremento concluído e publicado para revisão no PR #6 em 26/07/2026.**
+
 ### Próximo marco
 
-Implementar o Provider Integration v0.1: um adaptador real de texto atrás do
-contrato neutro e uma fatia mínima `ContextService` → `AIProvider` que demonstre
-uma resposta influenciada por memória explícita. Voz e streaming permanecem fora
-desse incremento.
+Após a integração do PR #6, retomar a baseline reproduzível do R0.4 antes de
+expandir voz ou streaming. O menor incremento será definido a partir dos itens
+ainda pendentes desse marco.
 
 ## R0.8 — Segurança e operação
 
