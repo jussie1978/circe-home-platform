@@ -39,7 +39,9 @@ Legenda:
 ## R0.7.1 — Memória portátil do Core
 
 - [x] contrato de repositório de memória;
-- [ ] contrato `ContextBuilder`;
+- [x] contrato `ContextBuilder`;
+- [x] modelo neutro e composição determinística de contexto;
+- [ ] integração entre recuperação de memória e `ContextBuilder`;
 - [x] persistência de preferências explícitas;
 - [x] recuperação entre sessões e reinício do backend;
 - [x] exclusão de memória;
@@ -52,7 +54,7 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 
 ### Próximo marco
 
-Implementar o contrato e o modelo neutro do `ContextBuilder` v0.1.
+Implementar o `ContextService` v0.1 para integrar recuperação de memórias ativas e construção de contexto.
 
 ## R0.8 — Segurança e operação
 

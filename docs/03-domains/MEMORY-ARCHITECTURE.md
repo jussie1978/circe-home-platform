@@ -88,7 +88,7 @@ O Context Builder monta o pacote enviado ao modelo combinando:
 
 O provedor nunca consulta diretamente o banco de memória.
 
-## Contratos previstos
+## Contratos
 
 ```ts
 interface MemoryProvider {
@@ -103,7 +103,26 @@ interface ContextBuilder {
 }
 ```
 
-Os contratos serão implementados somente após validação da baseline e definição do local correto no backend.
+O contrato de repositório está implementado em `backend/app/memory/`. O contrato
+`ContextBuilder` e seu modelo neutro estão implementados em
+`backend/app/context/`.
+
+O `ContextBuildInput` recebe:
+
+- mensagem atual;
+- personalidade do Core;
+- histórico recente já selecionado;
+- memórias candidatas;
+- ferramentas disponíveis.
+
+O `ModelContext` preserva esses elementos sem convertê-los para o formato de
+OpenAI, Gemini ou qualquer outro provedor. A implementação v0.1 mantém a ordem
+do histórico, ordena ferramentas por nome, prioriza memórias por importância e
+confiança e remove memórias inativas.
+
+O Context Builder não consulta o banco. A próxima camada, `ContextService`, será
+responsável por recuperar as memórias pelo `MemoryService` e entregá-las ao
+builder.
 
 ## Critérios de aceitação do primeiro incremento
 

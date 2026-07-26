@@ -19,7 +19,11 @@
 - API REST explícita de memória;
 - endpoints de criação, listagem, atualização e exclusão;
 - testes de domínio, persistência e integração da API;
-- teste de regressão com dois processos reais do backend para validar persistência após reinício.
+- teste de regressão com dois processos reais do backend para validar persistência após reinício;
+- contrato abstrato `ContextBuilder`;
+- modelos neutros `ContextBuildInput`, `ModelContext`, `ConversationTurn` e `ToolDefinition`;
+- implementação determinística `DeterministicContextBuilder`;
+- testes unitários de composição, ordenação, normalização e filtragem do contexto.
 
 ### Changed
 
@@ -33,13 +37,16 @@
 
 ### Validated
 
-- backend com 14 testes passando;
+- backend com 20 testes passando;
 - frontend com build de produção concluído;
 - ciclo completo de memória validado em SQLite temporário;
 - isolamento por usuário e tipo de memória;
 - respostas 404 para memórias inexistentes;
 - memória revisada e excluída pela API;
-- mesma memória recuperada do SQLite após encerrar o primeiro processo Uvicorn e iniciar um segundo processo.
+- mesma memória recuperada do SQLite após encerrar o primeiro processo Uvicorn e iniciar um segundo processo;
+- contexto neutro construído sem dependências de OpenAI, Gemini, embeddings ou persistência;
+- histórico preservado na ordem de entrada, ferramentas ordenadas e memórias ativas priorizadas de forma determinística;
+- memórias superadas ou excluídas impedidas de entrar no contexto.
 
 ### Deprecated
 

@@ -2,36 +2,39 @@
 
 **Atualizado em:** 26/07/2026  
 **Branch de referência:** `main`  
-**Classificação atual:** protótipo integrado com base de memória portátil funcional; ainda não é uma release operacional reproduzível.
+**Classificação atual:** protótipo integrado com base de memória portátil e construção de contexto neutro funcionais; ainda não é uma release operacional reproduzível.
 
 ## Resumo executivo
 
 A CIRCE já possui frontend React com interface espacial, backend FastAPI com REST/WebSocket/MQTT/SQLite, firmware ESP32-S3 para o mecanismo do case e serviços experimentais de voz e visão.
 
-A evolução mais recente comprovou que a memória do Core persiste em SQLite após o encerramento e a inicialização de um novo processo do backend. O cenário está protegido por teste automatizado de regressão.
+A evolução mais recente implementou o `ContextBuilder` v0.1, capaz de combinar personalidade, histórico recente, memórias explícitas, ferramentas e mensagem atual em um modelo neutro, sem acessar provedores de IA ou persistência.
 
 O principal gargalo continua sendo transformar o protótipo integrado em uma baseline reproduzível, observável e validada ponta a ponta.
 
 ## Última entrega concluída
 
-### Validação de persistência após reinício
+### Context Builder v0.1
 
 Concluído:
 
-- backend iniciado em processo Uvicorn real;
-- memória criada pela API REST;
-- primeiro processo encerrado;
-- segundo processo iniciado usando o mesmo arquivo SQLite;
-- mesma memória recuperada integralmente pela API;
-- teste automatizado `test_memory_survives_backend_restart`;
-- 14 testes passando.
+- contrato abstrato `ContextBuilder`;
+- modelos neutros `ContextBuildInput` e `ModelContext`;
+- composição de personalidade, histórico, memórias, ferramentas e mensagem atual;
+- preservação da ordem recebida do histórico recente;
+- ordenação determinística de memórias por importância, confiança, criação e ID;
+- ordenação determinística de ferramentas por nome e descrição;
+- exclusão de memórias com estado diferente de `active`;
+- seis novos testes unitários;
+- 20 testes passando no backend.
 
 PRs relacionados:
 
 - PR #2 — arquitetura de memória independente de provedor;
 - PR #3 — contratos e persistência do Memory Core;
 - PR #4 — Memory Runtime v0.1 e API REST explícita.
-- branch de entrega `test/memory-restart-persistence`, ainda sem PR.
+- commit `0353d4d` — validação de persistência após reinício, publicado na `main`;
+- entrega atual do `ContextBuilder` v0.1 ainda não publicada.
 
 ## Maturidade
 
@@ -40,13 +43,13 @@ PRs relacionados:
 | Produto | visão definida, escopo amplo | 3/5 |
 | Frontend | protótipo avançado e build validado | 3/5 |
 | Backend | MVP funcional com memória explícita | 3/5 |
-| Memória | Core funcional, integração contextual pendente | 3/5 |
+| Memória | Core e construção de contexto funcionais; integração de recuperação pendente | 3/5 |
 | Firmware | controle mecânico parcial | 2/5 |
 | Voz | experimental, sem baseline confiável | 1/5 |
 | Visão | protótipo isolado | 2/5 |
 | DevOps | broker apenas no Compose | 1/5 |
 | Segurança | laboratório | 1/5 |
-| Testes | cobertura inicial com 14 testes | 2/5 |
+| Testes | cobertura inicial com 20 testes | 2/5 |
 
 ## Implementado e comprovado
 
@@ -60,7 +63,9 @@ PRs relacionados:
 - persistência explícita de preferências, fatos, episódios e decisões;
 - recuperação da memória após reinício completo do backend;
 - API REST de memória com ciclo completo de CRUD;
-- 14 testes passando no backend.
+- contrato e modelo neutro do `ContextBuilder` v0.1;
+- composição determinística de contexto sem dependência de provedor;
+- 20 testes passando no backend.
 
 ## Ainda não comprovado
 
@@ -71,30 +76,28 @@ PRs relacionados:
 - voz confiável em produção;
 - CI/CD e release reproduzível;
 - troca entre dois provedores de IA preservando continuidade;
-- Context Builder usando memória, personalidade e histórico recente.
+- recuperação de memórias pelo serviço de contexto sem acesso direto do provedor;
+- injeção do contexto em adaptadores de IA;
 
 ## Próximo passo exato
 
-Implementar o contrato e o modelo neutro do `ContextBuilder` v0.1:
+Implementar o `ContextService` v0.1:
 
-1. definir entrada e saída independentes de provedor;
-2. combinar mensagem atual, histórico recente, memórias explícitas, personalidade e ferramentas;
-3. manter ordenação determinística;
-4. cobrir o contrato com testes unitários;
-5. não integrar ainda OpenAI, Gemini, embeddings ou banco vetorial.
+1. recuperar memórias ativas do usuário por meio do `MemoryService`;
+2. entregar essas memórias ao `ContextBuilder`;
+3. comprovar isolamento por usuário;
+4. comprovar que memórias excluídas ou superadas não entram no contexto;
+5. não integrar ainda OpenAI, Gemini, embeddings, banco vetorial ou endpoint HTTP.
 
 ## Próxima entrega planejada
 
-### Context Builder v0.1
+### Context Service v0.1
 
 Objetivo:
 
-- combinar mensagem atual;
-- histórico recente;
-- memórias relevantes;
-- personalidade do Core;
-- ferramentas disponíveis;
-- produzir contexto neutro para qualquer provedor de IA.
+- integrar recuperação de memória e construção de contexto dentro do Core;
+- manter o provedor sem acesso direto ao armazenamento;
+- preparar a validação posterior de troca entre provedores.
 
 Não inclui:
 
@@ -137,7 +140,7 @@ python -m pytest -q
 Resultado esperado:
 
 ```text
-14 passed
+20 passed
 ```
 
 Frontend:
