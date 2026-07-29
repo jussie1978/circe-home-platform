@@ -13,7 +13,8 @@ Legenda:
 - [~] `.env.example` e setup validado;
 - [~] health checks e logs coerentes;
 - [x] CI básica para backend e frontend — jobs Backend e Frontend aprovados na
-  execução CI #1 do GitHub Actions em 29/07/2026.
+  execução CI #2 e integrados à `main` pelo PR #8, merge commit `7782609`, em
+  29/07/2026.
 
 ## R0.5 — Controle confiável
 

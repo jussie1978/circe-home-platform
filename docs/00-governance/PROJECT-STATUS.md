@@ -1,7 +1,7 @@
 # Estado atual do projeto
 
 **Atualizado em:** 29/07/2026
-**Entrega de referência:** merge commit `0aa190f` na branch `main`, via PR #7
+**Entrega de referência:** merge commit `7782609` na branch `main`, via PR #8
 
 **Classificação atual:** protótipo integrado com memória portátil e primeiro
 adaptador textual real validado ao vivo; ainda não é uma release operacional
@@ -11,19 +11,20 @@ reproduzível.
 
 A CIRCE já possui frontend React com interface espacial, backend FastAPI com REST/WebSocket/MQTT/SQLite, firmware ESP32-S3 para o mecanismo do case e serviços experimentais de voz e visão.
 
-A evolução mais recente concluiu o Provider Integration v0.1. O
-`OpenAITextProvider` recebe somente o `ModelContext`, e uma preferência
-persistida é recuperada após reabertura do SQLite e incluída no payload textual.
-Uma única chamada autorizada ao `gpt-5-nano` confirmou que a resposta real usa
-essa memória.
+A evolução mais recente concluiu a CI básica de backend e frontend. O workflow
+valida automaticamente os 41 testes do backend, o lint e o build do frontend em
+pull requests e atualizações da `main`, sem chaves ou chamadas reais a
+provedores.
 
-O principal gargalo continua sendo transformar o protótipo integrado em uma baseline reproduzível, observável e validada ponta a ponta.
+O principal gargalo agora é completar o Compose para iniciar broker, backend e
+frontend por um único comando.
 
-## Entrega concluída
+## Última entrega concluída
 
 ### CI básica de backend e frontend
 
-Validado na branch `chore/ci-baseline`, commit `0e034bc`:
+Validado na branch `chore/ci-baseline`, commits `0e034bc` e `51183ba`, e
+integrado à `main` pelo PR #8, merge commit `7782609`:
 
 - workflow único em `.github/workflows/ci.yml`;
 - execução em pull requests para `main` e pushes na `main`;
@@ -32,11 +33,11 @@ Validado na branch `chore/ci-baseline`, commit `0e034bc`:
 - jobs independentes, permissões somente de leitura e limite de 10 minutos;
 - nenhuma chave, segredo ou chamada real a provedor.
 
-A execução CI #1 foi concluída com sucesso no GitHub Actions em 29/07/2026.
-Os jobs Backend e Frontend passaram no PR #8, concluindo o critério de validação
-remota da CI básica.
+A execução CI #2 foi concluída com sucesso no GitHub Actions em 29/07/2026.
+Os jobs Backend e Frontend passaram sobre o estado final do PR #8, concluindo o
+critério de validação remota da CI básica.
 
-## Última entrega concluída
+## Entrega anterior
 
 ### Provider Integration v0.1
 
