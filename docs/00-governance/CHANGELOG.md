@@ -99,7 +99,10 @@
 - baseline reproduzida em um segundo computador em 29/07/2026: backend com
   `41 passed` e frontend com `npm ci`, lint e build aprovados;
 - workflow revisado localmente sem chaves ou chamadas reais a provedores;
-- execução remota do GitHub Actions pendente antes de concluir a CI no roadmap.
+- execução remota CI #1 concluída com sucesso no GitHub Actions para o commit
+  `0e034bc`;
+- jobs Backend e Frontend aprovados no PR #8, sem chaves, segredos ou chamadas
+  reais a provedores.
 
 ### Deprecated
 

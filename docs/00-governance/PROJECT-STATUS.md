@@ -19,11 +19,11 @@ essa memória.
 
 O principal gargalo continua sendo transformar o protótipo integrado em uma baseline reproduzível, observável e validada ponta a ponta.
 
-## Entrega em validação
+## Entrega concluída
 
 ### CI básica de backend e frontend
 
-Configurado na branch `chore/ci-baseline`:
+Validado na branch `chore/ci-baseline`, commit `0e034bc`:
 
 - workflow único em `.github/workflows/ci.yml`;
 - execução em pull requests para `main` e pushes na `main`;
@@ -32,8 +32,9 @@ Configurado na branch `chore/ci-baseline`:
 - jobs independentes, permissões somente de leitura e limite de 10 minutos;
 - nenhuma chave, segredo ou chamada real a provedor.
 
-A configuração permanece parcialmente concluída até os dois jobs passarem em
-uma execução real do GitHub Actions.
+A execução CI #1 foi concluída com sucesso no GitHub Actions em 29/07/2026.
+Os jobs Backend e Frontend passaram no PR #8, concluindo o critério de validação
+remota da CI básica.
 
 ## Última entrega concluída
 
@@ -76,7 +77,7 @@ PRs relacionados:
 | Firmware | controle mecânico parcial | 2/5 |
 | Voz | experimental, sem baseline confiável | 1/5 |
 | Visão | protótipo isolado | 2/5 |
-| DevOps | broker no Compose e CI configurada, aguardando primeira execução | 2/5 |
+| DevOps | broker no Compose e CI de backend/frontend validada | 2/5 |
 | Segurança | laboratório | 1/5 |
 | Testes | cobertura inicial com 41 testes | 3/5 |
 
@@ -107,6 +108,8 @@ PRs relacionados:
   única chamada autorizada;
 - 41 testes passando no backend sem chamadas externas;
 - baseline local reproduzida em um segundo computador com Python 3.11;
+- CI #1 executada com sucesso no GitHub Actions para o commit `0e034bc`;
+- jobs remotos Backend e Frontend aprovados no PR #8;
 - frontend validado localmente com Node.js 24, `npm ci`, lint e build.
 
 ## Ainda não comprovado
@@ -116,7 +119,7 @@ PRs relacionados:
 - confirmação física/acknowledgement de comandos;
 - DHT22, PWM de fans e WS2812B no firmware atual;
 - voz confiável em produção;
-- primeira execução remota da CI e release reproduzível;
+- release reproduzível da stack completa;
 - resposta visível na interface utilizando memória persistida;
 - autenticação e autorização por proprietário nas operações de memória;
 - trilha imutável de criação, revisão e exclusão de memória;
@@ -124,19 +127,18 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Publicar a branch `chore/ci-baseline`, abrir o Pull Request e confirmar a
-primeira execução real dos jobs Backend e Frontend no GitHub Actions.
+Completar o Compose do R0.4 para iniciar broker, backend e frontend por um único
+comando, preservando a CI validada.
 
 ## Próxima entrega planejada
 
-### Continuação da baseline reproduzível do R0.4
+### Compose para broker, backend e frontend
 
-Estado:
+Objetivo:
 
-- workflow mínimo do GitHub Actions configurado;
-- baseline local aprovada em um segundo computador;
-- execução remota ainda pendente;
-- conclusão documental condicionada aos dois jobs remotos aprovados;
+- revisar o Compose existente e preservar a configuração do broker;
+- incluir backend e frontend com a menor configuração necessária;
+- validar a inicialização da stack por um único comando;
 - manter voz e streaming fora do próximo incremento.
 
 Não inclui:
@@ -152,7 +154,6 @@ Não inclui:
 - inicialização usa `@app.on_event("startup")`, já depreciado;
 - `declarative_base()` usa import antigo do SQLAlchemy;
 - bundle principal do frontend excede 500 kB após minificação;
-- primeira execução do workflow no GitHub Actions ainda não foi comprovada;
 - segurança ainda adequada apenas para laboratório local;
 - voz ainda não possui baseline confiável;
 - operações de memória ainda não possuem autenticação, autorização por
@@ -187,8 +188,9 @@ Não inclui:
 - em 29/07/2026, num segundo computador: Python 3.11 com `41 passed`;
 - em 29/07/2026, num segundo computador: Node.js 24 com `npm ci`, lint e build
   concluídos;
-- workflow revisado localmente; a validação remota será registrada após o
-  primeiro Pull Request.
+- em 29/07/2026, execução CI #1 concluída com sucesso no GitHub Actions para o
+  commit `0e034bc`;
+- jobs Backend e Frontend aprovados no PR #8.
 
 ## Validação rápida do ambiente
 
