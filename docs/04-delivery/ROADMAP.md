@@ -12,7 +12,8 @@ Legenda:
 - [ ] Compose para broker/backend/frontend;
 - [~] `.env.example` e setup validado;
 - [~] health checks e logs coerentes;
-- [ ] CI básica para backend e frontend.
+- [~] CI básica para backend e frontend — workflow configurado e baseline local
+  aprovada; primeira execução no GitHub Actions pendente.
 
 ## R0.5 — Controle confiável
 
@@ -70,8 +71,8 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 
 ### Próximo marco
 
-Retomar a baseline reproduzível do R0.4 pela CI básica de backend e frontend
-antes de expandir voz ou streaming.
+Validar os jobs Backend e Frontend no GitHub Actions e, após ambos passarem,
+concluir documentalmente a CI básica do R0.4 antes de expandir voz ou streaming.
 
 ## R0.8 — Segurança e operação
 

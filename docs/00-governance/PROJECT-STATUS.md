@@ -1,7 +1,7 @@
 # Estado atual do projeto
 
-**Atualizado em:** 26/07/2026  
-**Entrega de referência:** merge commit `e4863d9` na branch `main`, via PR #6
+**Atualizado em:** 29/07/2026
+**Entrega de referência:** merge commit `0aa190f` na branch `main`, via PR #7
 
 **Classificação atual:** protótipo integrado com memória portátil e primeiro
 adaptador textual real validado ao vivo; ainda não é uma release operacional
@@ -18,6 +18,22 @@ Uma única chamada autorizada ao `gpt-5-nano` confirmou que a resposta real usa
 essa memória.
 
 O principal gargalo continua sendo transformar o protótipo integrado em uma baseline reproduzível, observável e validada ponta a ponta.
+
+## Entrega em validação
+
+### CI básica de backend e frontend
+
+Configurado na branch `chore/ci-baseline`:
+
+- workflow único em `.github/workflows/ci.yml`;
+- execução em pull requests para `main` e pushes na `main`;
+- job de backend com Python 3.11, instalação por `requirements.txt` e `pytest`;
+- job de frontend com Node.js 24 LTS, `npm ci`, lint e build;
+- jobs independentes, permissões somente de leitura e limite de 10 minutos;
+- nenhuma chave, segredo ou chamada real a provedor.
+
+A configuração permanece parcialmente concluída até os dois jobs passarem em
+uma execução real do GitHub Actions.
 
 ## Última entrega concluída
 
@@ -60,7 +76,7 @@ PRs relacionados:
 | Firmware | controle mecânico parcial | 2/5 |
 | Voz | experimental, sem baseline confiável | 1/5 |
 | Visão | protótipo isolado | 2/5 |
-| DevOps | broker apenas no Compose | 1/5 |
+| DevOps | broker no Compose e CI configurada, aguardando primeira execução | 2/5 |
 | Segurança | laboratório | 1/5 |
 | Testes | cobertura inicial com 41 testes | 3/5 |
 
@@ -89,7 +105,9 @@ PRs relacionados:
 - memória persistida recuperada e traduzida para o payload do provedor;
 - resposta real do `gpt-5-nano` influenciada pela memória persistente em uma
   única chamada autorizada;
-- 41 testes passando no backend sem chamadas externas.
+- 41 testes passando no backend sem chamadas externas;
+- baseline local reproduzida em um segundo computador com Python 3.11;
+- frontend validado localmente com Node.js 24, `npm ci`, lint e build.
 
 ## Ainda não comprovado
 
@@ -98,7 +116,7 @@ PRs relacionados:
 - confirmação física/acknowledgement de comandos;
 - DHT22, PWM de fans e WS2812B no firmware atual;
 - voz confiável em produção;
-- CI/CD e release reproduzível;
+- primeira execução remota da CI e release reproduzível;
 - resposta visível na interface utilizando memória persistida;
 - autenticação e autorização por proprietário nas operações de memória;
 - trilha imutável de criação, revisão e exclusão de memória;
@@ -106,19 +124,19 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Implementar a CI básica do R0.4 para executar automaticamente os testes do
-backend e o build do frontend em pushes e pull requests, sem refatorar a
-aplicação.
+Publicar a branch `chore/ci-baseline`, abrir o Pull Request e confirmar a
+primeira execução real dos jobs Backend e Frontend no GitHub Actions.
 
 ## Próxima entrega planejada
 
 ### Continuação da baseline reproduzível do R0.4
 
-Objetivo:
+Estado:
 
-- adicionar um workflow mínimo do GitHub Actions;
-- executar a suíte do backend e o build de produção do frontend;
-- documentar comandos, versões e resultado verificável da pipeline;
+- workflow mínimo do GitHub Actions configurado;
+- baseline local aprovada em um segundo computador;
+- execução remota ainda pendente;
+- conclusão documental condicionada aos dois jobs remotos aprovados;
 - manter voz e streaming fora do próximo incremento.
 
 Não inclui:
@@ -134,6 +152,7 @@ Não inclui:
 - inicialização usa `@app.on_event("startup")`, já depreciado;
 - `declarative_base()` usa import antigo do SQLAlchemy;
 - bundle principal do frontend excede 500 kB após minificação;
+- primeira execução do workflow no GitHub Actions ainda não foi comprovada;
 - segurança ainda adequada apenas para laboratório local;
 - voz ainda não possui baseline confiável;
 - operações de memória ainda não possuem autenticação, autorização por
@@ -164,7 +183,12 @@ Não inclui:
   e objetivas, recuperada de um SQLite reaberto;
 - a primeira tentativa com execução direta do arquivo falhou na importação antes
   de alcançar a API; a chamada válida ocorreu uma única vez com execução como
-  módulo.
+  módulo;
+- em 29/07/2026, num segundo computador: Python 3.11 com `41 passed`;
+- em 29/07/2026, num segundo computador: Node.js 24 com `npm ci`, lint e build
+  concluídos;
+- workflow revisado localmente; a validação remota será registrada após o
+  primeiro Pull Request.
 
 ## Validação rápida do ambiente
 
@@ -172,8 +196,7 @@ Backend:
 
 ```powershell
 cd C:\Projetos\circe-home-platform\backend
-.\venv\Scripts\Activate.ps1
-python -m pytest -q
+.\venv\Scripts\python.exe -m pytest -q
 ```
 
 Resultado esperado:
@@ -186,8 +209,9 @@ Frontend:
 
 ```powershell
 cd C:\Projetos\circe-home-platform\frontend
-npm install
-npm run build
+npm.cmd ci
+npm.cmd run lint
+npm.cmd run build
 ```
 
-Resultado esperado: build concluído sem erro.
+Resultado esperado: lint e build concluídos sem erro.

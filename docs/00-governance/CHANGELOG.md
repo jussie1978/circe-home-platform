@@ -40,7 +40,9 @@
 - limite de 256 tokens de saída por chamada textual;
 - tratamento neutro de configuração ausente, falha externa e resposta sem texto;
 - demonstrador manual de memória persistente com uma única chamada real;
-- testes HTTP sem rede e sem custo usando `httpx.MockTransport`.
+- testes HTTP sem rede e sem custo usando `httpx.MockTransport`;
+- workflow de CI com jobs independentes para backend e frontend;
+- validação automática em pull requests para `main` e pushes na `main`.
 
 ### Changed
 
@@ -59,7 +61,8 @@
 - contratos de integração documentam o primeiro adaptador textual real;
 - matriz de rastreabilidade passa a refletir 41 testes no backend.
 - Provider Integration v0.1 integrada à `main` pelo PR #6, com merge commit
-  `e4863d9`.
+  `e4863d9`;
+- baseline de CI padronizada em Python 3.11 e Node.js 24 LTS.
 
 ### Validated
 
@@ -92,7 +95,11 @@
 - demonstrador validado com `python -m scripts.demo_provider_memory`; a tentativa
   anterior por caminho direto falhou na importação antes de chamar a API.
 - branch local `main` sincronizada com `origin/main` no merge commit `e4863d9`,
-  com working tree limpa após a integração.
+  com working tree limpa após a integração;
+- baseline reproduzida em um segundo computador em 29/07/2026: backend com
+  `41 passed` e frontend com `npm ci`, lint e build aprovados;
+- workflow revisado localmente sem chaves ou chamadas reais a provedores;
+- execução remota do GitHub Actions pendente antes de concluir a CI no roadmap.
 
 ### Deprecated
 
