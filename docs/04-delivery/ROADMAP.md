@@ -12,7 +12,8 @@ Legenda:
 - [ ] Compose para broker/backend/frontend;
 - [~] `.env.example` e setup validado;
 - [~] health checks e logs coerentes;
-- [ ] CI básica para backend e frontend.
+- [x] CI básica para backend e frontend — jobs Backend e Frontend aprovados na
+  execução CI #1 do GitHub Actions em 29/07/2026.
 
 ## R0.5 — Controle confiável
 
@@ -70,8 +71,8 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 
 ### Próximo marco
 
-Retomar a baseline reproduzível do R0.4 pela CI básica de backend e frontend
-antes de expandir voz ou streaming.
+Completar o Compose para broker, backend e frontend e validar a inicialização da
+stack por um único comando, sem expandir voz ou streaming.
 
 ## R0.8 — Segurança e operação
 

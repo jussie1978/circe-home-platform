@@ -1,7 +1,7 @@
 # Estado atual do projeto
 
-**Atualizado em:** 26/07/2026  
-**Entrega de referência:** merge commit `e4863d9` na branch `main`, via PR #6
+**Atualizado em:** 29/07/2026
+**Entrega de referência:** merge commit `0aa190f` na branch `main`, via PR #7
 
 **Classificação atual:** protótipo integrado com memória portátil e primeiro
 adaptador textual real validado ao vivo; ainda não é uma release operacional
@@ -18,6 +18,23 @@ Uma única chamada autorizada ao `gpt-5-nano` confirmou que a resposta real usa
 essa memória.
 
 O principal gargalo continua sendo transformar o protótipo integrado em uma baseline reproduzível, observável e validada ponta a ponta.
+
+## Entrega concluída
+
+### CI básica de backend e frontend
+
+Validado na branch `chore/ci-baseline`, commit `0e034bc`:
+
+- workflow único em `.github/workflows/ci.yml`;
+- execução em pull requests para `main` e pushes na `main`;
+- job de backend com Python 3.11, instalação por `requirements.txt` e `pytest`;
+- job de frontend com Node.js 24 LTS, `npm ci`, lint e build;
+- jobs independentes, permissões somente de leitura e limite de 10 minutos;
+- nenhuma chave, segredo ou chamada real a provedor.
+
+A execução CI #1 foi concluída com sucesso no GitHub Actions em 29/07/2026.
+Os jobs Backend e Frontend passaram no PR #8, concluindo o critério de validação
+remota da CI básica.
 
 ## Última entrega concluída
 
@@ -60,7 +77,7 @@ PRs relacionados:
 | Firmware | controle mecânico parcial | 2/5 |
 | Voz | experimental, sem baseline confiável | 1/5 |
 | Visão | protótipo isolado | 2/5 |
-| DevOps | broker apenas no Compose | 1/5 |
+| DevOps | broker no Compose e CI de backend/frontend validada | 2/5 |
 | Segurança | laboratório | 1/5 |
 | Testes | cobertura inicial com 41 testes | 3/5 |
 
@@ -89,7 +106,11 @@ PRs relacionados:
 - memória persistida recuperada e traduzida para o payload do provedor;
 - resposta real do `gpt-5-nano` influenciada pela memória persistente em uma
   única chamada autorizada;
-- 41 testes passando no backend sem chamadas externas.
+- 41 testes passando no backend sem chamadas externas;
+- baseline local reproduzida em um segundo computador com Python 3.11;
+- CI #1 executada com sucesso no GitHub Actions para o commit `0e034bc`;
+- jobs remotos Backend e Frontend aprovados no PR #8;
+- frontend validado localmente com Node.js 24, `npm ci`, lint e build.
 
 ## Ainda não comprovado
 
@@ -98,7 +119,7 @@ PRs relacionados:
 - confirmação física/acknowledgement de comandos;
 - DHT22, PWM de fans e WS2812B no firmware atual;
 - voz confiável em produção;
-- CI/CD e release reproduzível;
+- release reproduzível da stack completa;
 - resposta visível na interface utilizando memória persistida;
 - autenticação e autorização por proprietário nas operações de memória;
 - trilha imutável de criação, revisão e exclusão de memória;
@@ -106,19 +127,18 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Implementar a CI básica do R0.4 para executar automaticamente os testes do
-backend e o build do frontend em pushes e pull requests, sem refatorar a
-aplicação.
+Completar o Compose do R0.4 para iniciar broker, backend e frontend por um único
+comando, preservando a CI validada.
 
 ## Próxima entrega planejada
 
-### Continuação da baseline reproduzível do R0.4
+### Compose para broker, backend e frontend
 
 Objetivo:
 
-- adicionar um workflow mínimo do GitHub Actions;
-- executar a suíte do backend e o build de produção do frontend;
-- documentar comandos, versões e resultado verificável da pipeline;
+- revisar o Compose existente e preservar a configuração do broker;
+- incluir backend e frontend com a menor configuração necessária;
+- validar a inicialização da stack por um único comando;
 - manter voz e streaming fora do próximo incremento.
 
 Não inclui:
@@ -164,7 +184,13 @@ Não inclui:
   e objetivas, recuperada de um SQLite reaberto;
 - a primeira tentativa com execução direta do arquivo falhou na importação antes
   de alcançar a API; a chamada válida ocorreu uma única vez com execução como
-  módulo.
+  módulo;
+- em 29/07/2026, num segundo computador: Python 3.11 com `41 passed`;
+- em 29/07/2026, num segundo computador: Node.js 24 com `npm ci`, lint e build
+  concluídos;
+- em 29/07/2026, execução CI #1 concluída com sucesso no GitHub Actions para o
+  commit `0e034bc`;
+- jobs Backend e Frontend aprovados no PR #8.
 
 ## Validação rápida do ambiente
 
@@ -172,8 +198,7 @@ Backend:
 
 ```powershell
 cd C:\Projetos\circe-home-platform\backend
-.\venv\Scripts\Activate.ps1
-python -m pytest -q
+.\venv\Scripts\python.exe -m pytest -q
 ```
 
 Resultado esperado:
@@ -186,8 +211,9 @@ Frontend:
 
 ```powershell
 cd C:\Projetos\circe-home-platform\frontend
-npm install
-npm run build
+npm.cmd ci
+npm.cmd run lint
+npm.cmd run build
 ```
 
-Resultado esperado: build concluído sem erro.
+Resultado esperado: lint e build concluídos sem erro.
