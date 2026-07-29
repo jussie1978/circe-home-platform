@@ -62,7 +62,8 @@
 - matriz de rastreabilidade passa a refletir 41 testes no backend.
 - Provider Integration v0.1 integrada à `main` pelo PR #6, com merge commit
   `e4863d9`;
-- baseline de CI padronizada em Python 3.11 e Node.js 24 LTS.
+- baseline de CI padronizada em Python 3.11 e Node.js 24 LTS;
+- CI básica integrada à `main` pelo PR #8, com merge commit `7782609`.
 
 ### Validated
 
@@ -101,8 +102,11 @@
 - workflow revisado localmente sem chaves ou chamadas reais a provedores;
 - execução remota CI #1 concluída com sucesso no GitHub Actions para o commit
   `0e034bc`;
+- execução CI #2 aprovada para o estado final do PR #8, commit `51183ba`;
 - jobs Backend e Frontend aprovados no PR #8, sem chaves, segredos ou chamadas
-  reais a provedores.
+  reais a provedores;
+- branch local `main` sincronizada com `origin/main` no merge commit `7782609`,
+  com working tree limpa após a integração.
 
 ### Deprecated
 
