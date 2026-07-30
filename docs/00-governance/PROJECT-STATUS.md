@@ -1,25 +1,50 @@
 # Estado atual do projeto
 
 **Atualizado em:** 29/07/2026
-**Entrega de referência:** merge commit `7782609` na branch `main`, via PR #8
+**Entrega de referência:** merge commit `6644304` na branch `main`, via PR #9
 
-**Classificação atual:** protótipo integrado com memória portátil e primeiro
-adaptador textual real validado ao vivo; ainda não é uma release operacional
-reproduzível.
+**Classificação atual:** protótipo integrado com memória portátil, primeiro
+adaptador textual real validado ao vivo e baseline local reproduzível por
+Docker Compose; ainda não é uma release de produção.
 
 ## Resumo executivo
 
 A CIRCE já possui frontend React com interface espacial, backend FastAPI com REST/WebSocket/MQTT/SQLite, firmware ESP32-S3 para o mecanismo do case e serviços experimentais de voz e visão.
 
-A evolução mais recente concluiu a CI básica de backend e frontend. O workflow
-valida automaticamente os 41 testes do backend, o lint e o build do frontend em
-pull requests e atualizações da `main`, sem chaves ou chamadas reais a
+A evolução mais recente concluiu e validou localmente o Compose de
+desenvolvimento para broker, backend e frontend. A CI continua validando os 41
+testes do backend, o lint e o build do frontend, sem chaves ou chamadas reais a
 provedores.
 
-O principal gargalo agora é completar o Compose para iniciar broker, backend e
-frontend por um único comando.
-
 ## Última entrega concluída
+
+### Compose para broker, backend e frontend
+
+Configuração mínima validada sobre a `main` no commit-base `6644304`, ainda sem
+commit ou publicação:
+
+- Compose ampliado para os três serviços;
+- backend em Python 3.11 na porta `8001`;
+- frontend em Node.js 24 na porta `3000`;
+- Mosquitto preservado na porta `1883`;
+- health checks configurados para os três serviços;
+- SQLite direcionado para volume nomeado no Compose;
+- defaults de MQTT e SQLite preservados para execução local fora do Docker;
+- registro npm configurável no build, com o registro oficial preservado como
+  padrão;
+- nenhuma chave, segredo ou chamada real a provedor.
+
+Validado em 29/07/2026:
+
+- imagens construídas e três containers iniciados pelo Compose;
+- broker, backend e frontend em estado `Healthy`;
+- backend respondeu `online` em `http://127.0.0.1:8001/health`;
+- frontend abriu normalmente e respondeu HTTP `200`;
+- logs sem erros críticos e conexão MQTT ativa;
+- SQLite preservado após `docker compose down` e nova subida, com arquivo de
+  `61.440 bytes` e SHA-256 idêntico antes e depois.
+
+## Entrega anterior
 
 ### CI básica de backend e frontend
 
@@ -78,7 +103,7 @@ PRs relacionados:
 | Firmware | controle mecânico parcial | 2/5 |
 | Voz | experimental, sem baseline confiável | 1/5 |
 | Visão | protótipo isolado | 2/5 |
-| DevOps | broker no Compose e CI de backend/frontend validada | 2/5 |
+| DevOps | Compose local e CI validados | 3/5 |
 | Segurança | laboratório | 1/5 |
 | Testes | cobertura inicial com 41 testes | 3/5 |
 
@@ -111,11 +136,13 @@ PRs relacionados:
 - baseline local reproduzida em um segundo computador com Python 3.11;
 - CI #1 executada com sucesso no GitHub Actions para o commit `0e034bc`;
 - jobs remotos Backend e Frontend aprovados no PR #8;
-- frontend validado localmente com Node.js 24, `npm ci`, lint e build.
+- frontend validado localmente com Node.js 24, `npm ci`, lint e build;
+- stack de desenvolvimento iniciada pelo Compose com os três serviços
+  saudáveis;
+- persistência do SQLite comprovada após recriação dos containers.
 
 ## Ainda não comprovado
 
-- stack completa iniciada por um único comando;
 - autenticação, autorização e gestão segura de segredos;
 - confirmação física/acknowledgement de comandos;
 - DHT22, PWM de fans e WS2812B no firmware atual;
@@ -128,19 +155,18 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Completar o Compose do R0.4 para iniciar broker, backend e frontend por um único
-comando, preservando a CI validada.
+Revisar o diff final do R0.4 e, após autorização do usuário, criar branch e Pull
+Request sem enviar alterações diretamente para a `main`.
 
 ## Próxima entrega planejada
 
-### Compose para broker, backend e frontend
+### R0.5 — Controle confiável
 
 Objetivo:
 
-- revisar o Compose existente e preservar a configuração do broker;
-- incluir backend e frontend com a menor configuração necessária;
-- validar a inicialização da stack por um único comando;
-- manter voz e streaming fora do próximo incremento.
+- definir command IDs e estados desejado/reportado;
+- implementar acknowledgement e timeout de comandos;
+- manter o incremento mínimo e coberto por testes.
 
 Não inclui:
 
@@ -192,6 +218,18 @@ Não inclui:
 - em 29/07/2026, execução CI #1 concluída com sucesso no GitHub Actions para o
   commit `0e034bc`;
 - jobs Backend e Frontend aprovados no PR #8.
+- em 29/07/2026, neste checkout baseado em `6644304`: backend com `41 passed`;
+- em 29/07/2026, neste checkout baseado em `6644304`: frontend com Node.js 24,
+  lint e build aprovados;
+- em 29/07/2026, Docker Compose iniciou broker, backend e frontend, todos
+  `Healthy`, nas portas `1883`, `8001` e `3000`;
+- smoke tests aprovados: backend `online`, frontend aberto e HTTP `200`, logs sem
+  erros críticos e tráfego MQTT ativo;
+- SQLite persistiu após recriação dos containers: `61.440 bytes` e SHA-256
+  idêntico antes e depois;
+- `registry.npmjs.org` apresentou `ECONNRESET` apenas dentro do Docker neste
+  notebook; o build foi validado com `registry.npmmirror.com`, mantendo o
+  registro oficial como padrão configurável.
 
 ## Validação rápida do ambiente
 

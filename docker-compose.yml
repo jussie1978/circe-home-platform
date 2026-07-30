@@ -1,15 +1,70 @@
-version: '3.8'
-
 services:
-  # MQTT Broker (Eclipse Mosquitto)
   mqtt-broker:
     image: eclipse-mosquitto:2.0.15
     container_name: circe-mqtt-broker
     ports:
-      - "1883:1883"      # Porta padrão MQTT
-      - "9001:9001"      # Porta Websockets MQTT (para debug/painéis futuros)
+      - "1883:1883"
     volumes:
       - ./docker/mosquitto/config:/mosquitto/config
       - ./docker/mosquitto/data:/mosquitto/data
       - ./docker/mosquitto/log:/mosquitto/log
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-h", "127.0.0.1", "-p", "1883", "-t", "circe/healthcheck", "-E"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    container_name: circe-backend
+    environment:
+      CIRCE_DATABASE_URL: sqlite:////data/circe_home.db
+      CIRCE_MQTT_HOST: mqtt-broker
+      CIRCE_MQTT_PORT: "1883"
+    ports:
+      - "8001:8001"
+    volumes:
+      - circe-backend-data:/data
+    depends_on:
+      mqtt-broker:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org/}
+    container_name: circe-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  circe-backend-data:

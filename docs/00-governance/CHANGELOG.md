@@ -42,7 +42,11 @@
 - demonstrador manual de memória persistente com uma única chamada real;
 - testes HTTP sem rede e sem custo usando `httpx.MockTransport`;
 - workflow de CI com jobs independentes para backend e frontend;
-- validação automática em pull requests para `main` e pushes na `main`.
+- validação automática em pull requests para `main` e pushes na `main`;
+- Dockerfiles mínimos para backend Python 3.11 e frontend Node.js 24;
+- serviços de backend e frontend no Compose existente;
+- health checks para broker, backend e frontend;
+- volume nomeado para persistência do SQLite no Compose.
 
 ### Changed
 
@@ -63,7 +67,15 @@
 - Provider Integration v0.1 integrada à `main` pelo PR #6, com merge commit
   `e4863d9`;
 - baseline de CI padronizada em Python 3.11 e Node.js 24 LTS;
-- CI básica integrada à `main` pelo PR #8, com merge commit `7782609`.
+- CI básica integrada à `main` pelo PR #8, com merge commit `7782609`;
+- host e porta MQTT passam a aceitar configuração por ambiente, preservando
+  `localhost:1883` como padrão local;
+- URL do SQLite passa a aceitar configuração por ambiente, preservando o
+  arquivo local como padrão;
+- registro npm do build do frontend passa a aceitar configuração por
+  `NPM_REGISTRY`, preservando `registry.npmjs.org` como padrão;
+- porta `9001` deixa de ser exposta pelo Compose porque o listener WebSocket não
+  existe na configuração atual do Mosquitto.
 
 ### Validated
 
@@ -106,7 +118,20 @@
 - jobs Backend e Frontend aprovados no PR #8, sem chaves, segredos ou chamadas
   reais a provedores;
 - branch local `main` sincronizada com `origin/main` no merge commit `7782609`,
-  com working tree limpa após a integração.
+  com working tree limpa após a integração;
+- baseline anterior à alteração do Compose reproduzida neste checkout: backend
+  com `41 passed` e frontend com lint e build aprovados;
+- revisão estática confirma portas `1883`, `8001` e `3000`, defaults locais e
+  ausência de segredos na configuração;
+- imagens de backend e frontend construídas e stack iniciada pelo Docker Compose;
+- broker, backend e frontend confirmados como `Healthy` nas portas `1883`,
+  `8001` e `3000`;
+- endpoint `/health` respondeu `online` e frontend respondeu HTTP `200`;
+- logs dos três serviços revisados sem erros críticos, com tráfego MQTT ativo;
+- SQLite preservado após `docker compose down` e nova subida, mantendo
+  `61.440 bytes` e o mesmo SHA-256;
+- build do frontend validado com registro npm alternativo configurável após
+  `registry.npmjs.org` apresentar `ECONNRESET` somente dentro do Docker.
 
 ### Deprecated
 

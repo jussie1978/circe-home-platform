@@ -1,9 +1,13 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # URL do banco de dados SQLite local
-SQLALCHEMY_DATABASE_URL = "sqlite:///./circe_home.db"
+SQLALCHEMY_DATABASE_URL = os.getenv(
+    "CIRCE_DATABASE_URL", "sqlite:///./circe_home.db"
+)
 
 # engine do SQLAlchemy para SQLite.
 # connect_args={"check_same_thread": False} é necessário para o SQLite no FastAPI

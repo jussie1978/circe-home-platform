@@ -4,7 +4,8 @@
 
 - [ ] converter `backend/requirements.txt` para UTF-8 e validar instalação;
 - [ ] unificar porta do backend;
-- [ ] criar Compose completo e health checks;
+- [x] criar Compose completo e health checks — execução local, smoke tests e
+  persistência validados;
 - [ ] remover armazenamento de chave permanente no navegador;
 - [ ] restringir CORS e MQTT para ambiente adequado;
 - [ ] implementar ack e timeout de comandos.
