@@ -1,7 +1,7 @@
 # Estado atual do projeto
 
-**Atualizado em:** 29/07/2026
-**Entrega de referência:** merge commit `6644304` na branch `main`, via PR #9
+**Atualizado em:** 30/07/2026
+**Entrega de referência:** merge commit `fb2d4ef` na branch `main`, via PR #10
 
 **Classificação atual:** protótipo integrado com memória portátil, primeiro
 adaptador textual real validado ao vivo e baseline local reproduzível por
@@ -20,8 +20,8 @@ provedores.
 
 ### Compose para broker, backend e frontend
 
-Configuração mínima validada sobre a `main` no commit-base `6644304`, ainda sem
-commit ou publicação:
+Configuração mínima integrada à `main` pelo PR #10, merge commit `fb2d4ef`,
+após validação local e aprovação dos jobs Backend e Frontend:
 
 - Compose ampliado para os três serviços;
 - backend em Python 3.11 na porta `8001`;
@@ -155,8 +155,10 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Revisar o diff final do R0.4 e, após autorização do usuário, criar branch e Pull
-Request sem enviar alterações diretamente para a `main`.
+Iniciar o menor incremento do R0.5: definir o contrato de `command_id` e dos
+estados desejado/reportado, com testes automatizados, antes de implementar
+acknowledgement e timeout. Trabalhar em branch própria e publicar somente por
+Pull Request.
 
 ## Próxima entrega planejada
 
@@ -225,6 +227,9 @@ Não inclui:
   `Healthy`, nas portas `1883`, `8001` e `3000`;
 - smoke tests aprovados: backend `online`, frontend aberto e HTTP `200`, logs sem
   erros críticos e tráfego MQTT ativo;
+- PR #10 aprovado nos jobs Backend e Frontend e integrado à `main` pelo merge
+  commit `fb2d4ef`;
+- branch local `main` sincronizada com `origin/main`, com working tree limpa;
 - SQLite persistiu após recriação dos containers: `61.440 bytes` e SHA-256
   idêntico antes e depois;
 - `registry.npmjs.org` apresentou `ECONNRESET` apenas dentro do Docker neste
