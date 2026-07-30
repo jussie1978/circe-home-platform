@@ -1,13 +1,19 @@
 import json
 import logging
+import os
+
 import paho.mqtt.client as mqtt
 
 logger = logging.getLogger("IRIS_MQTT")
 
 class MQTTManager:
-    def __init__(self, broker_host="localhost", broker_port=1883, on_message_callback=None):
-        self.broker_host = broker_host
-        self.broker_port = broker_port
+    def __init__(self, broker_host=None, broker_port=None, on_message_callback=None):
+        self.broker_host = broker_host or os.getenv("CIRCE_MQTT_HOST", "localhost")
+        self.broker_port = (
+            broker_port
+            if broker_port is not None
+            else int(os.getenv("CIRCE_MQTT_PORT", "1883"))
+        )
         self.on_message_callback = on_message_callback
         
         # Inicialização compatível com paho-mqtt v2 e v1

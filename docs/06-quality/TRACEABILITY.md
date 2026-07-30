@@ -8,6 +8,6 @@
 | CAP-004 confirmação | inexistente | inexistente | R0.5 |
 | CAP-005 voz | Gemini/OpenAI experimentais | inexistente | SPEC-002 |
 | CAP-007 visão | script MediaPipe | manual | serviço e privacidade |
-| CAP-008 setup único | inexistente | inexistente | R0.4 |
+| CAP-008 setup único | Compose para broker/backend/frontend | três serviços saudáveis, smoke tests e persistência SQLite validados | publicação do R0.4 |
 | CAP-009 autenticação | inexistente | inexistente | R0.8 |
 | CAP-010 memória portátil | `MemoryService` + `ContextService` + `AIProvider` + `OpenAITextProvider` | 41 testes backend + auditoria técnica | chamada real autorizada e resposta no frontend |

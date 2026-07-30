@@ -9,9 +9,11 @@ Legenda:
 ## R0.4 — Baseline reproduzível
 
 - [x] corrigir codificação de dependências;
-- [ ] Compose para broker/backend/frontend;
-- [~] `.env.example` e setup validado;
-- [~] health checks e logs coerentes;
+- [x] Compose para broker/backend/frontend — três serviços iniciados e
+  comunicação validada em Docker;
+- [x] `.env.example` e setup validados;
+- [x] health checks e logs coerentes — três serviços `Healthy`, smoke tests
+  aprovados e logs sem erros críticos;
 - [x] CI básica para backend e frontend — jobs Backend e Frontend aprovados na
   execução CI #2 e integrados à `main` pelo PR #8, merge commit `7782609`, em
   29/07/2026.
@@ -72,8 +74,8 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 
 ### Próximo marco
 
-Completar o Compose para broker, backend e frontend e validar a inicialização da
-stack por um único comando, sem expandir voz ou streaming.
+Publicar o R0.4 por branch e Pull Request após autorização e iniciar o menor
+incremento do R0.5 para command IDs e confirmação confiável de comandos.
 
 ## R0.8 — Segurança e operação
 
