@@ -76,6 +76,8 @@
   `NPM_REGISTRY`, preservando `registry.npmjs.org` como padrão;
 - porta `9001` deixa de ser exposta pelo Compose porque o listener WebSocket não
   existe na configuração atual do Mosquitto.
+- baseline reproduzível R0.4 integrada à `main` pelo PR #10, merge commit
+  `fb2d4ef`.
 
 ### Validated
 
@@ -132,6 +134,10 @@
   `61.440 bytes` e o mesmo SHA-256;
 - build do frontend validado com registro npm alternativo configurável após
   `registry.npmjs.org` apresentar `ECONNRESET` somente dentro do Docker.
+- jobs Backend e Frontend aprovados no PR #10;
+- branch local `main` sincronizada com `origin/main` no merge commit `fb2d4ef`,
+  com working tree limpa após a integração;
+- R0.4 oficialmente concluído e publicado.
 
 ### Deprecated
 

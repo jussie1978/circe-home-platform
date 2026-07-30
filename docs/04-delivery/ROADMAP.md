@@ -18,6 +18,9 @@ Legenda:
   execução CI #2 e integrados à `main` pelo PR #8, merge commit `7782609`, em
   29/07/2026.
 
+**Marco R0.4 concluído e integrado à `main` pelo PR #10, merge commit
+`fb2d4ef`.**
+
 ## R0.5 — Controle confiável
 
 - [ ] command IDs;
@@ -74,8 +77,9 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 
 ### Próximo marco
 
-Publicar o R0.4 por branch e Pull Request após autorização e iniciar o menor
-incremento do R0.5 para command IDs e confirmação confiável de comandos.
+Iniciar o menor incremento do R0.5: contrato de `command_id` e estados
+desejado/reportado, coberto por testes. Acknowledgement e timeout permanecem
+para o incremento seguinte.
 
 ## R0.8 — Segurança e operação
 
