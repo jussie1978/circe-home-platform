@@ -1,8 +1,8 @@
 # Estado atual do projeto
 
 **Atualizado em:** 01/08/2026
-**Entrega de referência:** merge commit `fb2d4ef` na branch `main`, via PR #10
-**Incremento atual:** contrato físico R0.5 validado localmente na branch `feat/r0.5-physical-control-contract`; ainda sem commit ou Pull Request
+**Entrega de referência:** merge commit `7c72f1e` na branch `main`, via PR #12
+**Incremento atual:** contrato físico R0.5 integrado à `main`; próximo incremento: acknowledgement e timeout
 
 **Classificação atual:** protótipo integrado com memória portátil, primeiro
 adaptador textual real validado ao vivo e baseline local reproduzível por
@@ -158,13 +158,9 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Revisar e publicar o incremento concluído de `command_id` e estados
-desejado/reportado na branch `feat/r0.5-physical-control-contract`.
-
-Após o merge, iniciar o menor incremento seguinte do R0.5: definir e implementar
-acknowledgement e timeout, correlacionados pelo `command_id`, sem simular
+Iniciar o menor incremento seguinte do R0.5: definir e implementar
+acknowledgement e timeout correlacionados pelo `command_id`, sem simular
 confirmação física.
-
 ## Próxima entrega planejada
 
 ### R0.5 — Acknowledgement e timeout
