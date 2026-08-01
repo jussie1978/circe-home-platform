@@ -23,8 +23,9 @@ Legenda:
 
 ## R0.5 — Controle confiável
 
-- [ ] command IDs;
-- [ ] desired/reported state;
+- [x] command IDs — UUID integrado aos cinco endpoints REST e validado por testes;
+- [x] desired/reported state — `desired_state` incluído na resposta REST e
+  `reported_state` reservado para confirmação física real;
 - [ ] ack e timeout;
 - [ ] auditoria;
 - [ ] catálogo de dispositivos.

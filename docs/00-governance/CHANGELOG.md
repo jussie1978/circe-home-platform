@@ -48,6 +48,11 @@
 - health checks para broker, backend e frontend;
 - volume nomeado para persistência do SQLite no Compose.
 
+- contrato neutro `ControlCommand` para comandos físicos;
+- geração de `command_id` em formato UUID;
+- representação explícita de `desired_state` e `reported_state`;
+- testes automatizados específicos para o contrato de comandos físicos;
+
 ### Changed
 
 - `README.md` passa a apontar para uma fonte única da verdade;
@@ -78,6 +83,11 @@
   existe na configuração atual do Mosquitto.
 - baseline reproduzível R0.4 integrada à `main` pelo PR #10, merge commit
   `fb2d4ef`.
+
+- cinco endpoints REST de controle passam a devolver `command_id`,
+  `desired_state` e `reported_state`, preservando os campos legados;
+- teste legado dos controles passa a validar os campos de estado sem rejeitar
+  a extensão compatível do contrato;
 
 ### Validated
 
@@ -138,6 +148,10 @@
 - branch local `main` sincronizada com `origin/main` no merge commit `fb2d4ef`,
   com working tree limpa após a integração;
 - R0.4 oficialmente concluído e publicado.
+
+- 7 testes específicos do contrato de comandos físicos aprovados;
+- regressão completa do backend aprovada com 48 testes e nenhuma falha;
+- `reported_state` permanece `None`, sem simular acknowledgement físico;
 
 ### Deprecated
 
