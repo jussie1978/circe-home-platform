@@ -1,7 +1,8 @@
 # Estado atual do projeto
 
-**Atualizado em:** 30/07/2026
+**Atualizado em:** 01/08/2026
 **Entrega de referência:** merge commit `fb2d4ef` na branch `main`, via PR #10
+**Incremento atual:** contrato físico R0.5 validado localmente na branch `feat/r0.5-physical-control-contract`; ainda sem commit ou Pull Request
 
 **Classificação atual:** protótipo integrado com memória portátil, primeiro
 adaptador textual real validado ao vivo e baseline local reproduzível por
@@ -105,7 +106,7 @@ PRs relacionados:
 | Visão | protótipo isolado | 2/5 |
 | DevOps | Compose local e CI validados | 3/5 |
 | Segurança | laboratório | 1/5 |
-| Testes | cobertura inicial com 41 testes | 3/5 |
+| Testes | contratos físicos e regressão com 48 testes | 3/5 |
 
 ## Implementado e comprovado
 
@@ -132,7 +133,9 @@ PRs relacionados:
 - memória persistida recuperada e traduzida para o payload do provedor;
 - resposta real do `gpt-5-nano` influenciada pela memória persistente em uma
   única chamada autorizada;
-- 41 testes passando no backend sem chamadas externas;
+- contrato neutro de comandos físicos com `command_id`, `desired_state` e `reported_state`;
+- cinco endpoints REST de controle integrados ao contrato, preservando os campos legados;
+- 48 testes passando no backend sem chamadas externas;
 - baseline local reproduzida em um segundo computador com Python 3.11;
 - CI #1 executada com sucesso no GitHub Actions para o commit `0e034bc`;
 - jobs remotos Backend e Frontend aprovados no PR #8;
@@ -155,29 +158,38 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Iniciar o menor incremento do R0.5: definir o contrato de `command_id` e dos
-estados desejado/reportado, com testes automatizados, antes de implementar
-acknowledgement e timeout. Trabalhar em branch própria e publicar somente por
-Pull Request.
+Revisar e publicar o incremento concluído de `command_id` e estados
+desejado/reportado na branch `feat/r0.5-physical-control-contract`.
+
+Após o merge, iniciar o menor incremento seguinte do R0.5: definir e implementar
+acknowledgement e timeout, correlacionados pelo `command_id`, sem simular
+confirmação física.
 
 ## Próxima entrega planejada
 
-### R0.5 — Controle confiável
+### R0.5 — Acknowledgement e timeout
 
 Objetivo:
 
-- definir command IDs e estados desejado/reportado;
-- implementar acknowledgement e timeout de comandos;
-- manter o incremento mínimo e coberto por testes.
+- definir o contrato de acknowledgement do dispositivo;
+- correlacionar a confirmação física pelo `command_id`;
+- distinguir comandos pendentes, confirmados e expirados;
+- implementar timeout com comportamento verificável;
+- preservar compatibilidade com os endpoints REST existentes;
+- cobrir o incremento com testes automatizados.
 
 Não inclui:
 
 - voz e streaming;
 - embeddings ou banco vetorial;
 - memória automática ou emocional;
-- agentes autônomos.
+- agentes autônomos;
+- catálogo amplo de dispositivos.
 
 ## Bloqueios e riscos conhecidos
+
+- `reported_state` permanece vazio até existir acknowledgement físico real;
+- ainda não há expiração, timeout ou reconciliação de comandos;
 
 - `main.py` ainda concentra responsabilidades;
 - inicialização usa `@app.on_event("startup")`, já depreciado;
@@ -202,6 +214,10 @@ Não inclui:
 7. iniciar pelo item em **Próximo passo exato**.
 
 ## Validações da entrega atual
+
+- em 01/08/2026, 7 testes específicos do contrato físico aprovados;
+- em 01/08/2026, regressão completa do backend aprovada: `48 passed, 3 warnings`;
+- os avisos restantes correspondem ao `declarative_base()` antigo e ao `@app.on_event("startup")` depreciado;
 
 - baseline anterior: `35 passed`;
 - suíte após a integração: `41 passed`;

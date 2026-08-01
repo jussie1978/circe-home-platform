@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from .database import engine, SessionLocal, get_db
 from . import models
 from .mqtt import MQTTManager
+from .control_contracts import ControlCommand
 from .memory.api import router as memory_router
 
 # Configuração de logging
@@ -244,14 +245,22 @@ async def control_fans(control: FanControl):
     if 0 <= control.speed <= 100:
         state.fan_speed = control.speed
         logger.info(f"REST: Comando recebido - Fans em {control.speed}%")
-        
-        # Publica no broker se conectado
+
         if mqtt_manager and mqtt_manager.client.is_connected():
             mqtt_manager.publish("alx/case/fans/set", str(control.speed))
-            
+
         await broadcast_state()
-        return {"status": "success", "fan_speed": state.fan_speed}
+        command = ControlCommand(
+            desired_state={"fan_speed": control.speed},
+        )
+        return {
+            "status": "success",
+            "fan_speed": state.fan_speed,
+            **command.model_dump(mode="json"),
+        }
+
     return {"status": "error", "message": "Velocidade deve ser entre 0 e 100"}
+
 
 @app.post("/api/v1/controls/fans/mode")
 async def control_fan_mode(control: FanModeControl):
@@ -262,7 +271,15 @@ async def control_fan_mode(control: FanModeControl):
         mqtt_manager.publish("alx/case/fans/mode", control.mode)
 
     await broadcast_state()
-    return {"status": "success", "fan_mode": state.fan_mode}
+    command = ControlCommand(
+        desired_state={"fan_mode": control.mode},
+    )
+    return {
+        "status": "success",
+        "fan_mode": state.fan_mode,
+        **command.model_dump(mode="json"),
+    }
+
 
 @app.post("/api/v1/controls/servos")
 async def control_servos(control: ServoControl):
@@ -275,24 +292,37 @@ async def control_servos(control: ServoControl):
             mqtt_manager.publish("alx/case/servos/angle", str(control.angle))
 
         await broadcast_state()
+        command = ControlCommand(
+            desired_state={"roof_angle": control.angle},
+        )
         return {
             "status": "success",
             "roof_angle": state.roof_angle,
             "fins_state": state.fins_state,
+            **command.model_dump(mode="json"),
         }
+
     return {"status": "error", "message": "Abertura deve ser entre 0 e 100"}
+
 
 @app.post("/api/v1/controls/leds")
 async def control_leds(control: LedControl):
     state.led_color = control.color
     logger.info(f"REST: Comando recebido - Cor dos LEDs alterada para {control.color}")
-    
-    # Publica no broker se conectado
+
     if mqtt_manager and mqtt_manager.client.is_connected():
         mqtt_manager.publish("alx/case/leds/set", control.color)
-        
+
     await broadcast_state()
-    return {"status": "success", "led_color": state.led_color}
+    command = ControlCommand(
+        desired_state={"led_color": control.color},
+    )
+    return {
+        "status": "success",
+        "led_color": state.led_color,
+        **command.model_dump(mode="json"),
+    }
+
 
 @app.post("/api/v1/controls/leds/mode")
 async def control_led_mode(control: LedModeControl):
@@ -303,7 +333,15 @@ async def control_led_mode(control: LedModeControl):
         mqtt_manager.publish("alx/case/leds/mode", control.mode)
 
     await broadcast_state()
-    return {"status": "success", "led_mode": state.led_mode}
+    command = ControlCommand(
+        desired_state={"led_mode": control.mode},
+    )
+    return {
+        "status": "success",
+        "led_mode": state.led_mode,
+        **command.model_dump(mode="json"),
+    }
+
 
 # 3. WebSocket Endpoint
 @app.websocket("/ws")

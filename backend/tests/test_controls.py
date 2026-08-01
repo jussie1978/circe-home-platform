@@ -34,28 +34,40 @@ def test_health_reports_online(client):
 
 
 def test_rest_controls_update_software_state(client):
-    assert client.post("/api/v1/controls/fans", json={"speed": 75}).json() == {
-        "status": "success",
-        "fan_speed": 75,
-    }
-    assert client.post("/api/v1/controls/fans/mode", json={"mode": "manual"}).json() == {
-        "status": "success",
-        "fan_mode": "manual",
-    }
-    assert client.post("/api/v1/controls/servos", json={"angle": 0}).json() == {
-        "status": "success",
-        "roof_angle": 0,
-        "fins_state": "closed",
-    }
-    assert client.post("/api/v1/controls/leds", json={"color": "#ff00ff"}).json() == {
-        "status": "success",
-        "led_color": "#ff00ff",
-    }
-    assert client.post("/api/v1/controls/leds/mode", json={"mode": "rainbow"}).json() == {
-        "status": "success",
-        "led_mode": "rainbow",
-    }
+    response = client.post("/api/v1/controls/fans", json={"speed": 75})
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    assert response.json()["fan_speed"] == 75
 
+    response = client.post(
+        "/api/v1/controls/fans/mode",
+        json={"mode": "manual"},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    assert response.json()["fan_mode"] == "manual"
+
+    response = client.post("/api/v1/controls/servos", json={"angle": 0})
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    assert response.json()["roof_angle"] == 0
+    assert response.json()["fins_state"] == "closed"
+
+    response = client.post(
+        "/api/v1/controls/leds",
+        json={"color": "#ff00ff"},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    assert response.json()["led_color"] == "#ff00ff"
+
+    response = client.post(
+        "/api/v1/controls/leds/mode",
+        json={"mode": "rainbow"},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    assert response.json()["led_mode"] == "rainbow"
 
 def test_websocket_exposes_and_updates_complete_control_state(client):
     with client.websocket_connect("/ws") as websocket:
