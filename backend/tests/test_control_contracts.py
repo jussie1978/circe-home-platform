@@ -67,7 +67,8 @@ def test_rest_controls_return_command_contract(
     assert response.status_code == 200
     payload = response.json()
 
-    assert payload["status"] == "success"
+    expected_status = "pending" if path.endswith("/servos") else "success"
+    assert payload["status"] == expected_status
     assert isinstance(UUID(payload["command_id"]), UUID)
     assert payload["desired_state"] == expected_desired_state
     assert payload["reported_state"] is None

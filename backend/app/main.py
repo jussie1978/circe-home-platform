@@ -2,8 +2,10 @@ import asyncio
 import json
 import random
 import logging
-from datetime import datetime, timedelta
+from threading import Lock
+from datetime import datetime, timedelta, timezone
 from typing import Literal
+from uuid import UUID
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -12,7 +14,7 @@ from sqlalchemy.orm import Session
 from .database import engine, SessionLocal, get_db
 from . import models
 from .mqtt import MQTTManager
-from .control_contracts import ControlCommand
+from .control_contracts import ControlCommand, PhysicalControlCommand
 from .memory.api import router as memory_router
 
 # Configuração de logging
@@ -59,6 +61,12 @@ class SystemState:
 state = SystemState()
 mqtt_manager = None
 loop = None
+
+SERVO_COMMAND_TOPIC = "circe/alx/case/command/servos"
+SERVO_ACK_TOPIC_PREFIX = "circe/alx/case/ack/"
+SERVO_COMMAND_TIMEOUT = timedelta(seconds=5)
+pending_servo_commands: dict[UUID, PhysicalControlCommand] = {}
+pending_servo_commands_lock = Lock()
 
 # Modelos Pydantic para endpoints REST
 class FanControl(BaseModel):
@@ -161,7 +169,9 @@ async def broadcast_state():
 def handle_mqtt_message(topic: str, payload_str: str):
     global loop
     try:
-        if topic == "alx/case/temperature":
+        if topic.startswith(SERVO_ACK_TOPIC_PREFIX):
+            process_servo_ack(topic, payload_str)
+        elif topic == "alx/case/temperature":
             val = float(payload_str)
             state.temperature = val
             save_sensor_log(temperature=val)
@@ -190,10 +200,58 @@ def handle_mqtt_message(topic: str, payload_str: str):
                     state.fins_state = "closed"
 
         # Envia atualização para os clientes WebSocket se o loop estiver ativo
-        if loop:
+        if loop and not loop.is_closed():
             asyncio.run_coroutine_threadsafe(broadcast_state(), loop)
     except Exception as e:
         logger.error(f"Erro ao processar mensagem MQTT no callback: {e}")
+
+
+def process_servo_ack(topic: str, payload_str: str) -> bool:
+    """Reconcile a servo ACK only when topic, payload and desired value agree."""
+    try:
+        topic_command_id = UUID(topic.removeprefix(SERVO_ACK_TOPIC_PREFIX))
+        data = json.loads(payload_str)
+        payload_command_id = UUID(data["command_id"])
+        reported_state = data["reported_state"]
+    except (ValueError, TypeError, AttributeError, KeyError, json.JSONDecodeError):
+        return False
+
+    with pending_servo_commands_lock:
+        command = pending_servo_commands.get(topic_command_id)
+        if (
+            topic_command_id != payload_command_id
+            or command is None
+            or command.status != "pending"
+            or not isinstance(reported_state, dict)
+            or reported_state != command.desired_state
+        ):
+            return False
+
+        if command.expires_at <= datetime.now(timezone.utc):
+            command.status = "failed"
+            return False
+
+        angle = reported_state.get("roof_angle")
+        if not isinstance(angle, int) or isinstance(angle, bool) or not 0 <= angle <= 100:
+            return False
+
+        command.reported_state = reported_state
+        command.status = "acknowledged"
+        state.roof_angle = angle
+        state.fins_state = "open" if angle > 10 else "closed"
+    return True
+
+
+def process_expired_servo_commands(now: datetime | None = None) -> list[UUID]:
+    """Mark pending commands expired at ``now``; callers provide time in tests."""
+    current_time = now or datetime.now(timezone.utc)
+    expired = []
+    with pending_servo_commands_lock:
+        for command_id, command in pending_servo_commands.items():
+            if command.status == "pending" and command.expires_at <= current_time:
+                command.status = "failed"
+                expired.append(command_id)
+    return expired
 
 # 1. Rota de Health Check / Status REST
 @app.get("/health")
@@ -284,21 +342,38 @@ async def control_fan_mode(control: FanModeControl):
 @app.post("/api/v1/controls/servos")
 async def control_servos(control: ServoControl):
     if 0 <= control.angle <= 100:
-        state.roof_angle = control.angle
-        state.fins_state = "open" if control.angle > 10 else "closed"
         logger.info(f"REST: Abertura das aletas alterada para {control.angle}%")
 
+        requested_at = datetime.now(timezone.utc)
+        command = PhysicalControlCommand(
+            desired_state={"roof_angle": control.angle},
+            requested_at=requested_at,
+            actor="user",
+            expires_at=requested_at + SERVO_COMMAND_TIMEOUT,
+        )
+        with pending_servo_commands_lock:
+            pending_servo_commands[command.command_id] = command
+        asyncio.get_running_loop().call_later(
+            SERVO_COMMAND_TIMEOUT.total_seconds(),
+            process_expired_servo_commands,
+        )
+
         if mqtt_manager and mqtt_manager.client.is_connected():
+            serialized_command = command.model_dump(mode="json")
+            envelope = {
+                "command_id": str(command.command_id),
+                "requested_at": serialized_command["requested_at"],
+                "actor": command.actor,
+                "value": command.desired_state,
+                "expires_at": serialized_command["expires_at"],
+            }
+            mqtt_manager.publish(SERVO_COMMAND_TOPIC, json.dumps(envelope))
+            # Temporary migration bridge for firmware that still consumes a scalar.
             mqtt_manager.publish("alx/case/servos/angle", str(control.angle))
 
-        await broadcast_state()
-        command = ControlCommand(
-            desired_state={"roof_angle": control.angle},
-        )
         return {
-            "status": "success",
-            "roof_angle": state.roof_angle,
-            "fins_state": state.fins_state,
+            "roof_angle": control.angle,
+            "fins_state": "open" if control.angle > 10 else "closed",
             **command.model_dump(mode="json"),
         }
 

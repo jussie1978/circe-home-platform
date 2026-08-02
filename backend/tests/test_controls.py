@@ -49,7 +49,7 @@ def test_rest_controls_update_software_state(client):
 
     response = client.post("/api/v1/controls/servos", json={"angle": 0})
     assert response.status_code == 200
-    assert response.json()["status"] == "success"
+    assert response.json()["status"] == "pending"
     assert response.json()["roof_angle"] == 0
     assert response.json()["fins_state"] == "closed"
 
