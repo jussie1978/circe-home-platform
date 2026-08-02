@@ -176,9 +176,10 @@
 - revisão final confirmou correlação estrita de ACK, timeout atômico, ausência
   de atualização antecipada do estado e nenhuma alteração em fans, LEDs,
   frontend, firmware ou homing;
-- incremento publicado na branch `feat/r0.5-command-ack-timeout`, commit
-  `5b807aea0804f8fa1376ae003a2f50ecaa41998d`, no PR #14 ainda aberto como
-  draft; a R0.5 permanece parcial;
+- prova vertical de ACK e timeout do teto/servos integrada à `main` pelo PR #14,
+  merge commit `9762144021ced018c80e6c208a0acb392961b156`; a R0.5 permanece
+  parcial, e fans, LEDs, frontend, firmware, homing e persistência do registro
+  de comandos permanecem fora desta entrega;
 
 ### Deprecated
 

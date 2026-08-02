@@ -1,11 +1,10 @@
 # Estado atual do projeto
 
 **Atualizado em:** 02/08/2026
-**Entrega de referência:** merge commit `7c72f1e` na branch `main`, via PR #12
+**Entrega de referência:** merge commit
+`9762144021ced018c80e6c208a0acb392961b156` na branch `main`, via PR #14
 **Incremento atual:** prova vertical de acknowledgement e timeout do R0.5 para
-teto/servos publicada no commit
-`5b807aea0804f8fa1376ae003a2f50ecaa41998d`, no PR draft #14; R0.5 ainda
-parcial
+teto/servos integrada à `main`; R0.5 ainda parcial
 
 **Classificação atual:** protótipo integrado com memória portátil, primeiro
 adaptador textual real validado ao vivo e baseline local reproduzível por
@@ -15,12 +14,12 @@ Docker Compose; ainda não é uma release de produção.
 
 A CIRCE já possui frontend React com interface espacial, backend FastAPI com REST/WebSocket/MQTT/SQLite, firmware ESP32-S3 para o mecanismo do case e serviços experimentais de voz e visão.
 
-Na branch local `feat/r0.5-command-ack-timeout`, o teto/servos possui agora a
-primeira prova vertical de comando confiável: criação como `pending`, envelope
-MQTT oficial, ACK correlacionado pelo `command_id` e timeout determinístico. O
-registro ainda é efêmero e a R0.5 permanece parcial.
+Na `main`, o teto/servos possui agora a primeira prova vertical de comando
+confiável: criação como `pending`, envelope MQTT oficial, ACK correlacionado
+pelo `command_id` e timeout determinístico. O registro ainda é efêmero e a R0.5
+permanece parcial.
 
-## Incremento local validado — R0.5 teto/servos
+## Incremento integrado — R0.5 teto/servos
 
 - escopo restrito a `POST /api/v1/controls/servos` e à infraestrutura MQTT
   mínima necessária;
@@ -41,8 +40,8 @@ registro ainda é efêmero e a R0.5 permanece parcial.
   pendentes;
 - revisão final encontrou e corrigiu uma corrida entre callback MQTT, rota REST
   e expiração, protegendo a correlação e as transições com lock;
-- estado publicado no commit `5b807aea0804f8fa1376ae003a2f50ecaa41998d`
-  e no PR #14, ainda aberto como draft.
+- prova vertical integrada à `main` pelo PR #14, merge commit
+  `9762144021ced018c80e6c208a0acb392961b156`.
 
 A evolução mais recente concluiu e validou localmente o Compose de
 desenvolvimento para broker, backend e frontend. A CI continua validando os 41
@@ -191,10 +190,9 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Concluir a revisão humana do PR draft #14 sem ampliar seu escopo. Depois da
-integração, implementar em incremento separado a emissão de ACK real pelo
-firmware para teto/servos e validá-la em bancada; fans, LEDs e homing continuam
-fora desse próximo passo.
+Implementar em incremento separado a emissão de ACK real pelo firmware para
+teto/servos e validá-la em bancada. Fans, LEDs, frontend, homing e persistência
+do registro de comandos continuam fora dessa entrega e permanecem pendentes.
 ## Próxima entrega planejada
 
 ### R0.5 — Acknowledgement e timeout
@@ -259,9 +257,8 @@ Não inclui:
 - `git diff --check` aprovado;
 - revisão integral do diff confirmou ausência de alterações em fans, LEDs,
   frontend, firmware e homing;
-- incremento publicado na branch `feat/r0.5-command-ack-timeout`, commit
-  `5b807aea0804f8fa1376ae003a2f50ecaa41998d`, no PR #14 ainda aberto como
-  draft;
+- PR #14 integrado à `main` pelo merge commit
+  `9762144021ced018c80e6c208a0acb392961b156`;
 
 - em 01/08/2026, 7 testes específicos do contrato físico aprovados;
 - em 01/08/2026, regressão completa do backend aprovada: `48 passed, 3 warnings`;

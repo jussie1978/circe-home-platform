@@ -39,8 +39,9 @@ Compatibilidade temporária mantida em `alx/case/servos/angle`. Fans, LEDs,
 frontend, firmware e homing não foram alterados neste incremento. A R0.5 como
 um todo permanece parcial, e o registro de comandos ainda é efêmero.
 
-Prova vertical publicada no commit
-`5b807aea0804f8fa1376ae003a2f50ecaa41998d`, no PR #14 ainda aberto como draft.
+Prova vertical concluída e integrada à `main` pelo PR #14, merge commit
+`9762144021ced018c80e6c208a0acb392961b156`. Fans, LEDs, frontend, firmware,
+homing e persistência do registro de comandos permanecem fora desta entrega.
 
 ## R0.6 — Hardware completo
 
@@ -90,10 +91,9 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 
 ### Próximo marco
 
-Concluir a revisão humana do PR draft #14 sem ampliar o escopo da prova vertical
-de teto/servos. Depois da integração, implementar separadamente a emissão do
-ACK oficial no firmware do teto/servos e validá-la em bancada. Fans, LEDs e
-homing permanecem pendentes para incrementos posteriores.
+Implementar separadamente a emissão do ACK oficial no firmware do teto/servos e
+validá-la em bancada. Fans, LEDs, frontend, homing e persistência do registro de
+comandos permanecem pendentes para incrementos posteriores.
 
 ## R0.8 — Segurança e operação
 
