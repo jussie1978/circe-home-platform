@@ -2,9 +2,10 @@
 
 **Atualizado em:** 02/08/2026
 **Entrega de referência:** merge commit `7c72f1e` na branch `main`, via PR #12
-**Incremento atual:** prova vertical local de acknowledgement e timeout do R0.5
-para teto/servos validada na branch `feat/r0.5-command-ack-timeout`; ainda sem
-commit ou PR
+**Incremento atual:** prova vertical de acknowledgement e timeout do R0.5 para
+teto/servos publicada no commit
+`5b807aea0804f8fa1376ae003a2f50ecaa41998d`, no PR draft #14; R0.5 ainda
+parcial
 
 **Classificação atual:** protótipo integrado com memória portátil, primeiro
 adaptador textual real validado ao vivo e baseline local reproduzível por
@@ -40,7 +41,8 @@ registro ainda é efêmero e a R0.5 permanece parcial.
   pendentes;
 - revisão final encontrou e corrigiu uma corrida entre callback MQTT, rota REST
   e expiração, protegendo a correlação e as transições com lock;
-- estado atual validado localmente, ainda sem commit, push ou PR.
+- estado publicado no commit `5b807aea0804f8fa1376ae003a2f50ecaa41998d`
+  e no PR #14, ainda aberto como draft.
 
 A evolução mais recente concluiu e validou localmente o Compose de
 desenvolvimento para broker, backend e frontend. A CI continua validando os 41
@@ -189,10 +191,10 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Após revisão humana, autorizar o commit e o PR deste incremento sem ampliar o
-escopo. Depois da integração, implementar em incremento separado a emissão de
-ACK real pelo firmware para teto/servos e validá-la em bancada; fans, LEDs e
-homing continuam fora desse próximo passo.
+Concluir a revisão humana do PR draft #14 sem ampliar seu escopo. Depois da
+integração, implementar em incremento separado a emissão de ACK real pelo
+firmware para teto/servos e validá-la em bancada; fans, LEDs e homing continuam
+fora desse próximo passo.
 ## Próxima entrega planejada
 
 ### R0.5 — Acknowledgement e timeout
@@ -257,8 +259,9 @@ Não inclui:
 - `git diff --check` aprovado;
 - revisão integral do diff confirmou ausência de alterações em fans, LEDs,
   frontend, firmware e homing;
-- incremento permanece somente na branch local
-  `feat/r0.5-command-ack-timeout`, sem commit, push ou PR;
+- incremento publicado na branch `feat/r0.5-command-ack-timeout`, commit
+  `5b807aea0804f8fa1376ae003a2f50ecaa41998d`, no PR #14 ainda aberto como
+  draft;
 
 - em 01/08/2026, 7 testes específicos do contrato físico aprovados;
 - em 01/08/2026, regressão completa do backend aprovada: `48 passed, 3 warnings`;
