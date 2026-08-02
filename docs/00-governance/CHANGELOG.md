@@ -52,6 +52,15 @@
 - geração de `command_id` em formato UUID;
 - representação explícita de `desired_state` e `reported_state`;
 - testes automatizados específicos para o contrato de comandos físicos;
+- prova vertical de comando confiável restrita ao teto/servos;
+- envelope MQTT oficial em `circe/alx/case/command/servos` com `command_id`,
+  `requested_at`, `actor`, `value` e `expires_at`;
+- assinatura e correlação de ACK em `circe/alx/case/ack/{command_id}`;
+- registro efêmero de comandos do teto/servos com estados `pending`,
+  `acknowledged` e `failed`;
+- processamento determinístico de timeout sem espera real nos testes;
+- testes de envelope, ACK válido, timeout, ACK inválido/desconhecido e tópico
+  MQTT de assinatura;
 
 ### Changed
 
@@ -88,6 +97,14 @@
   `desired_state` e `reported_state`, preservando os campos legados;
 - teste legado dos controles passa a validar os campos de estado sem rejeitar
   a extensão compatível do contrato;
+- `POST /api/v1/controls/servos` passa a criar o comando como `pending` e deixa
+  de atualizar o estado físico confirmado antes do ACK;
+- publicação escalar em `alx/case/servos/angle` preservada temporariamente para
+  compatibilidade com o firmware atual;
+- transições do registro de comandos protegidas contra corrida entre rota REST,
+  callback MQTT e timeout;
+- SPEC-003 detalha o recorte vertical do teto/servos; fans, LEDs, frontend,
+  firmware e homing permanecem pendentes;
 
 ### Validated
 
@@ -152,6 +169,15 @@
 - 7 testes específicos do contrato de comandos físicos aprovados;
 - regressão completa do backend aprovada com 48 testes e nenhuma falha;
 - `reported_state` permanece `None`, sem simular acknowledgement físico;
+- suíte focal final do teto/servos aprovada com `19 passed, 4 warnings`;
+- regressão completa do backend aprovada com `57 passed, 4 warnings`;
+- compilação de `app` e `tests` aprovada com `python -m compileall -q`;
+- `git diff --check` aprovado;
+- revisão final confirmou correlação estrita de ACK, timeout atômico, ausência
+  de atualização antecipada do estado e nenhuma alteração em fans, LEDs,
+  frontend, firmware ou homing;
+- incremento validado na branch `feat/r0.5-command-ack-timeout`, ainda sem
+  commit, push ou PR;
 
 ### Deprecated
 

@@ -8,7 +8,9 @@
   persistência validados;
 - [ ] remover armazenamento de chave permanente no navegador;
 - [ ] restringir CORS e MQTT para ambiente adequado;
-- [ ] implementar ack e timeout de comandos.
+- [~] implementar ack e timeout de comandos — prova vertical concluída no
+  backend para teto/servos; persistência, ACK real do firmware e demais
+  controles físicos permanecem pendentes.
 - [ ] autenticar e autorizar operações de memória antes de exposição externa;
 
 ## P1 — Fundação

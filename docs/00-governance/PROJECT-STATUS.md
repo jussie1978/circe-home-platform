@@ -1,8 +1,10 @@
 # Estado atual do projeto
 
-**Atualizado em:** 01/08/2026
+**Atualizado em:** 02/08/2026
 **Entrega de referência:** merge commit `7c72f1e` na branch `main`, via PR #12
-**Incremento atual:** contrato físico R0.5 integrado à `main`; próximo incremento: acknowledgement e timeout
+**Incremento atual:** prova vertical local de acknowledgement e timeout do R0.5
+para teto/servos validada na branch `feat/r0.5-command-ack-timeout`; ainda sem
+commit ou PR
 
 **Classificação atual:** protótipo integrado com memória portátil, primeiro
 adaptador textual real validado ao vivo e baseline local reproduzível por
@@ -11,6 +13,34 @@ Docker Compose; ainda não é uma release de produção.
 ## Resumo executivo
 
 A CIRCE já possui frontend React com interface espacial, backend FastAPI com REST/WebSocket/MQTT/SQLite, firmware ESP32-S3 para o mecanismo do case e serviços experimentais de voz e visão.
+
+Na branch local `feat/r0.5-command-ack-timeout`, o teto/servos possui agora a
+primeira prova vertical de comando confiável: criação como `pending`, envelope
+MQTT oficial, ACK correlacionado pelo `command_id` e timeout determinístico. O
+registro ainda é efêmero e a R0.5 permanece parcial.
+
+## Incremento local validado — R0.5 teto/servos
+
+- escopo restrito a `POST /api/v1/controls/servos` e à infraestrutura MQTT
+  mínima necessária;
+- comando criado com status `pending`, `command_id`, `requested_at`, `actor`,
+  `value` e `expires_at`;
+- publicação oficial em `circe/alx/case/command/servos`;
+- assinatura e processamento de ACK em
+  `circe/alx/case/ack/{command_id}`;
+- `reported_state`, `roof_angle` e `fins_state` confirmados somente após ACK
+  válido e correlacionado;
+- transição determinística de `pending` para `failed` no timeout;
+- ACK desconhecido, divergente, inválido ou posterior ao timeout ignorado sem
+  confirmar o estado;
+- compatibilidade temporária preservada pela publicação escalar em
+  `alx/case/servos/angle`;
+- registro de comandos ainda efêmero, sem persistência ou histórico;
+- fans, LEDs, frontend, firmware e homing não foram alterados e permanecem
+  pendentes;
+- revisão final encontrou e corrigiu uma corrida entre callback MQTT, rota REST
+  e expiração, protegendo a correlação e as transições com lock;
+- estado atual validado localmente, ainda sem commit, push ou PR.
 
 A evolução mais recente concluiu e validou localmente o Compose de
 desenvolvimento para broker, backend e frontend. A CI continua validando os 41
@@ -147,7 +177,8 @@ PRs relacionados:
 ## Ainda não comprovado
 
 - autenticação, autorização e gestão segura de segredos;
-- confirmação física/acknowledgement de comandos;
+- acknowledgement real emitido pelo firmware e validado em bancada; a prova
+  atual do teto/servos usa ACK MQTT exercitado por testes;
 - DHT22, PWM de fans e WS2812B no firmware atual;
 - voz confiável em produção;
 - release reproduzível da stack completa;
@@ -158,19 +189,23 @@ PRs relacionados:
 
 ## Próximo passo exato
 
-Iniciar o menor incremento seguinte do R0.5: definir e implementar
-acknowledgement e timeout correlacionados pelo `command_id`, sem simular
-confirmação física.
+Após revisão humana, autorizar o commit e o PR deste incremento sem ampliar o
+escopo. Depois da integração, implementar em incremento separado a emissão de
+ACK real pelo firmware para teto/servos e validá-la em bancada; fans, LEDs e
+homing continuam fora desse próximo passo.
 ## Próxima entrega planejada
 
 ### R0.5 — Acknowledgement e timeout
 
 Objetivo:
 
-- definir o contrato de acknowledgement do dispositivo;
-- correlacionar a confirmação física pelo `command_id`;
-- distinguir comandos pendentes, confirmados e expirados;
-- implementar timeout com comportamento verificável;
+- [x] provar no backend o contrato de acknowledgement do teto/servos;
+- [x] correlacionar ACK MQTT do teto/servos pelo `command_id`;
+- [x] distinguir comandos do teto/servos pendentes, confirmados e expirados;
+- [x] implementar timeout determinístico para o teto/servos;
+- [ ] persistir o registro e o histórico dos comandos;
+- [ ] implementar emissão de ACK real no firmware e validação em bancada;
+- [ ] estender o contrato confiável aos demais controles físicos;
 - preservar compatibilidade com os endpoints REST existentes;
 - cobrir o incremento com testes automatizados.
 
@@ -184,8 +219,11 @@ Não inclui:
 
 ## Bloqueios e riscos conhecidos
 
-- `reported_state` permanece vazio até existir acknowledgement físico real;
-- ainda não há expiração, timeout ou reconciliação de comandos;
+- o registro de comandos do teto/servos é apenas em memória e se perde no
+  reinício do backend;
+- o firmware ainda não emite o ACK oficial; não há confirmação física real
+  validada em bancada;
+- fans e LEDs ainda não possuem ACK, timeout ou reconciliação;
 
 - `main.py` ainda concentra responsabilidades;
 - inicialização usa `@app.on_event("startup")`, já depreciado;
@@ -210,6 +248,17 @@ Não inclui:
 7. iniciar pelo item em **Próximo passo exato**.
 
 ## Validações da entrega atual
+
+- em 02/08/2026, suíte focal final do contrato de teto/servos aprovada:
+  `19 passed, 4 warnings`;
+- em 02/08/2026, regressão completa do backend aprovada:
+  `57 passed, 4 warnings`;
+- `python -m compileall -q app tests` aprovado;
+- `git diff --check` aprovado;
+- revisão integral do diff confirmou ausência de alterações em fans, LEDs,
+  frontend, firmware e homing;
+- incremento permanece somente na branch local
+  `feat/r0.5-command-ack-timeout`, sem commit, push ou PR;
 
 - em 01/08/2026, 7 testes específicos do contrato físico aprovados;
 - em 01/08/2026, regressão completa do backend aprovada: `48 passed, 3 warnings`;
@@ -260,7 +309,7 @@ cd C:\Projetos\circe-home-platform\backend
 Resultado esperado:
 
 ```text
-41 passed
+57 passed
 ```
 
 Frontend:

@@ -38,6 +38,7 @@ class MQTTManager:
                 ("alx/vision/face", 0),
                 ("alx/voice/state", 0),
                 ("alx/status", 0),
+                ("circe/alx/case/ack/+", 0),
             ]
             self.client.subscribe(topics)
             logger.info(f"Subscrito nos tópicos: {[t[0] for t in topics]}")

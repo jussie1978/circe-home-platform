@@ -26,9 +26,18 @@ Legenda:
 - [x] command IDs — UUID integrado aos cinco endpoints REST e validado por testes;
 - [x] desired/reported state — `desired_state` incluído na resposta REST e
   `reported_state` reservado para confirmação física real;
-- [ ] ack e timeout;
-- [ ] auditoria;
+- [~] ack e timeout — prova vertical do backend concluída para teto/servos:
+  comando `pending` em `circe/alx/case/command/servos`, ACK correlacionado em
+  `circe/alx/case/ack/{command_id}` e timeout determinístico para `failed`;
+  registro ainda efêmero e ACK real do firmware ainda pendente;
+- [x] auditoria do incremento de teto/servos — suíte focal com `19 passed`,
+  regressão completa com `57 passed`, compilação e `git diff --check`
+  aprovados; corrida entre REST, MQTT e timeout corrigida;
 - [ ] catálogo de dispositivos.
+
+Compatibilidade temporária mantida em `alx/case/servos/angle`. Fans, LEDs,
+frontend, firmware e homing não foram alterados neste incremento. A R0.5 como
+um todo permanece parcial, e o registro de comandos ainda é efêmero.
 
 ## R0.6 — Hardware completo
 
@@ -78,9 +87,10 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 
 ### Próximo marco
 
-Iniciar o menor incremento do R0.5: contrato de `command_id` e estados
-desejado/reportado, coberto por testes. Acknowledgement e timeout permanecem
-para o incremento seguinte.
+Após revisão humana, autorizar commit e PR da prova vertical de teto/servos sem
+ampliar seu escopo. Depois da integração, implementar separadamente a emissão
+do ACK oficial no firmware do teto/servos e validá-la em bancada. Fans, LEDs e
+homing permanecem pendentes para incrementos posteriores.
 
 ## R0.8 — Segurança e operação
 
