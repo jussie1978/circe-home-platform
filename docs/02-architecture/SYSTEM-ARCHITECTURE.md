@@ -33,6 +33,13 @@ Manter **monólito modular** no backend enquanto escala e domínio não justific
 - `VoiceGateway`: abstrai OpenAI, Gemini ou TTS/STT separados;
 - `AuditLog`: registra ator, ação, resultado e latência;
 - `HealthService`: consolida integridade dos módulos.
+- `CapabilityRegistry`: registra schemas, risco, versão e executor de cada
+  capacidade;
+- `OrchestrationService`: coordena plano, política, aprovação, execução e
+  verificação;
+- `PolicyEngine`: autoriza ou bloqueia ações conforme ator, risco e contexto;
+- `TaskRepository`: persiste tarefas, execuções de ferramenta e aprovações;
+- `QualityGate`: valida fontes e resultado antes de concluir a tarefa.
 
 ## Restrições
 
@@ -40,3 +47,7 @@ Manter **monólito modular** no backend enquanto escala e domínio não justific
 - nenhuma chave permanente no frontend;
 - MQTT anônimo somente em laboratório isolado;
 - mudanças estruturais exigem ADR.
+- nenhum provedor ou frontend executa ferramentas diretamente;
+- voz e texto atravessam a mesma política e o mesmo catálogo de capacidades;
+- capacidades especializadas permanecem módulos internos até haver evidência
+  para outro processo ou serviço.

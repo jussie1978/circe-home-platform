@@ -1,6 +1,6 @@
 # Estado atual do projeto
 
-**Atualizado em:** 02/08/2026
+**Atualizado em:** 11/08/2026
 **Entrega de referência:** merge commit
 `9762144021ced018c80e6c208a0acb392961b156` na branch `main`, via PR #14
 **Incremento atual:** prova vertical de acknowledgement e timeout do R0.5 para
@@ -9,6 +9,19 @@ teto/servos integrada à `main`; R0.5 ainda parcial
 **Classificação atual:** protótipo integrado com memória portátil, primeiro
 adaptador textual real validado ao vivo e baseline local reproduzível por
 Docker Compose; ainda não é uma release de produção.
+
+## Decisão preparada — orquestração governada
+
+Em 11/08/2026 foi concluída a auditoria de viabilidade para evoluir o Core com
+capacidades especializadas, briefings e tarefas assistidas. A decisão registrada
+na ADR-0006 preserva o monólito modular e rejeita uma equipe arbitrária de
+agentes: o modelo propõe, enquanto o Core aplica política, aprovação, execução,
+verificação e auditoria.
+
+A SPEC-007 está `Proposed`; nenhum runtime de orquestração foi implementado
+nesta rodada. A prioridade operacional continua sendo o ACK real do firmware do
+teto/servos. O futuro incremento R0.7.2 começa por leitura e briefing sob demanda
+e permanece bloqueado para efeitos externos e físicos até os gates de segurança.
 
 ## Resumo executivo
 
@@ -236,6 +249,12 @@ Não inclui:
 - proveniência ainda é convenção no campo `metadata`, não um atributo obrigatório.
 - `CIRCE_OPENAI_MODEL` não possui padrão deliberadamente: o modelo deve ser
   escolhido e autorizado antes da chamada.
+- Gemini Live ainda recebe chave no browser e executa ferramentas no frontend;
+  esse caminho é experimental e não poderá integrar o runtime governado;
+- não existem `TaskRun`, `ToolRun`, catálogo de capacidades, política de risco,
+  aprovação persistente ou scheduler confiável;
+- `check_presence` no frontend devolve resultado simulado sem marcação
+  estruturada de simulação.
 
 ## Como retomar o projeto
 

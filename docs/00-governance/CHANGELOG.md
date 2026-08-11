@@ -4,6 +4,15 @@
 
 ### Added
 
+- auditoria de viabilidade do Core para orquestração assistida em 11/08/2026;
+- ADR-0006 para orquestração governada de capacidades;
+- SPEC-007 para runtime v0.1 com tarefas, política, aprovação e briefing sob
+  demanda;
+- capacidades de produto CAP-011, CAP-012 e CAP-013;
+- modelo arquitetural proposto de `TaskRun`, `ToolRun`, `ApprovalRequest` e
+  `ArtifactRef`;
+- níveis de risco R0–R4 e gates contra autonomia irrestrita;
+
 - estrutura documental profissional por domínio;
 - visão, plano mestre, arquitetura, roadmap, backlog e releases;
 - baseline de segurança, testes, observabilidade e rastreabilidade;
@@ -63,6 +72,12 @@
   MQTT de assinatura;
 
 ### Changed
+
+- arquitetura de inteligência passa a exigir execução de ferramentas somente
+  no backend, com uma política comum para voz, texto e automação;
+- roadmap registra R0.7.2 sem alterar a prioridade atual do ACK físico do R0.5;
+- segurança, observabilidade, testes e rastreabilidade passam a cobrir o futuro
+  runtime de orquestração;
 
 - `README.md` passa a apontar para uma fonte única da verdade;
 - documentação antiga movida para `docs/legacy/`;

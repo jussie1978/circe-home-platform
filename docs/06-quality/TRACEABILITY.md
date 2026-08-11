@@ -11,3 +11,6 @@
 | CAP-008 setup único | Compose para broker/backend/frontend | três serviços saudáveis, smoke tests e persistência SQLite validados | publicação do R0.4 |
 | CAP-009 autenticação | inexistente | inexistente | R0.8 |
 | CAP-010 memória portátil | `MemoryService` + `ContextService` + `AIProvider` + `OpenAITextProvider` | 41 testes backend + auditoria técnica | chamada real autorizada e resposta no frontend |
+| CAP-011 orquestração governada | ADR-0006 e SPEC-007 | auditoria de viabilidade; implementação ausente | runtime, política, persistência e testes |
+| CAP-012 briefing rastreável | SPEC-007 | implementação ausente | briefing sob demanda com fontes e quality gate |
+| CAP-013 aprovação por risco | ADR-0006 e SPEC-007 | implementação ausente | autenticação, política e aprovação vinculada aos parâmetros |
