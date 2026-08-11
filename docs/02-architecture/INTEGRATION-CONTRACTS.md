@@ -56,3 +56,14 @@ Nesta integração mínima, `store: false` impede o armazenamento da resposta pe
 provedor e `max_output_tokens: 256` limita a saída. Falhas de configuração e de
 requisição são convertidas em erros neutros. Retry, fallback, streaming e
 métricas permanecem fora do contrato v0.1.
+
+## Capacidades e ferramentas
+
+Ferramentas expostas ao modelo são projeções do `CapabilityRegistry`; não são
+funções executáveis entregues ao provedor. O modelo devolve apenas uma proposta
+estruturada. O backend valida capacidade, versão, parâmetros, risco, autorização
+e idempotência antes de chamar o executor registrado.
+
+O frontend não mantém allowlist própria e não executa efeitos. Voz, texto e
+automação usam o mesmo contrato do Core. A ação aprovada deve corresponder
+exatamente à capacidade, versão e hash dos parâmetros executados.

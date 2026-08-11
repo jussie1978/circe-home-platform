@@ -6,6 +6,7 @@
 | R0.5 | estado confiável | desired/reported state, ack, auditoria de comandos |
 | R0.6 | hardware completo | sensores, PWM fans, LEDs e fail-safe validados |
 | R0.7 | voz plugável | OpenAI Realtime funcional e provedor abstrato |
+| R0.7.2 | orquestração governada | tarefas de leitura, briefing sob demanda, aprovação e auditoria persistente |
 | R0.8 | segurança local | auth, MQTT protegido, segredos e perfis |
 | R1.0 | MVP residencial | fluxo ponta a ponta estável, instalável e documentado |
 

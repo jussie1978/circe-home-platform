@@ -16,3 +16,9 @@ R0.7.1 exige persistência após reinício real, isolamento por usuário, ciclo 
 vida da memória, construção determinística do contexto e troca entre dois
 adaptadores usando o mesmo `ModelContext`. A auditoria técnica normativa está em
 [`MEMORY-AUDIT-2026-07-26.md`](MEMORY-AUDIT-2026-07-26.md).
+
+R0.7.2 exige testes da máquina de estados, schemas do catálogo, política R0–R4,
+aprovação vinculada aos parâmetros, idempotência, persistência após reinício,
+isolamento por proprietário, falhas e timeouts. O briefing deve distinguir
+fontes reais, ausentes e simuladas. Testes automatizados não usam rede nem
+geram custo; chamada real continua condicionada a autorização explícita.

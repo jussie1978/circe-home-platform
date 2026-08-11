@@ -17,6 +17,24 @@ O modelo de IA é substituível. Personalidade, políticas, memória persistente
 7. **Provider Adapter:** tradução do contexto e ferramentas para o provedor escolhido.
 8. **Explicação:** resposta ao usuário e trilha de auditoria.
 
+## Runtime de orquestração
+
+A evolução aprovada na [ADR-0006](../adrs/ADR-0006-GOVERNED-CAPABILITY-ORCHESTRATION.md)
+mantém uma identidade central e capacidades especializadas no backend. A
+especialização é composta por instruções versionadas, ferramentas permitidas e
+política; ela não implica microserviço ou chamada adicional de modelo.
+
+Fluxo normativo:
+
+```text
+Intenção -> Plano -> Política -> Aprovação -> Execução -> Verificação -> Registro
+```
+
+O modelo pode sugerir. O Core decide se a sugestão é válida e executável. O
+primeiro incremento admite apenas leitura e geração de rascunho. Escrita,
+comunicação externa e controle físico permanecem bloqueados até seus gates de
+segurança e confiabilidade.
+
 ## Memória
 
 A arquitetura detalhada está em [MEMORY-ARCHITECTURE.md](MEMORY-ARCHITECTURE.md) e na [ADR-0005](../adrs/ADR-0005-PROVIDER-INDEPENDENT-MEMORY.md).
@@ -26,3 +44,7 @@ O MVP começa sem memória longa automática. Persistir apenas preferências exp
 ## Proibição arquitetural
 
 O modelo não publica diretamente em MQTT, não acessa credenciais de dispositivos e não consulta diretamente o armazenamento de memória.
+
+Também é proibido executar ferramentas no frontend ou conceder à voz um caminho
+de autorização diferente do texto. Toda alegação de autonomia deve apontar para
+uma capacidade, teste e trilha de execução verificáveis.

@@ -10,7 +10,10 @@ Integrar sensores, fans PWM, LEDs e mecanismos com acknowledgements, modo seguro
 
 ## Horizonte 3 — Presença inteligente
 
-Adicionar voz plugável, wake word opcional, ferramentas seguras, memória controlada e visão computacional com consentimento.
+Adicionar voz plugável, wake word opcional, ferramentas seguras, memória
+controlada e visão computacional com consentimento. Introduzir orquestração
+governada, começando por capacidades de leitura, briefing sob demanda e
+aprovação humana.
 
 ## Horizonte 4 — Plataforma residencial
 
@@ -25,3 +28,7 @@ Expandir catálogo de dispositivos, automações, perfis, cenas, regras e implan
 - cobertura dos fluxos críticos;
 - custo por hora de conversação;
 - incidentes de segurança ou segredos expostos.
+- percentual de tarefas com fonte e resultado verificáveis;
+- taxa de tarefas bloqueadas corretamente pela política;
+- taxa de duplicidade evitada por idempotência;
+- custo e latência por tarefa concluída, não por personagem/agente.

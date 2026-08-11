@@ -12,6 +12,9 @@
   backend para teto/servos; persistência, ACK real do firmware e demais
   controles físicos permanecem pendentes.
 - [ ] autenticar e autorizar operações de memória antes de exposição externa;
+- [ ] remover execução de ferramentas de IA do frontend e centralizar política
+  e execução no backend;
+- [ ] marcar respostas simuladas como `simulated` e impedir seu uso como fato;
 
 ## P1 — Fundação
 
@@ -26,6 +29,11 @@
 - [ ] CI com testes backend e build frontend;
 - [ ] logs estruturados com correlation/command ID;
 - [ ] catálogo de dispositivos e capacidades.
+- [ ] catálogo versionado de capacidades de IA;
+- [ ] persistir `TaskRun`, `ToolRun` e `ApprovalRequest`;
+- [ ] implementar máquina de estados e idempotência das tarefas;
+- [ ] implementar política R0–R4 e aprovação vinculada aos parâmetros;
+- [ ] briefing diário sob demanda antes de adicionar scheduler;
 
 ## P2 — Voz
 
@@ -42,3 +50,5 @@
 - [ ] visão como serviço;
 - [ ] perfis, cenas e automações;
 - [ ] PWA e instalação residencial.
+- [ ] especialistas adicionais somente após caso de uso e avaliação próprios;
+- [ ] scheduler de briefings após recuperação de falhas e idempotência;

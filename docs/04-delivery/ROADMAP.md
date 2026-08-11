@@ -89,6 +89,24 @@ Não inclui inferência automática de hábitos, memória emocional, RAG amplo o
 **Incremento integrado à `main` pelo PR #6, merge commit `e4863d9`, em
 26/07/2026.**
 
+## R0.7.2 — Orquestração governada
+
+- [x] auditoria de viabilidade e riscos;
+- [x] decisão arquitetural do runtime central;
+- [x] SPEC do primeiro incremento;
+- [ ] remover segredo permanente e execução de ferramentas do frontend;
+- [ ] catálogo versionado de capacidades;
+- [ ] `TaskRun`, `ToolRun` e `ApprovalRequest` persistentes;
+- [ ] política R0–R4 e aprovação vinculada aos parâmetros;
+- [ ] capacidades iniciais somente de leitura;
+- [ ] briefing diário sob demanda com fontes e quality gate;
+- [ ] observabilidade de duração, falha, provedor e custo;
+- [ ] scheduler, somente após idempotência e recuperação de falhas.
+
+O marco não cria uma equipe arbitrária de agentes. Especialistas adicionais
+entram somente com caso de uso, ferramentas e critérios de aceite próprios. A
+implementação começa após preservar o próximo passo exato do R0.5.
+
 ### Próximo marco
 
 Implementar separadamente a emissão do ACK oficial no firmware do teto/servos e
