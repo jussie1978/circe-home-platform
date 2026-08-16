@@ -4,6 +4,10 @@
 
 ### Added
 
+- SPEC Master v1.0 do CIRCE OS como contrato central de produto, arquitetura de
+  referência e evolução;
+- ADR-0007 para identidade do produto, significado de “OS”, foco do R1.0,
+  papel do Home Assistant e limites de incubação;
 - auditoria de viabilidade do Core para orquestração assistida em 11/08/2026;
 - ADR-0006 para orquestração governada de capacidades;
 - SPEC-007 para runtime v0.1 com tarefas, política, aprovação e briefing sob
@@ -73,6 +77,18 @@
 
 ### Changed
 
+- CIRCE OS passa a ser o nome canônico do produto, e Circe a identidade do Home
+  Companion;
+- R1.0 passa a ser definido como piloto residencial de uma casa;
+- Home Assistant passa a ser classificado como integração opcional por
+  adaptador;
+- saúde assistiva e localização permanecem como incubação pós-R1.0;
+- novas frentes de Home Companion ficam subordinadas ao fechamento verificável
+  do R0.5;
+- `IRIS` passa a ser tratado como dívida de nomenclatura até migração ou
+  definição restrita;
+- o próximo incremento técnico do R0.5 permanece o ACK oficial no firmware do
+  teto/servos e sua validação física;
 - arquitetura de inteligência passa a exigir execução de ferramentas somente
   no backend, com uma política comum para voz, texto e automação;
 - roadmap registra R0.7.2 sem alterar a prioridade atual do ACK físico do R0.5;
@@ -123,6 +139,13 @@
 
 ### Validated
 
+- decisões D-01 a D-06 aprovadas pelo proprietário do produto em 14/08/2026;
+- SPEC Master e ADR-0007 reconciliadas em 16/08/2026 com a `main` no commit
+  `ddc12a22339545109750549b50deed6699ab67e2` e com os PRs #14, #15 e #16;
+- 82 arquivos Markdown verificados sem links locais quebrados;
+- compilação de `backend/app` e `backend/tests` aprovada;
+- `git diff --check` aprovado;
+- nenhuma alteração em código de backend, frontend ou firmware;
 - frontend com build de produção concluído;
 - ciclo completo de memória validado em SQLite temporário;
 - isolamento por usuário e tipo de memória;

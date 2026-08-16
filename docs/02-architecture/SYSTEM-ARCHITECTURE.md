@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart LR
- U[Usuário] --> FE[Frontend React / IRIS]
+ U[Usuário] --> FE[Frontend React / Circe]
  FE <-->|REST + WebSocket| BE[FastAPI]
  FE <-->|WebRTC/áudio| VP[Provedor de voz]
  BE <-->|MQTT| MQ[Mosquitto]

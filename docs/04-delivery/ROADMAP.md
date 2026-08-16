@@ -6,6 +6,16 @@ Legenda:
 - `[~]` parcialmente concluído;
 - `[ ]` pendente.
 
+## Baseline estratégica
+
+A SPEC Master v1.0 define o CIRCE OS como Home Companion local-first e híbrido.
+A visão de longo prazo não altera a prioridade imediata: o R0.5 deve fechar o
+controle físico confiável antes da abertura de novas frentes.
+
+R1.0 é um piloto residencial de uma casa. Saúde assistiva, localização,
+dispositivos dedicados e appliance própria permanecem em incubação e não
+integram o compromisso atual de release.
+
 ## R0.4 — Baseline reproduzível
 
 - [x] corrigir codificação de dependências;
@@ -30,6 +40,11 @@ Legenda:
   comando `pending` em `circe/alx/case/command/servos`, ACK correlacionado em
   `circe/alx/case/ack/{command_id}` e timeout determinístico para `failed`;
   registro ainda efêmero e ACK real do firmware ainda pendente;
+- [ ] ACK oficial emitido pelo firmware e validado fisicamente;
+- [ ] persistência, expiração durável e idempotência do registro;
+- [ ] reconciliação durável e auditoria de comandos;
+- [ ] feedback `pending/confirmed/failed/timeout` no frontend;
+- [ ] extensão do contrato confiável a fans, LEDs e demais controles;
 - [x] auditoria do incremento de teto/servos — suíte focal com `19 passed`,
   regressão completa com `57 passed`, compilação e `git diff --check`
   aprovados; corrida entre REST, MQTT e timeout corrigida;
@@ -125,4 +140,6 @@ comandos permanecem pendentes para incrementos posteriores.
 
 ## R1.0 — MVP residencial
 
-Release candidata somente após execução contínua, recuperação de falhas e validação ponta a ponta.
+Piloto residencial de uma casa, candidato somente após execução contínua,
+recuperação de falhas e validação ponta a ponta. Não é release comercial
+multi-tenant.

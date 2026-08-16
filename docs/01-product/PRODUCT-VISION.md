@@ -2,7 +2,10 @@
 
 ## Declaração
 
-A CIRCE será uma plataforma local-first capaz de perceber, explicar e controlar o ambiente residencial por interfaces visual, física e conversacional, preservando autonomia local e segurança operacional.
+O CIRCE OS será uma plataforma local-first e híbrida de Home Companion capaz
+de perceber, explicar e controlar o ambiente residencial por interfaces
+visual, física e conversacional, preservando autonomia local e segurança
+operacional.
 
 ## Problema
 

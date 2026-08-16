@@ -1,11 +1,12 @@
-# CIRCE Home Platform
+# CIRCE OS
 
-> Plataforma local-first de automação residencial, interface espacial e assistência por voz.
+> Plataforma local-first e híbrida de Home Companion.
 
 **Estado:** protótipo integrado em estabilização
 
 **Fonte oficial da documentação:** [`docs/INDEX.md`](docs/INDEX.md)
 **Estado verificável:** [`docs/00-governance/PROJECT-STATUS.md`](docs/00-governance/PROJECT-STATUS.md)
+**Definição canônica do produto:** [SPEC Master](docs/01-product/SPEC-MASTER.md)
 
 ## O que existe hoje
 
@@ -24,7 +25,7 @@
 
 ## Comece aqui
 
-1. [Visão do produto](docs/01-product/PRODUCT-VISION.md)
+1. [SPEC Master](docs/01-product/SPEC-MASTER.md)
 2. [Estado atual](docs/00-governance/PROJECT-STATUS.md)
 3. [Arquitetura](docs/02-architecture/SYSTEM-ARCHITECTURE.md)
 4. [Roadmap](docs/04-delivery/ROADMAP.md)
