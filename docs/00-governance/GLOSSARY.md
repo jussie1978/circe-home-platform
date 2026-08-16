@@ -1,7 +1,9 @@
 # Glossário
 
-- **CIRCE:** plataforma completa de automação, controle e interface.
-- **IRIS:** identidade conversacional/visual da assistente.
+- **CIRCE OS:** produto e ecossistema de Home Companion.
+- **Circe:** identidade do Home Companion percebida pelo usuário.
+- **Circe Core:** núcleo de contexto, memória, políticas, ferramentas e coordenação de IA.
+- **IRIS:** dívida de nomenclatura presente no protótipo; não recebe novos significados até migração ou definição restrita por ADR.
 - **Desired State:** estado solicitado pelo usuário ou automação.
 - **Reported State:** estado confirmado pelo dispositivo físico.
 - **Ack:** confirmação de recebimento ou execução de comando.

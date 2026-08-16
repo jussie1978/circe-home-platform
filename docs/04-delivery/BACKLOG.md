@@ -2,7 +2,7 @@
 
 ## P0 — Bloqueadores
 
-- [ ] converter `backend/requirements.txt` para UTF-8 e validar instalação;
+- [x] converter `backend/requirements.txt` para UTF-8 e validar instalação;
 - [ ] unificar porta do backend;
 - [x] criar Compose completo e health checks — execução local, smoke tests e
   persistência validados;
@@ -21,12 +21,12 @@
 - [x] integrar `MemoryService` e `ContextBuilder` no `ContextService` v0.1;
 - [x] definir contrato neutro de provedor que consome `ModelContext`;
 - [x] validar troca entre dois adaptadores sem perda de continuidade;
-- [ ] implementar adaptador real de texto atrás do contrato neutro;
+- [x] implementar adaptador real de texto atrás do contrato neutro;
 - [ ] implementar trilha imutável de criação, revisão e exclusão de memória;
 - [ ] formalizar proveniência, retenção, exportação e backup da memória;
 - [ ] schemas Pydantic versionados;
 - [ ] persistir comandos e estados;
-- [ ] CI com testes backend e build frontend;
+- [x] CI com testes backend e build frontend;
 - [ ] logs estruturados com correlation/command ID;
 - [ ] catálogo de dispositivos e capacidades.
 - [ ] catálogo versionado de capacidades de IA;

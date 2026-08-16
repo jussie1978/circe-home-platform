@@ -1,5 +1,13 @@
 # Plano mestre
 
+> A visão e os limites canônicos do produto estão em
+> [SPEC-MASTER.md](SPEC-MASTER.md). Este plano detalha a execução e não pode
+> ampliar silenciosamente o escopo aprovado.
+
+O CIRCE OS é uma plataforma local-first e híbrida de Home Companion que
+unifica interação natural, memória controlada, percepção ambiental, automação
+e dispositivos físicos sob políticas e controle confiável.
+
 ## Horizonte 1 — Fundação confiável
 
 Tornar instalação, execução, testes e diagnóstico reproduzíveis. Consolidar contratos de API/MQTT e separar estado desejado do confirmado.

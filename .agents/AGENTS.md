@@ -1,15 +1,15 @@
-# CIRCE Home Platform - Project Rules & Guidelines
+# CIRCE OS - Project Rules & Guidelines
 
-Welcome to the **CIRCE Home Platform** workspace. As an Antigravity agent, you must strictly adhere to the following rules, constraints, and methodologies when working on this codebase.
+Welcome to the **CIRCE OS** workspace. As an Antigravity agent, you must strictly adhere to the following rules, constraints, and methodologies when working on this codebase.
 
 ---
 
 ## 1. Core Architecture & Philosophy
 
-*   **🔒 Privacy-First / Local-First**: The system operates locally for device control, automation, and state management. External cloud services (such as Gemini Live or GPT Realtime APIs) are permitted exclusively for streaming conversational voice intelligence and ambient multimodal analysis under demand, ensuring no personal data trackers are introduced.
-*   **🤖 Conversational Interface (IRIS)**: Voice interactions are handled through a hybrid architecture, using low-latency WebSockets APIs (Gemini Live API, with GPT Realtime backup) for conversational fluidity, while local function calling executes commands on the local IoT network.
+*   **🔒 Privacy-First / Local-First**: The system operates locally for device control, automation, and state management. External AI services may be used only through explicit provider adapters and policy, without becoming a hidden dependency of essential controls or introducing personal data trackers.
+*   **🤖 Conversational Interface (Circe)**: Circe is the canonical Home Companion identity. Voice providers remain replaceable, and every tool or physical command must pass through backend policy and validation.
 *   **⚡ Real-Time Messaging**: Communication between components (Frontend, Backend, Firmware) is orchestrated using local MQTT (via Mosquitto) and WebSockets.
-*   **📐 Spec-Driven Development (SDD)**: Never write product code without an approved specification (`docs/SPEC-*.md` and/or ADRs in `docs/adrs/`). Any architectural changes must be documented via Architecture Decision Records (ADRs).
+*   **📐 Spec-Driven Development (SDD)**: Never write product code without an approved specification (`docs/specs/SPEC-*.md` and/or ADRs in `docs/adrs/`). Any architectural changes must be documented via Architecture Decision Records (ADRs).
 
 ---
 
@@ -55,5 +55,5 @@ Welcome to the **CIRCE Home Platform** workspace. As an Antigravity agent, you m
 
 ## 5. Development Workflow (Swim Lanes)
 
-*   **Single-Focus Sprints**: Only one project in the portfolio (CIRCE Home, LexisPro, CIRCE Intel Desk) can be in active development during a given week. Do not introduce cross-project code changes unless necessary.
+*   **Single-Focus Sprints**: Only one project in the portfolio (CIRCE OS, LexisPro, CIRCE Intel Desk) can be in active development during a given week. Do not introduce cross-project code changes unless necessary.
 *   **Comments and Documentation**: Maintain all comments and docstrings in code. Do not remove existing logic explanations during refactors.

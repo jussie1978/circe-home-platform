@@ -2,6 +2,13 @@
 
 Esta pasta é a **fonte única da verdade** do projeto. Documentos antigos foram preservados em [`legacy/`](legacy/), mas não devem orientar novas implementações sem validação.
 
+## Comece aqui
+
+- [SPEC Master do CIRCE OS](01-product/SPEC-MASTER.md) — contrato central de
+  produto, arquitetura de referência e evolução.
+- [Estado atual do projeto](00-governance/PROJECT-STATUS.md) — painel
+  operacional e próximo passo exato.
+
 ## 00 — Governança
 
 - [Estado atual](00-governance/PROJECT-STATUS.md)
@@ -11,6 +18,7 @@ Esta pasta é a **fonte única da verdade** do projeto. Documentos antigos foram
 
 ## 01 — Produto
 
+- [SPEC Master](01-product/SPEC-MASTER.md)
 - [Visão do produto](01-product/PRODUCT-VISION.md)
 - [Plano mestre](01-product/MASTER-PLAN.md)
 - [Escopo e requisitos](01-product/PRODUCT-SPEC.md)

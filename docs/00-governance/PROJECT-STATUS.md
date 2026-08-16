@@ -1,22 +1,36 @@
 # Estado atual do projeto
 
-**Atualizado em:** 11/08/2026
+**Atualizado em:** 16/08/2026
 **Entrega de referência:** merge commit
-`9762144021ced018c80e6c208a0acb392961b156` na branch `main`, via PR #14
-**Incremento atual:** prova vertical de acknowledgement e timeout do R0.5 para
-teto/servos integrada à `main`; R0.5 ainda parcial
+`ddc12a22339545109750549b50deed6699ab67e2` na branch `main`, via PR #16
+**Incremento atual:** integração documental da SPEC Master v1.0 e da ADR-0007;
+R0.5 permanece parcial e sem alteração técnica
 
 **Classificação atual:** protótipo integrado com memória portátil, primeiro
 adaptador textual real validado ao vivo e baseline local reproduzível por
 Docker Compose; ainda não é uma release de produção.
 
-## Decisão preparada — orquestração governada
+## Baseline de produto e governança
+
+A identidade CIRCE OS, a visão de Home Companion, o limite do R1.0 residencial
+e a arquitetura de referência foram consolidados na SPEC Master v1.0. A
+ADR-0007 registra a adoção da SPEC, o papel opcional do Home Assistant, a
+classificação de saúde e localização como incubação e a migração gradual da
+nomenclatura `IRIS`.
+
+Esta entrega é documental e não altera o estado do controle físico. O próximo
+incremento técnico permanece a emissão do ACK oficial pelo firmware do
+teto/servos e sua validação física. Persistência/idempotência,
+reconciliação/auditoria, feedback real na interface e expansão aos demais
+controles permanecem pendentes.
+
+## Decisão documentada — orquestração governada
 
 Em 11/08/2026 foi concluída a auditoria de viabilidade para evoluir o Core com
 capacidades especializadas, briefings e tarefas assistidas. A decisão registrada
-na ADR-0006 preserva o monólito modular e rejeita uma equipe arbitrária de
-agentes: o modelo propõe, enquanto o Core aplica política, aprovação, execução,
-verificação e auditoria.
+na ADR-0006, integrada pelo PR #16, preserva o monólito modular e rejeita uma
+equipe arbitrária de agentes: o modelo propõe, enquanto o Core aplica política,
+aprovação, execução, verificação e auditoria.
 
 A SPEC-007 está `Proposed`; nenhum runtime de orquestração foi implementado
 nesta rodada. A prioridade operacional continua sendo o ACK real do firmware do
@@ -56,12 +70,28 @@ permanece parcial.
 - prova vertical integrada à `main` pelo PR #14, merge commit
   `9762144021ced018c80e6c208a0acb392961b156`.
 
-A evolução mais recente concluiu e validou localmente o Compose de
-desenvolvimento para broker, backend e frontend. A CI continua validando os 41
-testes do backend, o lint e o build do frontend, sem chaves ou chamadas reais a
-provedores.
+A baseline reproduzível mantém o Compose de desenvolvimento para broker,
+backend e frontend. A validação mais recente registrada na `main`, no PR #16,
+aprovou 57 testes do backend, lint e build do frontend, sem chaves ou chamadas
+reais a provedores.
 
 ## Última entrega concluída
+
+### Orquestração governada documentada
+
+Integrada à `main` pelo PR #16, merge commit
+`ddc12a22339545109750549b50deed6699ab67e2`:
+
+- auditoria de viabilidade da orquestração assistida;
+- ADR-0006 para runtime central governado;
+- SPEC-007 para o primeiro incremento;
+- capacidades CAP-011, CAP-012 e CAP-013;
+- política inicial de risco R0–R4;
+- nenhum runtime, scheduler ou execução autônoma implementado;
+- 57 testes do backend, compilação Python, lint e build do frontend aprovados;
+- 80 arquivos Markdown verificados sem links locais quebrados.
+
+## Entrega anterior
 
 ### Compose para broker, backend e frontend
 
@@ -150,7 +180,7 @@ PRs relacionados:
 | Visão | protótipo isolado | 2/5 |
 | DevOps | Compose local e CI validados | 3/5 |
 | Segurança | laboratório | 1/5 |
-| Testes | contratos físicos e regressão com 48 testes | 3/5 |
+| Testes | contratos físicos e regressão com 57 testes | 3/5 |
 
 ## Implementado e comprovado
 
@@ -179,7 +209,7 @@ PRs relacionados:
   única chamada autorizada;
 - contrato neutro de comandos físicos com `command_id`, `desired_state` e `reported_state`;
 - cinco endpoints REST de controle integrados ao contrato, preservando os campos legados;
-- 48 testes passando no backend sem chamadas externas;
+- 57 testes passando no backend sem chamadas externas;
 - baseline local reproduzida em um segundo computador com Python 3.11;
 - CI #1 executada com sucesso no GitHub Actions para o commit `0e034bc`;
 - jobs remotos Backend e Frontend aprovados no PR #8;
@@ -247,6 +277,9 @@ Não inclui:
 - operações de memória ainda não possuem autenticação, autorização por
   proprietário, trilha imutável, retenção ou backup;
 - proveniência ainda é convenção no campo `metadata`, não um atributo obrigatório.
+- nomenclatura `IRIS` ainda está presente no código e em referências legadas;
+- capacidades da SPEC Master ainda possuem apenas mapeamento parcial na matriz
+  de rastreabilidade;
 - `CIRCE_OPENAI_MODEL` não possui padrão deliberadamente: o modelo deve ser
   escolhido e autorizado antes da chamada.
 - Gemini Live ainda recebe chave no browser e executa ferramentas no frontend;
@@ -267,6 +300,19 @@ Não inclui:
 7. iniciar pelo item em **Próximo passo exato**.
 
 ## Validações da entrega atual
+
+- em 16/08/2026, snapshot da SPEC Master reconciliado com a `main` no commit
+  `ddc12a22339545109750549b50deed6699ab67e2`;
+- 82 arquivos Markdown verificados sem links locais quebrados;
+- `python3 -m compileall -q backend/app backend/tests` aprovado;
+- `git diff --check` aprovado;
+- regressão do backend não reexecutada neste clone porque `pytest` não está
+  instalado e a rede do ambiente não permitiu baixar dependências;
+- lint e build do frontend não reexecutados neste clone porque não há cache
+  Node e a rede do ambiente não permitiu `npm ci`;
+- nenhuma linha de código de backend, frontend ou firmware foi alterada; a
+  última regressão aplicável permanece a do PR #16: 57 testes do backend, lint
+  e build do frontend aprovados;
 
 - em 02/08/2026, suíte focal final do contrato de teto/servos aprovada:
   `19 passed, 4 warnings`;

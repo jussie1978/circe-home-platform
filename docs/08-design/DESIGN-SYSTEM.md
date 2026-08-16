@@ -2,7 +2,9 @@
 
 ## Identidade
 
-IRIS é a presença visual e conversacional da CIRCE. O orbe comunica estado operacional, não apenas decoração.
+Circe é a presença visual e conversacional do CIRCE OS. O nome `IRIS` ainda
+existente no protótipo é dívida de nomenclatura. O orbe comunica estado
+operacional, não apenas decoração.
 
 ## Estados essenciais
 
