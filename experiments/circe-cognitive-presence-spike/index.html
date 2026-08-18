@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#030608" />
+    <title>Circe — Cognitive Presence Spike</title>
+  </head>
+  <body>
+    <main id="app" aria-label="Experimento visual de presença da Circe">
+      <div id="scene" aria-hidden="true"></div>
+      <section class="hud" aria-label="Controles e métricas do experimento">
+        <div class="identity">
+          <span class="eyebrow">CIRCE / PRESENCE LAB</span>
+          <span id="state-label" class="state-label">IDLE</span>
+        </div>
+        <dl class="metrics">
+          <div><dt>BACKEND</dt><dd id="backend">INICIANDO</dd></div>
+          <div><dt>FPS</dt><dd id="fps">—</dd></div>
+          <div><dt>FRAME</dt><dd id="frame-time">—</dd></div>
+          <div><dt>MATÉRIA</dt><dd>32.768</dd></div>
+          <div><dt>REDE</dt><dd id="network">—</dd></div>
+        </dl>
+        <div class="controls" role="group" aria-label="Estado visual">
+          <button type="button" data-state="idle" aria-pressed="true">Idle <kbd>1</kbd></button>
+          <button type="button" data-state="listening" aria-pressed="false">Listening <kbd>2</kbd></button>
+          <button id="fullscreen" type="button">Tela cheia <kbd>F</kbd></button>
+        </div>
+        <p class="hint">Mova ou toque para deslocar a atenção localmente.</p>
+      </section>
+      <div id="error" class="error" role="alert" hidden></div>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+
