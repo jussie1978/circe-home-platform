@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>CIRCE Presence — WebGPU Spike</title>
+  </head>
+  <body>
+    <main id="app" aria-label="Spike visual da presença da Circe">
+      <section id="stage" aria-label="Campo de partículas da Circe"></section>
+
+      <aside class="hud" aria-label="Métricas do renderer">
+        <div class="hud__identity">CIRCE / PRESENCE LAB</div>
+        <dl>
+          <div><dt>Backend</dt><dd id="metric-backend">inicializando</dd></div>
+          <div><dt>FPS</dt><dd id="metric-fps">—</dd></div>
+          <div><dt>Frame</dt><dd id="metric-frame">—</dd></div>
+          <div><dt>Partículas</dt><dd id="metric-particles">32.768</dd></div>
+          <div><dt>Estado</dt><dd id="metric-state">idle</dd></div>
+        </dl>
+        <div id="motion-mode" class="hud__motion" aria-live="polite"></div>
+      </aside>
+
+      <nav class="controls" aria-label="Controles do spike">
+        <button id="state-idle" type="button" aria-pressed="true">1 · Idle</button>
+        <button id="state-listening" type="button" aria-pressed="false">2 · Listening</button>
+        <button id="fullscreen" type="button">F · Tela cheia</button>
+      </nav>
+
+      <output id="error-message" class="error" role="alert" hidden></output>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+
