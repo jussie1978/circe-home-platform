@@ -1,10 +1,10 @@
 # Estado atual do projeto
 
-**Atualizado em:** 16/08/2026
+**Atualizado em:** 21/08/2026
 **Entrega de referência:** merge commit
-`ddc12a22339545109750549b50deed6699ab67e2` na branch `main`, via PR #16
-**Incremento atual:** integração documental da SPEC Master v1.0 e da ADR-0007;
-R0.5 permanece parcial e sem alteração técnica
+`a1b7a210c9e01370d47e66419aee35ff68bf478e` na branch `main`, via PR #17
+**Incremento atual:** SPEC Master v1.0 e ADR-0007 integradas; o próximo
+incremento técnico é o ACK oficial no firmware do teto/servos
 
 **Classificação atual:** protótipo integrado com memória portátil, primeiro
 adaptador textual real validado ao vivo e baseline local reproduzível por
@@ -17,6 +17,9 @@ e a arquitetura de referência foram consolidados na SPEC Master v1.0. A
 ADR-0007 registra a adoção da SPEC, o papel opcional do Home Assistant, a
 classificação de saúde e localização como incubação e a migração gradual da
 nomenclatura `IRIS`.
+
+A baseline foi integrada à `main` pelo PR #17, merge commit `a1b7a21`, após
+aprovação dos jobs Backend e Frontend na execução CI #21.
 
 Esta entrega é documental e não altera o estado do controle físico. O próximo
 incremento técnico permanece a emissão do ACK oficial pelo firmware do
@@ -76,6 +79,21 @@ aprovou 57 testes do backend, lint e build do frontend, sem chaves ou chamadas
 reais a provedores.
 
 ## Última entrega concluída
+
+### SPEC Master e identidade do CIRCE OS
+
+Integradas à `main` pelo PR #17, merge commit
+`a1b7a210c9e01370d47e66419aee35ff68bf478e`:
+
+- SPEC Master v1.0 como contrato central de produto;
+- ADR-0007 para identidade, significado de “OS” e limites do R1.0;
+- CIRCE OS como nome canônico e `IRIS` como dívida de nomenclatura;
+- Home Assistant como integração opcional;
+- saúde assistiva e localização mantidas em incubação;
+- 82 arquivos Markdown verificados sem links locais quebrados;
+- jobs Backend e Frontend aprovados na execução CI #21.
+
+## Entrega anterior
 
 ### Orquestração governada documentada
 
@@ -301,6 +319,9 @@ Não inclui:
 
 ## Validações da entrega atual
 
+- PR #17 integrado à `main` pelo merge commit
+  `a1b7a210c9e01370d47e66419aee35ff68bf478e`;
+- execução CI #21 aprovada, com jobs Backend e Frontend concluídos com sucesso;
 - em 16/08/2026, snapshot da SPEC Master reconciliado com a `main` no commit
   `ddc12a22339545109750549b50deed6699ab67e2`;
 - 82 arquivos Markdown verificados sem links locais quebrados;
